@@ -1,0 +1,14 @@
+{
+  "name": "wk2026",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "wrangler dev src/worker.js",
+    "deploy": "wrangler deploy",
+    "db:init:local": "wrangler d1 execute wk2026 --local --file=schema.sql",
+    "db:init:remote": "wrangler d1 execute wk2026 --remote --file=schema.sql"
+  },
+  "devDependencies": {
+    "wrangler": "^3.0.0"
+  }
+}

@@ -1,0 +1,11 @@
+name            = "wk2026-api"
+main            = "src/worker.js"
+compatibility_date = "2024-01-01"
+
+[[d1_databases]]
+binding  = "DB"
+database_name = "wk2026"
+database_id   = "dc9293fb-0fd3-4540-a1bc-444fe4aa6f16"
+
+[env.production]
+name = "wk2026-api"
