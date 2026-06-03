@@ -465,7 +465,7 @@
         <div class="bonus-card">
           <h3>⚽ Topscorer</h3>
           <div class="bonus-field">
-            <label>Naam van de topscorer</label>
+            <label>Naam van de topscorer / Zorg voor de exacte naam van de speler voor de juiste punten</label>
             <input type="text" id="bon-topscorer" value="${esc(bonusPred.topscorer||'')}" placeholder="Naam speler..." maxlength="40" ${tsLocked?'disabled':''} onchange="saveBonus('${esc(player)}')">
             <div class="bonus-pts-info">Juiste speler = 5 pt &nbsp;·&nbsp; Juiste speler + exact doelpunten = 8 pt</div>
           </div>
