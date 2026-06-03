@@ -10,16 +10,11 @@ function json(data, status = 200) {
     headers: { 'Content-Type': 'application/json', ...CORS },
   });
 }
-
-function err(msg, status = 400) {
-  return json({ error: msg }, status);
-}
+function err(msg, status = 400) { return json({ error: msg }, status); }
 
 export default {
   async fetch(request, env) {
-    if (request.method === 'OPTIONS') {
-      return new Response(null, { headers: CORS });
-    }
+    if (request.method === 'OPTIONS') return new Response(null, { headers: CORS });
 
     const url = new URL(request.url);
     const path = url.pathname;
@@ -30,7 +25,7 @@ export default {
       return json(rows.results.map(r => r.name));
     }
 
-    // POST /api/players  { name }
+    // POST /api/players
     if (path === '/api/players' && request.method === 'POST') {
       const { name } = await request.json();
       if (!name || name.length > 30) return err('Ongeldige naam');
@@ -39,9 +34,7 @@ export default {
       try {
         await env.DB.prepare('INSERT INTO players (name) VALUES (?)').bind(name.trim()).run();
         return json({ ok: true });
-      } catch {
-        return err('Speler bestaat al');
-      }
+      } catch { return err('Speler bestaat al'); }
     }
 
     // DELETE /api/players/:name
@@ -49,6 +42,7 @@ export default {
       const name = decodeURIComponent(path.split('/api/players/')[1]);
       await env.DB.prepare('DELETE FROM players WHERE name = ?').bind(name).run();
       await env.DB.prepare('DELETE FROM predictions WHERE player = ?').bind(name).run();
+      await env.DB.prepare('DELETE FROM bonus_predictions WHERE player = ?').bind(name).run();
       return json({ ok: true });
     }
 
@@ -60,16 +54,16 @@ export default {
         'SELECT match_id, home_score, away_score FROM predictions WHERE player = ?'
       ).bind(player).all();
       const result = {};
-      rows.results.forEach(r => {
-        result[r.match_id] = { h: r.home_score, a: r.away_score };
-      });
+      rows.results.forEach(r => { result[r.match_id] = { h: r.home_score, a: r.away_score }; });
       return json(result);
     }
 
-    // PUT /api/predictions  { player, matchId, h, a }
+    // PUT /api/predictions
     if (path === '/api/predictions' && request.method === 'PUT') {
-      const { player, matchId, h, a } = await request.json();
+      const { player, matchId, h, a, kickoff } = await request.json();
       if (!player || !matchId || h == null || a == null) return err('Ontbrekende velden');
+      // Check lock: als kickoff verstreken is, weigeren
+      if (kickoff && Date.now() >= kickoff) return err('Wedstrijd is al begonnen — prono vergrendeld');
       await env.DB.prepare(
         `INSERT INTO predictions (player, match_id, home_score, away_score)
          VALUES (?, ?, ?, ?)
@@ -82,21 +76,56 @@ export default {
     if (path === '/api/results' && request.method === 'GET') {
       const rows = await env.DB.prepare('SELECT match_id, home_score, away_score FROM results').all();
       const result = {};
-      rows.results.forEach(r => {
-        result[r.match_id] = { h: r.home_score, a: r.away_score };
-      });
+      rows.results.forEach(r => { result[r.match_id] = { h: r.home_score, a: r.away_score }; });
       return json(result);
     }
 
-    // PUT /api/results  { matchId, h, a }
+    // PUT /api/results
     if (path === '/api/results' && request.method === 'PUT') {
       const { matchId, h, a } = await request.json();
       if (!matchId || h == null || a == null) return err('Ontbrekende velden');
       await env.DB.prepare(
-        `INSERT INTO results (match_id, home_score, away_score)
-         VALUES (?, ?, ?)
+        `INSERT INTO results (match_id, home_score, away_score) VALUES (?, ?, ?)
          ON CONFLICT(match_id) DO UPDATE SET home_score=excluded.home_score, away_score=excluded.away_score`
       ).bind(matchId, parseInt(h), parseInt(a)).run();
+      return json({ ok: true });
+    }
+
+    // GET /api/bonus?player=X
+    if (path === '/api/bonus' && request.method === 'GET') {
+      const player = url.searchParams.get('player');
+      if (!player) return err('player vereist');
+      const row = await env.DB.prepare('SELECT * FROM bonus_predictions WHERE player = ?').bind(player).first();
+      return json(row || {});
+    }
+
+    // PUT /api/bonus  { player, champion, topscorer, goals }
+    if (path === '/api/bonus' && request.method === 'PUT') {
+      const { player, champion, topscorer, goals } = await request.json();
+      if (!player) return err('player vereist');
+      await env.DB.prepare(
+        `INSERT INTO bonus_predictions (player, champion, topscorer, goals)
+         VALUES (?, ?, ?, ?)
+         ON CONFLICT(player) DO UPDATE SET champion=excluded.champion, topscorer=excluded.topscorer, goals=excluded.goals`
+      ).bind(player, champion || null, topscorer || null, goals != null ? parseInt(goals) : null).run();
+      return json({ ok: true });
+    }
+
+    // GET /api/bonus-result  (admin: de echte winnaar + topscorer)
+    if (path === '/api/bonus-result' && request.method === 'GET') {
+      const row = await env.DB.prepare('SELECT * FROM results WHERE match_id = ?').bind('bonus').first();
+      if (!row) return json({});
+      try { return json(JSON.parse(row.home_score + '')); } catch { return json({}); }
+    }
+
+    // PUT /api/bonus-result  { champion, topscorer, goals }
+    if (path === '/api/bonus-result' && request.method === 'PUT') {
+      const data = await request.json();
+      const val = JSON.stringify(data);
+      await env.DB.prepare(
+        `INSERT INTO results (match_id, home_score, away_score) VALUES ('bonus', ?, 0)
+         ON CONFLICT(match_id) DO UPDATE SET home_score=excluded.home_score`
+      ).bind(val).run();
       return json({ ok: true });
     }
 
@@ -105,16 +134,26 @@ export default {
       const players = await env.DB.prepare('SELECT name FROM players ORDER BY created_at').all();
       const allPreds = await env.DB.prepare('SELECT player, match_id, home_score, away_score FROM predictions').all();
       const allResults = await env.DB.prepare('SELECT match_id, home_score, away_score FROM results').all();
+      const allBonus = await env.DB.prepare('SELECT * FROM bonus_predictions').all();
 
       const predsMap = {};
       allPreds.results.forEach(r => {
         if (!predsMap[r.player]) predsMap[r.player] = {};
         predsMap[r.player][r.match_id] = { h: r.home_score, a: r.away_score };
       });
+
       const resMap = {};
+      let bonusResult = {};
       allResults.results.forEach(r => {
-        resMap[r.match_id] = { h: r.home_score, a: r.away_score };
+        if (r.match_id === 'bonus') {
+          try { bonusResult = JSON.parse(r.home_score); } catch {}
+        } else {
+          resMap[r.match_id] = { h: r.home_score, a: r.away_score };
+        }
       });
+
+      const bonusMap = {};
+      allBonus.results.forEach(r => { bonusMap[r.player] = r; });
 
       const ranking = players.results.map(({ name }) => {
         let pts = 0, exact = 0, win = 0, filled = 0;
@@ -131,7 +170,20 @@ export default {
             }
           }
         }
-        return { name, pts, exact, win, filled };
+        // Bonus punten
+        let bonusPts = 0;
+        const bp = bonusMap[name];
+        if (bp && bonusResult.champion) {
+          if (bp.champion === bonusResult.champion) bonusPts += 10;
+        }
+        if (bp && bonusResult.topscorer) {
+          if (bp.topscorer === bonusResult.topscorer) {
+            if (bp.goals != null && bp.goals === bonusResult.goals) bonusPts += 8;
+            else bonusPts += 5;
+          }
+        }
+        pts += bonusPts;
+        return { name, pts, exact, win, filled, bonusPts };
       }).sort((a, b) => b.pts - a.pts || b.exact - a.exact);
 
       return json(ranking);
