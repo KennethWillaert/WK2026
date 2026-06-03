@@ -97,7 +97,20 @@
     @keyframes spin{to{transform:rotate(360deg)}}
     .player-select{margin-bottom:14px}
     .player-select label{font-size:13px;color:var(--text2);font-weight:500;display:block;margin-bottom:5px}
-    .bonus-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px}
+    .standings-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-bottom:1rem}
+    .standings-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+    .standings-card h3{font-size:12px;font-weight:700;color:#fff;background:var(--navy);padding:8px 12px;letter-spacing:.06em;text-transform:uppercase}
+    .standings-tbl{width:100%;border-collapse:collapse;font-size:12px}
+    .standings-tbl th{padding:5px 8px;font-size:10px;font-weight:700;color:var(--text3);border-bottom:1px solid var(--border);text-align:right;text-transform:uppercase;letter-spacing:.05em}
+    .standings-tbl th:first-child{text-align:left}
+    .standings-tbl td{padding:6px 8px;border-bottom:1px solid var(--border);text-align:right;color:var(--text2)}
+    .standings-tbl td:first-child{text-align:left;font-weight:600;color:var(--text)}
+    .standings-tbl tr:last-child td{border-bottom:none}
+    .standings-tbl tr.qualified td{color:var(--green);font-weight:600}
+    .standings-tbl tr.qualified td:first-child{color:var(--green)}
+    .pos-badge{display:inline-block;width:16px;height:16px;border-radius:50%;font-size:10px;font-weight:700;line-height:16px;text-align:center;margin-right:4px}
+    .pos-1{background:var(--green-bg);color:var(--green-text)}
+    .pos-2{background:var(--accent-bg);color:var(--accent-text)}
     .bonus-card h3{font-size:14px;font-weight:700;color:var(--text);margin-bottom:12px;display:flex;align-items:center;gap:6px}
     .bonus-field{margin-bottom:10px}
     .bonus-field label{font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:5px}
@@ -120,6 +133,7 @@
   <nav>
     <button class="active" onclick="nav('spelers')">Spelers</button>
     <button onclick="nav('pronostiek')">Pronostiek</button>
+    <button onclick="nav('standen')">Standen</button>
     <button onclick="nav('scores')">Scores</button>
     <button onclick="nav('ranking')">Ranking</button>
   </nav>
@@ -150,6 +164,10 @@
       </div>
       <div class="phase-bar" id="phase-bar-v"></div>
       <div id="matches-wrap"></div>
+    </div>
+
+    <div id="page-standen" class="page">
+      <div id="standen-wrap"></div>
     </div>
 
     <div id="page-scores" class="page">
@@ -296,7 +314,7 @@
       {id:'m104',date:'2026-07-19',h:'W101',a:'W102',ph:'final',ko:cest('2026-07-19','21:00')},
     ];
 
-    let players=[], results={}, curPreds={}, bonusPred={}, bonusResult={};
+    let players=[], results={}, curPreds={}, bonusPred={}, bonusResult={}, bracket={};
     let curPhaseV='bonus', curPhaseS='group', savingTimer={};
 
     function isLocked(ko){ return Date.now() >= ko; }
@@ -319,6 +337,7 @@
           apiFetch('/results'),
           apiFetch('/bonus-result'),
         ]);
+        try{const s=await apiFetch('/standings');bracket=s.bracket||{};}catch{}
         renderCurrent();
       }catch(e){showError(e.message);}
     }
@@ -332,7 +351,7 @@
     let curPage='spelers';
     function nav(page){
       curPage=page;
-      document.querySelectorAll('nav button').forEach((b,i)=>b.classList.toggle('active',['spelers','pronostiek','scores','ranking'][i]===page));
+      document.querySelectorAll('nav button').forEach((b,i)=>b.classList.toggle('active',['spelers','pronostiek','standen','scores','ranking'][i]===page));
       document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
       document.getElementById('page-'+page).classList.add('active');
       renderCurrent();
@@ -341,8 +360,43 @@
     function renderCurrent(){
       if(curPage==='spelers')renderPlayers();
       if(curPage==='pronostiek')renderPredPage();
+      if(curPage==='standen')renderStandings();
       if(curPage==='scores')renderScoresPage();
       if(curPage==='ranking')renderRanking();
+    }
+
+    let standingsCache=null;
+    async function renderStandings(){
+      const wrap=document.getElementById('standen-wrap');
+      wrap.innerHTML='<div class="loading"><span class="spinner"></span>Laden...</div>';
+      try{
+        const data=await apiFetch('/standings');
+        standingsCache=data;
+        const{standings,bracket}=data;
+        const grpNames='ABCDEFGHIJKL'.split('');
+        wrap.innerHTML=`<div class="standings-grid">${grpNames.map(g=>{
+          const table=standings[g]||[];
+          const totalMatches=table.reduce((s,t)=>s+t.played,0)/2;
+          const grpDone=totalMatches>=6;
+          return`<div class="standings-card">
+            <h3>Groep ${g}</h3>
+            <table class="standings-tbl">
+              <thead><tr><th>Land</th><th>Gs</th><th>W</th><th>G</th><th>V</th><th>DV</th><th>DT</th><th>Sal</th><th>Pts</th></tr></thead>
+              <tbody>${table.map((t,i)=>{
+                const qualified=(i<2)||(i===2&&!grpDone);
+                const pos=i===0?'<span class="pos-badge pos-1">1</span>':i===1?'<span class="pos-badge pos-2">2</span>':'<span style="display:inline-block;width:16px;margin-right:4px;text-align:center;font-size:10px;color:var(--text3)">'+(i+1)+'</span>';
+                return`<tr class="${i<2?'qualified':''}">
+                  <td>${pos}${esc(t.name)}</td>
+                  <td>${t.played}</td><td>${t.w}</td><td>${t.d}</td><td>${t.l}</td>
+                  <td>${t.gf}</td><td>${t.ga}</td>
+                  <td style="color:${t.gd>0?'var(--green)':t.gd<0?'var(--red)':'var(--text2)'}">${t.gd>0?'+':''}${t.gd}</td>
+                  <td style="font-weight:700;color:var(--navy)">${t.pts}</td>
+                </tr>`;
+              }).join('')}</tbody>
+            </table>
+          </div>`;
+        }).join('')}</div>`;
+      }catch(e){wrap.innerHTML=`<div class="error">${e.message}</div>`;}
     }
 
     function renderPlayers(){
@@ -439,6 +493,11 @@
       },600);
     }
 
+    function resolveTeam(name){
+      // Zet "1A", "2B", "W73" etc om naar echte landnaam als bekend
+      return bracket[name]||name;
+    }
+
     function renderMatchList(wrap,player){
       const filtered=MATCHES.filter(m=>m.ph===curPhaseV);
       const byDate={};
@@ -466,13 +525,13 @@
               ${badge}
             </div>
             <div class="match-grid">
-              <div class="team">${esc(m.h)}</div>
+              <div class="team">${esc(resolveTeam(m.h))}</div>
               <div class="score-inputs">
                 <input type="number" min="0" max="20" value="${pred.h!=null?pred.h:''}" placeholder="–" id="v_${m.id}_h" ${locked?'disabled':''} onchange="queueSavePred('${esc(player)}','${m.id}',${m.ko})">
                 <span class="score-sep">–</span>
                 <input type="number" min="0" max="20" value="${pred.a!=null?pred.a:''}" placeholder="–" id="v_${m.id}_a" ${locked?'disabled':''} onchange="queueSavePred('${esc(player)}','${m.id}',${m.ko})">
               </div>
-              <div class="team right">${esc(m.a)}</div>
+              <div class="team right">${esc(resolveTeam(m.a))}</div>
             </div>
             <div class="saved-msg" id="sv_${m.id}"></div>
           </div>`.replace('${timeStr}',timeStr);
@@ -514,13 +573,13 @@
           return`<div class="card">
             <div class="card-meta"><span>${m.ph==='group'?`Groep ${m.g}`:''} ${timeStr}</span></div>
             <div class="match-grid">
-              <div class="team">${esc(m.h)}</div>
+              <div class="team">${esc(resolveTeam(m.h))}</div>
               <div class="score-inputs">
                 <input type="number" min="0" max="20" value="${res.h!=null?res.h:''}" placeholder="–" id="r_${m.id}_h" onchange="queueSaveResult('${m.id}')">
                 <span class="score-sep">–</span>
                 <input type="number" min="0" max="20" value="${res.a!=null?res.a:''}" placeholder="–" id="r_${m.id}_a" onchange="queueSaveResult('${m.id}')">
               </div>
-              <div class="team right">${esc(m.a)}</div>
+              <div class="team right">${esc(resolveTeam(m.a))}</div>
             </div>
             <div class="saved-msg" id="sr_${m.id}"></div>
           </div>`;
