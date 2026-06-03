@@ -1,10 +1,36 @@
-const CORS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type',
+const CORS={
+  'Access-Control-Allow-Origin':'*',
+  'Access-Control-Allow-Methods':'GET,POST,PUT,DELETE,OPTIONS',
+  'Access-Control-Allow-Headers':'Content-Type,Authorization',
 };
 function json(data,status=200){return new Response(JSON.stringify(data),{status,headers:{'Content-Type':'application/json',...CORS}});}
 function err(msg,status=400){return json({error:msg},status);}
+
+const ADMIN_EMAIL='djduuub@gmail.com';
+
+// Simpele hash met Web Crypto
+async function hashPassword(password){
+  const encoder=new TextEncoder();
+  const data=encoder.encode(password+'wk2026salt');
+  const hash=await crypto.subtle.digest('SHA-256',data);
+  return Array.from(new Uint8Array(hash)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+function generateToken(){
+  const arr=new Uint8Array(32);
+  crypto.getRandomValues(arr);
+  return Array.from(arr).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+async function getUser(request,env){
+  const auth=request.headers.get('Authorization')||'';
+  const token=auth.replace('Bearer ','').trim();
+  if(!token)return null;
+  const session=await env.DB.prepare('SELECT user_id FROM sessions WHERE token=?').bind(token).first();
+  if(!session)return null;
+  const user=await env.DB.prepare('SELECT id,name,email,is_admin FROM users WHERE id=?').bind(session.user_id).first();
+  return user||null;
+}
 
 const GROUPS={
   A:['Mexico','Zuid-Korea','Zuid-Afrika','Tsjechië'],
@@ -65,8 +91,7 @@ function calcStandings(grpMatches,resMap){
   grpMatches.forEach(m=>{
     if(!teams[m.h])teams[m.h]={name:m.h,pts:0,w:0,d:0,l:0,gf:0,ga:0,gd:0,played:0};
     if(!teams[m.a])teams[m.a]={name:m.a,pts:0,w:0,d:0,l:0,gf:0,ga:0,gd:0,played:0};
-    const res=resMap[m.id];
-    if(!res)return;
+    const res=resMap[m.id];if(!res)return;
     const h=teams[m.h],a=teams[m.a];
     h.played++;a.played++;
     h.gf+=res.h;h.ga+=res.a;h.gd=h.gf-h.ga;
@@ -84,45 +109,90 @@ export default {
     const url=new URL(request.url);
     const path=url.pathname;
 
-    if(path==='/api/players'&&request.method==='GET'){
-      const rows=await env.DB.prepare('SELECT name FROM players ORDER BY created_at').all();
-      return json(rows.results.map(r=>r.name));
+    // ── AUTH ──────────────────────────────────────────────
+
+    // POST /api/auth/register
+    if(path==='/api/auth/register'&&request.method==='POST'){
+      const{name,email,password}=await request.json();
+      if(!name||!email||!password)return err('Alle velden zijn verplicht');
+      if(password.length<4)return err('Wachtwoord minimaal 4 tekens');
+      if(name.length>30)return err('Naam te lang');
+      const hashed=await hashPassword(password);
+      const isAdmin=email.toLowerCase()===ADMIN_EMAIL?1:0;
+      try{
+        const result=await env.DB.prepare(
+          'INSERT INTO users(name,email,password,is_admin)VALUES(?,?,?,?)'
+        ).bind(name.trim(),email.toLowerCase().trim(),hashed,isAdmin).run();
+        const userId=result.meta.last_row_id;
+        // Voeg ook toe als player voor bestaande systeem compatibiliteit
+        try{await env.DB.prepare('INSERT INTO players(name)VALUES(?)').bind(name.trim()).run();}catch{}
+        const token=generateToken();
+        await env.DB.prepare('INSERT INTO sessions(token,user_id)VALUES(?,?)').bind(token,userId).run();
+        return json({ok:true,token,name:name.trim(),email:email.toLowerCase(),isAdmin:isAdmin===1});
+      }catch(e){
+        if(e.message?.includes('UNIQUE'))return err('Email al in gebruik');
+        return err('Registratie mislukt');
+      }
     }
-    if(path==='/api/players'&&request.method==='POST'){
-      const{name}=await request.json();
-      if(!name||name.length>30)return err('Ongeldige naam');
-      const count=await env.DB.prepare('SELECT COUNT(*) as c FROM players').first();
-      if(count.c>=15)return err('Maximum 15 spelers bereikt');
-      try{await env.DB.prepare('INSERT INTO players (name) VALUES (?)').bind(name.trim()).run();return json({ok:true});}
-      catch{return err('Speler bestaat al');}
+
+    // POST /api/auth/login
+    if(path==='/api/auth/login'&&request.method==='POST'){
+      const{email,password}=await request.json();
+      if(!email||!password)return err('Email en wachtwoord verplicht');
+      const hashed=await hashPassword(password);
+      const user=await env.DB.prepare(
+        'SELECT id,name,email,is_admin FROM users WHERE email=? AND password=?'
+      ).bind(email.toLowerCase().trim(),hashed).first();
+      if(!user)return err('Ongeldig email of wachtwoord');
+      const token=generateToken();
+      await env.DB.prepare('INSERT INTO sessions(token,user_id)VALUES(?,?)').bind(token,user.id).run();
+      return json({ok:true,token,name:user.name,email:user.email,isAdmin:user.is_admin===1});
     }
-    if(path.startsWith('/api/players/')&&request.method==='DELETE'){
-      const name=decodeURIComponent(path.split('/api/players/')[1]);
-      await env.DB.prepare('DELETE FROM players WHERE name = ?').bind(name).run();
-      await env.DB.prepare('DELETE FROM predictions WHERE player = ?').bind(name).run();
-      await env.DB.prepare('DELETE FROM bonus_predictions WHERE player = ?').bind(name).run();
+
+    // POST /api/auth/logout
+    if(path==='/api/auth/logout'&&request.method==='POST'){
+      const auth=request.headers.get('Authorization')||'';
+      const token=auth.replace('Bearer ','').trim();
+      if(token)await env.DB.prepare('DELETE FROM sessions WHERE token=?').bind(token).run();
       return json({ok:true});
     }
 
+    // GET /api/auth/me
+    if(path==='/api/auth/me'&&request.method==='GET'){
+      const user=await getUser(request,env);
+      if(!user)return err('Niet ingelogd',401);
+      return json({name:user.name,email:user.email,isAdmin:user.is_admin===1});
+    }
+
+    // ── PLAYERS (voor ranking compatibiliteit) ────────────
+    if(path==='/api/players'&&request.method==='GET'){
+      const rows=await env.DB.prepare('SELECT name FROM users ORDER BY created_at').all();
+      return json(rows.results.map(r=>r.name));
+    }
+
+    // ── PREDICTIONS ───────────────────────────────────────
     if(path==='/api/predictions'&&request.method==='GET'){
-      const player=url.searchParams.get('player');
-      if(!player)return err('player vereist');
-      const rows=await env.DB.prepare('SELECT match_id,home_score,away_score FROM predictions WHERE player=?').bind(player).all();
+      const user=await getUser(request,env);
+      if(!user)return err('Niet ingelogd',401);
+      const rows=await env.DB.prepare('SELECT match_id,home_score,away_score FROM predictions WHERE player=?').bind(user.name).all();
       const result={};
       rows.results.forEach(r=>{result[r.match_id]={h:r.home_score,a:r.away_score};});
       return json(result);
     }
     if(path==='/api/predictions'&&request.method==='PUT'){
-      const{player,matchId,h,a,kickoff}=await request.json();
-      if(!player||!matchId||h==null||a==null)return err('Ontbrekende velden');
+      const user=await getUser(request,env);
+      if(!user)return err('Niet ingelogd',401);
+      const{matchId,h,a,kickoff}=await request.json();
+      if(!matchId||h==null||a==null)return err('Ontbrekende velden');
       if(kickoff&&Date.now()>=kickoff)return err('Wedstrijd is al begonnen — prono vergrendeld');
       await env.DB.prepare(
         `INSERT INTO predictions(player,match_id,home_score,away_score)VALUES(?,?,?,?)
          ON CONFLICT(player,match_id)DO UPDATE SET home_score=excluded.home_score,away_score=excluded.away_score`
-      ).bind(player,matchId,parseInt(h),parseInt(a)).run();
+      ).bind(user.name,matchId,parseInt(h),parseInt(a)).run();
       return json({ok:true});
     }
 
+    // ── RESULTS (enkel admin) ─────────────────────────────
     if(path==='/api/results'&&request.method==='GET'){
       const rows=await env.DB.prepare('SELECT match_id,home_score,away_score FROM results').all();
       const result={};
@@ -130,6 +200,8 @@ export default {
       return json(result);
     }
     if(path==='/api/results'&&request.method==='PUT'){
+      const user=await getUser(request,env);
+      if(!user||!user.is_admin)return err('Geen toegang',403);
       const{matchId,h,a}=await request.json();
       if(!matchId||h==null||a==null)return err('Ontbrekende velden');
       await env.DB.prepare(
@@ -139,6 +211,7 @@ export default {
       return json({ok:true});
     }
 
+    // ── STANDINGS ─────────────────────────────────────────
     if(path==='/api/standings'&&request.method==='GET'){
       const rows=await env.DB.prepare('SELECT match_id,home_score,away_score FROM results').all();
       const resMap={};
@@ -171,6 +244,8 @@ export default {
     }
 
     if(path==='/api/bracket-override'&&request.method==='PUT'){
+      const user=await getUser(request,env);
+      if(!user||!user.is_admin)return err('Geen toegang',403);
       const{slot,team}=await request.json();
       await env.DB.prepare(
         `INSERT INTO results(match_id,home_score,away_score)VALUES(?,?,0)
@@ -179,19 +254,21 @@ export default {
       return json({ok:true});
     }
 
+    // ── BONUS ─────────────────────────────────────────────
     if(path==='/api/bonus'&&request.method==='GET'){
-      const player=url.searchParams.get('player');
-      if(!player)return err('player vereist');
-      const row=await env.DB.prepare('SELECT * FROM bonus_predictions WHERE player=?').bind(player).first();
+      const user=await getUser(request,env);
+      if(!user)return err('Niet ingelogd',401);
+      const row=await env.DB.prepare('SELECT * FROM bonus_predictions WHERE player=?').bind(user.name).first();
       return json(row||{});
     }
     if(path==='/api/bonus'&&request.method==='PUT'){
-      const{player,champion,topscorer,goals}=await request.json();
-      if(!player)return err('player vereist');
+      const user=await getUser(request,env);
+      if(!user)return err('Niet ingelogd',401);
+      const{champion,topscorer,goals}=await request.json();
       await env.DB.prepare(
         `INSERT INTO bonus_predictions(player,champion,topscorer,goals)VALUES(?,?,?,?)
          ON CONFLICT(player)DO UPDATE SET champion=excluded.champion,topscorer=excluded.topscorer,goals=excluded.goals`
-      ).bind(player,champion||null,topscorer||null,goals!=null?parseInt(goals):null).run();
+      ).bind(user.name,champion||null,topscorer||null,goals!=null?parseInt(goals):null).run();
       return json({ok:true});
     }
 
@@ -201,6 +278,8 @@ export default {
       try{return json(JSON.parse(row.home_score+''));}catch{return json({});}
     }
     if(path==='/api/bonus-result'&&request.method==='PUT'){
+      const user=await getUser(request,env);
+      if(!user||!user.is_admin)return err('Geen toegang',403);
       const data=await request.json();
       await env.DB.prepare(
         `INSERT INTO results(match_id,home_score,away_score)VALUES('bonus',?,0)
@@ -209,8 +288,9 @@ export default {
       return json({ok:true});
     }
 
+    // ── RANKING ───────────────────────────────────────────
     if(path==='/api/ranking'&&request.method==='GET'){
-      const players=await env.DB.prepare('SELECT name FROM players ORDER BY created_at').all();
+      const users=await env.DB.prepare('SELECT name FROM users ORDER BY created_at').all();
       const allPreds=await env.DB.prepare('SELECT player,match_id,home_score,away_score FROM predictions').all();
       const allResults=await env.DB.prepare('SELECT match_id,home_score,away_score FROM results').all();
       const allBonus=await env.DB.prepare('SELECT * FROM bonus_predictions').all();
@@ -226,7 +306,7 @@ export default {
       });
       const bonusMap={};
       allBonus.results.forEach(r=>{bonusMap[r.player]=r;});
-      const ranking=players.results.map(({name})=>{
+      const ranking=users.results.map(({name})=>{
         let pts=0,exact=0,win=0,filled=0,bonusPts=0;
         const preds=predsMap[name]||{};
         for(const[mid,pred]of Object.entries(preds)){
