@@ -145,7 +145,7 @@
         Exacte score = 3 pt<br>
         Juiste winnaar of gelijkspel = 1 pt<br><br>
         Juiste wereldkampioen = 10 pt<br>
-        Juiste topscorer = 5 pt - Zorg voor de juiste benaming voor correcte punten<br>
+        Juiste topscorer = 5 pt - Exacte Naam<br>
         Juiste topscorer + exact doelpunten = 8 pt<br><br>
         🔒 Pronostieken worden vergrendeld bij aftrap.
       </div>
@@ -465,7 +465,7 @@
         <div class="bonus-card">
           <h3>⚽ Topscorer</h3>
           <div class="bonus-field">
-            <label>Naam van de topscorer / Zorg voor de exacte naam van de speler voor de juiste punten</label>
+            <label>Naam van de topscorer / Correcte Naam Speler</label>
             <input type="text" id="bon-topscorer" value="${esc(bonusPred.topscorer||'')}" placeholder="Naam speler..." maxlength="40" ${tsLocked?'disabled':''} onchange="saveBonus('${esc(player)}')">
             <div class="bonus-pts-info">Juiste speler = 5 pt &nbsp;·&nbsp; Juiste speler + exact doelpunten = 8 pt</div>
           </div>
