@@ -1080,10 +1080,13 @@ async function renderTopscorers(){
     document.getElementById('stats-body').innerHTML='<div class="loading"><span class="spinner"></span>Laden...</div>';
 
     try{
-      // Haal ranking op voor stats
-      const ranking = await apiFetch('/ranking');
+      const [ranking, allBonus] = await Promise.all([
+        apiFetch('/ranking'),
+        apiFetch('/bonus-all').catch(()=>null)
+      ]);
       const player = ranking.find(r=>r.name===playerName);
       if(!player){document.getElementById('stats-body').innerHTML='<div class="error-msg">Niet gevonden</div>';return;}
+      const playerBonus = allBonus ? allBonus.find(b=>b.name===playerName) : null;
 
       // Haal bonus prono op van deze speler
       const allResults = results;
@@ -1138,7 +1141,22 @@ async function renderTopscorers(){
             <span class="stats-label">Via bonus</span>
             <span class="stats-value gold">${player.bonusPts} pt</span>
           </div>
-        </div>`;
+        </div>
+        ${playerBonus?`<div class="stats-section">
+          <h3 style="display:flex;align-items:center;gap:6px"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><path d="M6 9H4a2 2 0 0 1-2-2V5h4"/><path d="M18 9h2a2 2 0 0 0 2-2V5h-4"/><path d="M12 17v4"/><path d="M8 21h8"/><path d="M6 5h12v6a6 6 0 0 1-12 0z"/></svg> Bonus prono</h3>
+          <div class="stats-row">
+            <span class="stats-label">Wereldkampioen</span>
+            <span class="stats-value">${playerBonus.champion?`${flagFor(playerBonus.champion)} ${esc(playerBonus.champion)}`:'<span style="color:#7a8a9a">Niet ingevuld</span>'}</span>
+          </div>
+          <div class="stats-row">
+            <span class="stats-label">Topscorer</span>
+            <span class="stats-value">${playerBonus.topscorer?esc(playerBonus.topscorer):'<span style="color:#7a8a9a">Niet ingevuld</span>'}</span>
+          </div>
+          ${playerBonus.goals!=null?`<div class="stats-row">
+            <span class="stats-label">Verwacht doelpunten</span>
+            <span class="stats-value">${playerBonus.goals}</span>
+          </div>`:''}
+        </div>`:''}`;
 
       if(window.twemoji) twemoji.parse(document.getElementById('stats-body'),{folder:'svg',ext:'.svg'});
     }catch(e){
