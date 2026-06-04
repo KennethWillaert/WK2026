@@ -852,7 +852,46 @@ async function renderRanking(){
 }
 
 // ── HELPERS ──────────────────────────────────────
-function calcPts(pred,res){
+async function renderTopscorers(){
+    const wrap=document.getElementById('topscorers-wrap');
+    wrap.innerHTML='<div class="loading"><span class="spinner"></span>Laden...</div>';
+    try{
+      const scorers=await apiFetch('/topscorers');
+      if(!scorers.length){
+        wrap.innerHTML='<div class="loading">Topscorers nog niet beschikbaar — start op 11 juni.</div>';
+        return;
+      }
+      const medals=['🥇','🥈','🥉'];
+      wrap.innerHTML=`<div class="rank-wrap"><table class="ranking-table">
+        <thead><tr><th>#</th><th>Speler</th><th>Team</th><th style="text-align:right">⚽</th></tr></thead>
+        <tbody>${scorers.map((s,i)=>`<tr>
+          <td style="font-size:${i<3?'18':'14'}px;width:36px">${i<3?medals[i]:`<span style="color:#445566;font-weight:700">${i+1}</span>`}</td>
+          <td style="font-weight:${i===0?'700':'500'}">${esc(s.name)}</td>
+          <td style="font-size:13px;color:#7a90aa">${esc(s.team)}</td>
+          <td style="text-align:right;font-size:18px;font-weight:800;color:#3a7bd5">${s.goals}</td>
+        </tr>`).join('')}</tbody>
+      </table></div>`;
+    }catch(e){wrap.innerHTML=`<div class="error-msg">${e.message}</div>`;}
+  }
+
+  window.manualSync=async function(){
+    const btn=document.getElementById('sync-btn');
+    const status=document.getElementById('sync-status');
+    if(btn){btn.disabled=true;btn.textContent='⏳ Bezig...';}
+    try{
+      const result=await apiFetch('/sync',{method:'POST'});
+      if(status){status.textContent=result.message||'Gesynchroniseerd!';}
+      setTimeout(()=>{if(status)status.textContent='';},4000);
+      await loadAll();
+    }catch(e){
+      if(status){status.textContent='Fout: '+e.message;status.style.color='#f08090';}
+      setTimeout(()=>{if(status){status.textContent='';status.style.color='#1d9e75';}},4000);
+    }finally{
+      if(btn){btn.disabled=false;btn.textContent='🔄 Nu synchroniseren';}
+    }
+  };
+
+  function calcPts(pred,res){
   if(pred.h==null||pred.a==null||res.h==null||res.a==null)return 0;
   if(pred.h===res.h&&pred.a===res.a)return 3;
   const pw=pred.h>pred.a?1:pred.h<pred.a?-1:0;
