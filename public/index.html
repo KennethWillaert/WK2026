@@ -791,7 +791,7 @@ function renderBonusForm(wrap){
       <div class="bonus-field">
         <label>Naam topscorer</label>
         <input type="text" id="bon-topscorer" value="${esc(bonusPred.topscorer||'')}" placeholder="bv. Lamine Yamal, Mbappé..." maxlength="40" ${locked?'disabled':''} onchange="saveBonus()">
-        <div style="font-size:11px;color:#445566;margin-top:4px"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Gebruik de volledige naam (bv. Lamine Yamal, niet enkel Yamal)</div>
+        <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:#445566;margin-top:4px"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Gebruik de volledige naam (bv. Lamine Yamal, niet enkel Yamal)</div>
       </div>
       <div class="bonus-field">
         <label>Aantal doelpunten</label>
