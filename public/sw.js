@@ -1,4 +1,4 @@
-const CACHE = 'wk2026-v' + '20260604';
+const CACHE = 'wk2026-v' + '20260605';
 const STATIC = ['/', '/index.html', '/manifest.json', '/logo.png'];
 
 self.addEventListener('install', e => {
