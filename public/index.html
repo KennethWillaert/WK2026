@@ -91,11 +91,11 @@
     .card-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
     .card-meta-left{display:flex;align-items:center;gap:6px}
     .card-meta span{font-size:11px;color:#445566;font-weight:600;letter-spacing:.05em;text-transform:uppercase}
-    .match-grid{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px}
-    .team{font-size:14px;font-weight:600;color:#e4eaf4}
+    .match-grid{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:4px}
+    .team{font-size:13px;font-weight:600;color:#e4eaf4;word-break:break-word;hyphens:auto}
     .team.right{text-align:right}
     .score-inputs{display:flex;align-items:center;gap:4px}
-    .score-inputs input{width:44px;text-align:center;font-size:16px;font-weight:700;padding:6px 4px;border-radius:6px;border:1px solid rgba(255,255,255,0.15);background:#0a1220}
+    .score-inputs input{width:38px;text-align:center;font-size:15px;font-weight:700;padding:5px 2px;border-radius:6px;border:1px solid rgba(255,255,255,0.15);background:#0a1220}
     .score-inputs input:focus{border-color:#3a7bd5;background:#1e2a3a}
     .score-sep{color:#445566;font-size:16px;font-weight:700;padding:0 2px}
     .saved-msg{font-size:11px;color:#1d9e75;text-align:center;height:16px;margin-top:5px;font-weight:500}
@@ -263,17 +263,26 @@ const FLAGS=[
 ];
 const TEAMS=FLAGS.map(f=>f[1]);
 
+  const SHORT_NAMES={
+    'Saoedi-Arabië':'Saoedi-Ar.',
+    'Nieuw-Zeeland':'Nieuw-Zl.',
+    'Oezbekistan':'Oezbekist.',
+    'Zuid-Afrika':'Zuid-Afr.',
+  };
+
+  function shortName(name){ return SHORT_NAMES[name]||name; }
+
   function flagFor(name){
     const entry=FLAGS.find(([f,l])=>l===name);
     return entry?entry[0]:'';
   }
   function teamWithFlag(name){
     const flag=flagFor(name);
-    return flag?`<span style="margin-right:4px">${flag}</span>${esc(name)}`:esc(name);
+    return flag?`<span style="margin-right:4px">${flag}</span>${esc(shortName(name))}`:esc(shortName(name));
   }
   function teamWithFlagRight(name){
     const flag=flagFor(name);
-    return flag?`${esc(name)}<span style="margin-left:4px">${flag}</span>`:esc(name);
+    return flag?`${esc(shortName(name))}<span style="margin-left:4px">${flag}</span>`:esc(shortName(name));
   }
 const PHASES=[
   {id:'bonus',label:'🏆 Bonus',unlock:0,lock:ko('2026-06-11','21:00')},
