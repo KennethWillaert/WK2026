@@ -84,7 +84,7 @@
     nav button:hover:not(.active){color:rgba(255,255,255,0.75)}
     main{max-width:640px;margin:0 auto;padding:16px}
     .page{display:none}.page.active{display:block}
-    .info-box{display:flex;flex-direction:column;gap:4px;background:#0d2040;border-left:3px solid #3a7bd5;border-radius:0 6px 6px 0;padding:10px 14px;font-size:13px;color:#7ab0f0;margin-bottom:16px;line-height:1.8}
+    .info-box{background:#0d2040;border-left:3px solid #3a7bd5;border-radius:0 6px 6px 0;padding:10px 14px;font-size:13px;color:#7ab0f0;margin-bottom:16px;line-height:1.8}
     .info-box strong{color:#e4eaf4}
     input[type=text],input[type=number],input[type=email],input[type=password],select{width:100%;padding:9px 12px;border:1px solid rgba(255,255,255,0.15);border-radius:6px;background:#1e2a3a;color:#e4eaf4;font-size:14px;font-family:inherit;outline:none}
     input[type=number]{-moz-appearance:textfield}
@@ -316,24 +316,30 @@
     </div>
   </div>
   <nav id="main-nav">
-    <button class="active" onclick="nav('pronostiek')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><path d="M9 11l3 3L22 4"/>&#10;<path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg> Pronostiek</button>
-    <button onclick="nav('standen')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg> Standen</button>
-    <button onclick="nav('topscorers')"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 0 20"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4"/></svg> Scorers</button>
-    <button onclick="nav('ranking')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> Ranking</button>
+    <button class="active" onclick="nav('pronostiek')">Pronostiek</button>
+    <button onclick="nav('standen')">Standen</button>
+    <button onclick="nav('topscorers')">Scorers</button>
+    <button onclick="nav('ranking')">Ranking</button>
   </nav>
   <main>
     <div id="page-pronostiek" class="page active">
       <div class="info-box">
-        <strong>Spelregels</strong><br><br>
-        Exacte score = 3 pt<br>
-        Juiste winnaar of gelijkspel = 1 pt<br>
-        Geen prono ingevuld = 0 pt<br><br>
-        Wereldkampioen juist = 8 pt<br>
-        Topscorer juist = 8 pt<br>
-        Topscorer + exact aantal doelpunten = 12 pt<br><br>
-        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Prono sluit bij aftrap<br>
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><path d="M6 9H4a2 2 0 0 1-2-2V5h4"/><path d="M18 9h2a2 2 0 0 0 2-2V5h-4"/><path d="M12 17v4"/><path d="M8 21h8"/><path d="M6 5h12v6a6 6 0 0 1-12 0z"/></svg> Bonus sluit bij aftrap eerste wedstrijd (11 jun 21:00)<br>
-        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Wedstrijden beschikbaar 24u voor aftrap
+        <strong>Spelregels</strong>
+        <div style="display:flex;flex-direction:column;gap:3px;margin-top:8px">
+          <span>Exacte score = 3 pt</span>
+          <span>Juiste winnaar of gelijkspel = 1 pt</span>
+          <span>Geen prono ingevuld = 0 pt</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:3px;margin-top:8px">
+          <span>Wereldkampioen juist = 8 pt</span>
+          <span>Topscorer juist = 8 pt</span>
+          <span>Topscorer + exact aantal doelpunten = 12 pt</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:3px;margin-top:8px">
+          <span style="display:flex;align-items:center;gap:5px"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Prono sluit bij aftrap</span>
+          <span style="display:flex;align-items:center;gap:5px"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4a2 2 0 0 1-2-2V5h4"/><path d="M18 9h2a2 2 0 0 0 2-2V5h-4"/><path d="M12 17v4"/><path d="M8 21h8"/><path d="M6 5h12v6a6 6 0 0 1-12 0z"/></svg> Bonus sluit bij aftrap eerste wedstrijd (11 jun 21:00)</span>
+          <span style="display:flex;align-items:center;gap:5px"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Wedstrijden beschikbaar 24u voor aftrap</span>
+        </div>
       </div>
       <div class="phase-bar" id="phase-bar-v"></div>
       <div id="matches-wrap"></div>
