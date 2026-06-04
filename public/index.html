@@ -539,9 +539,14 @@ async function saveFlagChange(){
 let curPage='pronostiek';
 function navTo(page){
   curPage=page;
+  // Zet alle knoppen inactief
   document.querySelectorAll('#main-nav button').forEach(b=>b.classList.remove('active'));
-  const map={pronostiek:0,standen:1,ranking:2,scores:3};
-  document.querySelectorAll('#main-nav button')[map[page]]?.classList.add('active');
+  // Activeer de juiste knop op basis van tekst/id
+  const labels={pronostiek:'pronostiek',standen:'standen',ranking:'ranking',topscorers:'scorers',scores:'scores'};
+  const target=labels[page]||page;
+  Array.from(document.querySelectorAll('#main-nav button')).forEach(b=>{
+    if(b.textContent.trim().toLowerCase()===target) b.classList.add('active');
+  });
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById('page-'+page).classList.add('active');
   renderCurrent();
@@ -553,6 +558,7 @@ function renderCurrent(){
   if(curPage==='standen') renderStandings();
   if(curPage==='scores') renderScoresPage();
   if(curPage==='ranking') renderRanking();
+  if(curPage==='topscorers') renderTopscorers();
 }
 
 // ── DATA LOADING ────────────────────────────────
