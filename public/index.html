@@ -110,6 +110,8 @@
     .error-msg{background:#2a0a10;color:#f08090;border-radius:6px;border-left:3px solid #D2001E;padding:10px 14px;font-size:13px;margin-bottom:12px}
     .spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,0.1);border-top-color:#3a7bd5;border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:6px}
     @keyframes spin{to{transform:rotate(360deg)}}
+    .rank-flag{display:inline-block;width:20px;height:16px;margin-right:6px;vertical-align:middle;overflow:hidden}
+    .rank-flag img{width:20px!important;height:16px!important;vertical-align:middle}
     .bonus-card{background:#111e2e;border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:16px;margin-bottom:12px}
     .bonus-card h3{font-size:14px;font-weight:700;color:#e4eaf4;margin-bottom:12px}
     .bonus-field{margin-bottom:10px}
@@ -207,7 +209,8 @@
         Wereldkampioen juist = 10 pt<br>
         Topscorer juist = 5 pt<br>
         Topscorer + exact aantal doelpunten = 8 pt<br><br>
-        🔒 Prono sluit bij aftrap
+        🔒 Prono sluit bij aftrap<br>
+        🏆 Bonus sluit bij aftrap eerste wedstrijd (11 jun 21:00)
       </div>
       <div class="phase-bar" id="phase-bar-v"></div>
       <div id="matches-wrap"></div>
@@ -816,7 +819,7 @@ async function renderRanking(){
       <tbody>${ranking.map((r,i)=>`<tr>
         <td style="font-size:${i<3?'20':'14'}px;width:36px">${i<3?medals[i]:`<span style="color:#445566;font-weight:700">${i+1}</span>`}</td>
         <td style="font-weight:${i===0?'700':'500'}">
-          <span style="font-size:18px;margin-right:4px">${r.avatar||'🏳️'}</span>${esc(r.name)}
+          <span class="rank-flag">${r.avatar||'🏳️'}</span>${esc(r.name)}
         </td>
         <td class="stat-chips">
           <span style="color:#445566">${r.filled}×</span>
