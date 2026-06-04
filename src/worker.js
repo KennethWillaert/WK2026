@@ -7,30 +7,72 @@ function json(data,status=200){return new Response(JSON.stringify(data),{status,
 function err(msg,status=400){return json({error:msg},status);}
 
 const ADMIN_EMAIL='djduuub@gmail.com';
+const FD_BASE='https://api.football-data.org/v4';
 
-// Simpele hash met Web Crypto
-async function hashPassword(password){
-  const encoder=new TextEncoder();
-  const data=encoder.encode(password+'wk2026salt');
-  const hash=await crypto.subtle.digest('SHA-256',data);
-  return Array.from(new Uint8Array(hash)).map(b=>b.toString(16).padStart(2,'0')).join('');
-}
+// Mapping football-data.org team names → onze Nederlandse namen
+const TEAM_MAP={
+  'Belgium':'België','Netherlands':'Nederland','France':'Frankrijk',
+  'Germany':'Duitsland','Spain':'Spanje','Portugal':'Portugal',
+  'Brazil':'Brazilië','Argentina':'Argentinië','England':'Engeland',
+  'United States':'VS','Canada':'Canada','Mexico':'Mexico',
+  'Japan':'Japan','South Korea':'Zuid-Korea','Morocco':'Marokko',
+  'Senegal':'Senegal','Switzerland':'Zwitserland','Italy':'Italië',
+  'Croatia':'Kroatië','Uruguay':'Uruguay','Australia':'Australië',
+  'Turkey':'Turkije','Paraguay':'Paraguay','Qatar':'Qatar',
+  'South Africa':'Zuid-Afrika','Czech Republic':'Tsjechië',
+  'Czechia':'Tsjechië','Bosnia and Herzegovina':'Bosnië',
+  'Haiti':'Haïti','Scotland':'Schotland','Ivory Coast':'Ivoorkust',
+  "Côte d'Ivoire":'Ivoorkust','Ecuador':'Ecuador','Curaçao':'Curaçao',
+  'Ukraine':'Oekraïne','Tunisia':'Tunesië','Saudi Arabia':'Saoedi-Arabië',
+  'Cape Verde':'Kaapverdië','Iran':'Iran','New Zealand':'Nieuw-Zeeland',
+  'Egypt':'Egypte','Norway':'Noorwegen','Iraq':'Irak',
+  'Austria':'Oostenrijk','Algeria':'Algerije','Jordan':'Jordanië',
+  'Colombia':'Colombia','Uzbekistan':'Oezbekistan',
+  'DR Congo':'DRC','Panama':'Panama','Ghana':'Ghana',
+  'Israel':'Israël',
+};
 
-function generateToken(){
-  const arr=new Uint8Array(32);
-  crypto.getRandomValues(arr);
-  return Array.from(arr).map(b=>b.toString(16).padStart(2,'0')).join('');
-}
+function mapTeam(name){return TEAM_MAP[name]||name;}
 
-async function getUser(request,env){
-  const auth=request.headers.get('Authorization')||'';
-  const token=auth.replace('Bearer ','').trim();
-  if(!token)return null;
-  const session=await env.DB.prepare('SELECT user_id FROM sessions WHERE token=?').bind(token).first();
-  if(!session)return null;
-  const user=await env.DB.prepare('SELECT id,name,email,is_admin FROM users WHERE id=?').bind(session.user_id).first();
-  return user||null;
-}
+// Mapping onze match IDs → football-data wedstrijd zoeksleutel (thuis+uit teams)
+const MATCH_ID_MAP={
+  'm1':['Mexico','Zuid-Afrika'],'m2':['Zuid-Korea','Tsjechië'],
+  'm3':['Canada','Bosnië'],'m4':['VS','Paraguay'],
+  'm5':['Qatar','Zwitserland'],'m6':['Brazilië','Marokko'],
+  'm7':['Haïti','Schotland'],'m8':['Australië','Turkije'],
+  'm9':['Duitsland','Curaçao'],'m10':['Nederland','Japan'],
+  'm11':['Ivoorkust','Ecuador'],'m12':['Oekraïne','Tunesië'],
+  'm13':['Spanje','Kaapverdië'],'m14':['België','Egypte'],
+  'm15':['Saoedi-Arabië','Uruguay'],'m16':['Iran','Nieuw-Zeeland'],
+  'm17':['Frankrijk','Senegal'],'m18':['Irak','Noorwegen'],
+  'm19':['Argentinië','Algerije'],'m20':['Oostenrijk','Jordanië'],
+  'm21':['Portugal','DRC'],'m22':['Engeland','Kroatië'],
+  'm23':['Ghana','Panama'],'m24':['Oezbekistan','Colombia'],
+  'm25':['Tsjechië','Zuid-Afrika'],'m26':['Zwitserland','Italië'],
+  'm27':['Canada','Qatar'],'m28':['Mexico','Zuid-Korea'],
+  'm29':['Schotland','Marokko'],'m30':['VS','Australië'],
+  'm31':['Brazilië','Haïti'],'m32':['Turkije','Paraguay'],
+  'm33':['Nederland','Oekraïne'],'m34':['Duitsland','Ivoorkust'],
+  'm35':['Ecuador','Curaçao'],'m36':['Tunesië','Japan'],
+  'm37':['Spanje','Saoedi-Arabië'],'m38':['België','Iran'],
+  'm39':['Uruguay','Kaapverdië'],'m40':['Nieuw-Zeeland','Egypte'],
+  'm41':['Argentinië','Oostenrijk'],'m42':['Frankrijk','Irak'],
+  'm43':['Noorwegen','Senegal'],'m44':['Jordanië','Algerije'],
+  'm45':['Portugal','Oezbekistan'],'m46':['Engeland','Ghana'],
+  'm47':['Panama','Kroatië'],'m48':['Colombia','DRC'],
+  'm49':['Zwitserland','Canada'],'m50':['Italië','Qatar'],
+  'm51':['Schotland','Brazilië'],'m52':['Marokko','Haïti'],
+  'm53':['Tsjechië','Mexico'],'m54':['Zuid-Afrika','Zuid-Korea'],
+  'm55':['Ecuador','Duitsland'],'m56':['Curaçao','Ivoorkust'],
+  'm57':['Japan','Oekraïne'],'m58':['Tunesië','Nederland'],
+  'm59':['Turkije','VS'],'m60':['Paraguay','Australië'],
+  'm61':['Noorwegen','Frankrijk'],'m62':['Senegal','Irak'],
+  'm63':['Kaapverdië','Saoedi-Arabië'],'m64':['Uruguay','Spanje'],
+  'm65':['Egypte','Iran'],'m66':['Nieuw-Zeeland','België'],
+  'm67':['Panama','Engeland'],'m68':['Kroatië','Ghana'],
+  'm69':['Colombia','Portugal'],'m70':['DRC','Oezbekistan'],
+  'm71':['Algerije','Oostenrijk'],'m72':['Jordanië','Argentinië'],
+};
 
 const GROUPS={
   A:['Mexico','Zuid-Korea','Zuid-Afrika','Tsjechië'],
@@ -86,9 +128,27 @@ const GROUP_MATCHES=[
   {id:'m71',h:'Algerije',a:'Oostenrijk',g:'J'},{id:'m72',h:'Jordanië',a:'Argentinië',g:'J'},
 ];
 
-function normalizeStr(s){
-  if(!s)return '';
-  return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+async function hashPassword(password){
+  const encoder=new TextEncoder();
+  const data=encoder.encode(password+'wk2026salt');
+  const hash=await crypto.subtle.digest('SHA-256',data);
+  return Array.from(new Uint8Array(hash)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+function generateToken(){
+  const arr=new Uint8Array(32);
+  crypto.getRandomValues(arr);
+  return Array.from(arr).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+async function getUser(request,env){
+  const auth=request.headers.get('Authorization')||'';
+  const token=auth.replace('Bearer ','').trim();
+  if(!token)return null;
+  const session=await env.DB.prepare('SELECT user_id FROM sessions WHERE token=?').bind(token).first();
+  if(!session)return null;
+  const user=await env.DB.prepare('SELECT id,name,email,is_admin,avatar FROM users WHERE id=?').bind(session.user_id).first();
+  return user||null;
 }
 
 function calcStandings(grpMatches,resMap){
@@ -108,15 +168,79 @@ function calcStandings(grpMatches,resMap){
   return Object.values(teams).sort((a,b)=>b.pts-a.pts||b.gd-a.gd||b.gf-a.gf||a.name.localeCompare(b.name));
 }
 
+// ── FOOTBALL-DATA SYNC ────────────────────────────────────
+async function syncFromFootballData(env){
+  const headers={'X-Auth-Token':env.FOOTBALL_API_KEY};
+
+  // Check rate limit headers
+  const resp=await fetch(`${FD_BASE}/competitions/WC/matches?status=FINISHED`,{headers});
+
+  // Respect rate limiting
+  const reqsAvail=resp.headers.get('X-Requests-Available-Minute');
+  if(reqsAvail&&parseInt(reqsAvail)<2){
+    return{synced:0,message:'Rate limit bijna bereikt, overgeslagen'};
+  }
+
+  if(!resp.ok)return{synced:0,message:`API fout: ${resp.status}`};
+  const data=await resp.json();
+  const matches=data.matches||[];
+
+  let synced=0;
+  for(const match of matches){
+    if(match.status!=='FINISHED')continue;
+    const h=mapTeam(match.homeTeam?.name||'');
+    const a=mapTeam(match.awayTeam?.name||'');
+    const hs=match.score?.fullTime?.home;
+    const as_=match.score?.fullTime?.away;
+    if(hs==null||as_==null)continue;
+
+    // Zoek onze match ID op basis van teamnamen
+    const ourMatch=Object.entries(MATCH_ID_MAP).find(([id,[th,ta]])=>
+      (th===h&&ta===a)||(th===a&&ta===h)
+    );
+    if(!ourMatch)continue;
+    const[mid,[th,ta]]=ourMatch;
+    // Wissel scores om als teams omgekeerd staan
+    const homeScore=th===h?hs:as_;
+    const awayScore=th===h?as_:hs;
+
+    await env.DB.prepare(
+      `INSERT INTO results(match_id,home_score,away_score)VALUES(?,?,?)
+       ON CONFLICT(match_id)DO UPDATE SET home_score=excluded.home_score,away_score=excluded.away_score`
+    ).bind(mid,homeScore,awayScore).run();
+    synced++;
+  }
+
+  // Sync topscorers
+  const scoreResp=await fetch(`${FD_BASE}/competitions/WC/scorers?limit=20`,{headers});
+  if(scoreResp.ok){
+    const scoreData=await scoreResp.json();
+    const scorers=(scoreData.scorers||[]).map(s=>({
+      name:s.player?.name||'',
+      team:mapTeam(s.team?.name||''),
+      goals:s.goals||0,
+    }));
+    await env.DB.prepare(
+      `INSERT INTO results(match_id,home_score,away_score)VALUES('topscorers',?,0)
+       ON CONFLICT(match_id)DO UPDATE SET home_score=excluded.home_score`
+    ).bind(JSON.stringify(scorers)).run();
+  }
+
+  return{synced,message:`${synced} wedstrijden gesynchroniseerd`};
+}
+
 export default {
+  // Cron trigger: elke 5 minuten tijdens het WK
+  async scheduled(event,env,ctx){
+    ctx.waitUntil(syncFromFootballData(env));
+  },
+
   async fetch(request,env){
     if(request.method==='OPTIONS')return new Response(null,{headers:CORS});
     const url=new URL(request.url);
     const path=url.pathname;
 
     // ── AUTH ──────────────────────────────────────────────
-
-    // POST /api/auth/register
     if(path==='/api/auth/register'&&request.method==='POST'){
       const{name,email,password,avatar}=await request.json();
       if(!name||!email||!password)return err('Alle velden zijn verplicht');
@@ -129,7 +253,6 @@ export default {
           'INSERT INTO users(name,email,password,is_admin,avatar)VALUES(?,?,?,?,?)'
         ).bind(name.trim(),email.toLowerCase().trim(),hashed,isAdmin,avatar||'🏳️').run();
         const userId=result.meta.last_row_id;
-        // Voeg ook toe als player voor bestaande systeem compatibiliteit
         try{await env.DB.prepare('INSERT INTO players(name)VALUES(?)').bind(name.trim()).run();}catch{}
         const token=generateToken();
         await env.DB.prepare('INSERT INTO sessions(token,user_id)VALUES(?,?)').bind(token,userId).run();
@@ -140,7 +263,6 @@ export default {
       }
     }
 
-    // POST /api/auth/login
     if(path==='/api/auth/login'&&request.method==='POST'){
       const{email,password}=await request.json();
       if(!email||!password)return err('Email en wachtwoord verplicht');
@@ -154,7 +276,6 @@ export default {
       return json({ok:true,token,name:user.name,email:user.email,isAdmin:user.is_admin===1,avatar:user.avatar||'🏳️'});
     }
 
-    // POST /api/auth/logout
     if(path==='/api/auth/logout'&&request.method==='POST'){
       const auth=request.headers.get('Authorization')||'';
       const token=auth.replace('Bearer ','').trim();
@@ -162,14 +283,12 @@ export default {
       return json({ok:true});
     }
 
-    // GET /api/auth/me
     if(path==='/api/auth/me'&&request.method==='GET'){
       const user=await getUser(request,env);
       if(!user)return err('Niet ingelogd',401);
       return json({name:user.name,email:user.email,isAdmin:user.is_admin===1,avatar:user.avatar||'🏳️'});
     }
 
-    // PUT /api/auth/avatar
     if(path==='/api/auth/avatar'&&request.method==='PUT'){
       const user=await getUser(request,env);
       if(!user)return err('Niet ingelogd',401);
@@ -178,7 +297,15 @@ export default {
       return json({ok:true});
     }
 
-    // ── PLAYERS (voor ranking compatibiliteit) ────────────
+    // ── MANUEL SYNC TRIGGER (admin) ───────────────────────
+    if(path==='/api/sync'&&request.method==='POST'){
+      const user=await getUser(request,env);
+      if(!user||!user.is_admin)return err('Geen toegang',403);
+      const result=await syncFromFootballData(env);
+      return json(result);
+    }
+
+    // ── PLAYERS ───────────────────────────────────────────
     if(path==='/api/players'&&request.method==='GET'){
       const rows=await env.DB.prepare('SELECT name FROM users ORDER BY created_at').all();
       return json(rows.results.map(r=>r.name));
@@ -193,6 +320,7 @@ export default {
       rows.results.forEach(r=>{result[r.match_id]={h:r.home_score,a:r.away_score};});
       return json(result);
     }
+
     if(path==='/api/predictions'&&request.method==='PUT'){
       const user=await getUser(request,env);
       if(!user)return err('Niet ingelogd',401);
@@ -206,13 +334,14 @@ export default {
       return json({ok:true});
     }
 
-    // ── RESULTS (enkel admin) ─────────────────────────────
+    // ── RESULTS ───────────────────────────────────────────
     if(path==='/api/results'&&request.method==='GET'){
       const rows=await env.DB.prepare('SELECT match_id,home_score,away_score FROM results').all();
       const result={};
       rows.results.forEach(r=>{result[r.match_id]={h:r.home_score,a:r.away_score};});
       return json(result);
     }
+
     if(path==='/api/results'&&request.method==='PUT'){
       const user=await getUser(request,env);
       if(!user||!user.is_admin)return err('Geen toegang',403);
@@ -225,12 +354,19 @@ export default {
       return json({ok:true});
     }
 
+    // ── TOPSCORERS ────────────────────────────────────────
+    if(path==='/api/topscorers'&&request.method==='GET'){
+      const row=await env.DB.prepare("SELECT home_score FROM results WHERE match_id='topscorers'").first();
+      if(!row)return json([]);
+      try{return json(JSON.parse(row.home_score));}catch{return json([]);}
+    }
+
     // ── STANDINGS ─────────────────────────────────────────
     if(path==='/api/standings'&&request.method==='GET'){
       const rows=await env.DB.prepare('SELECT match_id,home_score,away_score FROM results').all();
       const resMap={};
       rows.results.forEach(r=>{
-        if(!r.match_id.startsWith('override_')&&r.match_id!=='bonus')
+        if(!r.match_id.startsWith('override_')&&r.match_id!=='bonus'&&r.match_id!=='topscorers')
           resMap[r.match_id]={h:r.home_score,a:r.away_score};
       });
       const overrides={};
@@ -275,6 +411,7 @@ export default {
       const row=await env.DB.prepare('SELECT * FROM bonus_predictions WHERE player=?').bind(user.name).first();
       return json(row||{});
     }
+
     if(path==='/api/bonus'&&request.method==='PUT'){
       const user=await getUser(request,env);
       if(!user)return err('Niet ingelogd',401);
@@ -291,6 +428,7 @@ export default {
       if(!row)return json({});
       try{return json(JSON.parse(row.home_score+''));}catch{return json({});}
     }
+
     if(path==='/api/bonus-result'&&request.method==='PUT'){
       const user=await getUser(request,env);
       if(!user||!user.is_admin)return err('Geen toegang',403);
@@ -316,10 +454,18 @@ export default {
       const resMap={};let bonusResult={};
       allResults.results.forEach(r=>{
         if(r.match_id==='bonus'){try{bonusResult=JSON.parse(r.home_score);}catch{}}
-        else if(!r.match_id.startsWith('override_')){resMap[r.match_id]={h:r.home_score,a:r.away_score};}
+        else if(!r.match_id.startsWith('override_')&&r.match_id!=='topscorers'){
+          resMap[r.match_id]={h:r.home_score,a:r.away_score};
+        }
       });
       const bonusMap={};
       allBonus.results.forEach(r=>{bonusMap[r.player]=r;});
+
+      function normalizeStr(s){
+        if(!s)return'';
+        return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+      }
+
       const ranking=users.results.map(({name,avatar})=>{
         let pts=0,exact=0,win=0,filled=0,bonusPts=0;
         const preds=predsMap[name]||{};

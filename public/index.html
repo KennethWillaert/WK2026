@@ -553,7 +553,7 @@ function renderCurrent(){
 async function loadAll(){
   try{
     [results, bonusResult] = await Promise.all([apiFetch('/results'), apiFetch('/bonus-result')]);
-    try{const s=await apiFetch('/standings'); bracket=s.bracket||{};}catch{}
+    try{const s=await apiFetch('/standings'); bracket=s.bracket||{}; lastStandings=s.standings||{};}catch{}
     renderCurrent();
   }catch(e){showError(e.message);}
 }

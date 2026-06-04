@@ -7,5 +7,6 @@ binding  = "DB"
 database_name = "wk2026"
 database_id   = "dc9293fb-0fd3-4540-a1bc-444fe4aa6f16"
 
-[env.production]
-name = "wk2026-api"
+# Cron: elke 5 minuten sync met football-data.org
+[triggers]
+crons = ["*/5 * * * *"]
