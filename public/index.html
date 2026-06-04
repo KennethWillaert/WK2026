@@ -897,7 +897,7 @@ async function renderRanking(){
       <thead><tr><th>#</th><th>Naam</th><th>Stats</th><th style="text-align:right">Ptn</th></tr></thead>
       <tbody>${ranking.map((r,i)=>`<tr>
         <td style="font-size:${i<3?'20':'14'}px;width:36px;text-align:center">${i<3?medals[i]:`<span style="color:#445566;font-weight:700">${i+1}</span>`}</td>
-        <td style="font-weight:${i===0?'700':'500'}">
+        <td style="font-weight:${i===0?'700':'500'};cursor:pointer" onclick="openStatsModal(this.dataset.name)" data-name="${esc(r.name)}">
           <span class="rank-flag">${r.avatar||'🏳️'}</span>${esc(r.name)}
         </td>
         <td class="stat-chips">
