@@ -696,7 +696,7 @@ function renderMatchList(wrap){
           ${badge}
         </div>
         <div class="match-grid">
-          <div class="team">${esc(resolveTeam(m.h))}</div>
+          <div class="team">${teamWithFlag(resolveTeam(m.h))}</div>
           <div class="score-inputs">
             <input type="number" min="0" max="20" value="${pred.h!=null?pred.h:''}" placeholder="–" id="v_${m.id}_h" ${locked?'disabled':''} onchange="qSavePred('${m.id}',${m.ko})">
             <span class="score-sep">–</span>
@@ -778,7 +778,7 @@ function renderScoresPage(){
       return`<div class="card">
         <div class="card-meta"><span>${m.ph==='group'?`Groep ${m.g}`:''} ${timeStr}</span></div>
         <div class="match-grid">
-          <div class="team">${esc(resolveTeam(m.h))}</div>
+          <div class="team">${teamWithFlag(resolveTeam(m.h))}</div>
           <div class="score-inputs">
             <input type="number" min="0" max="20" value="${res.h!=null?res.h:''}" placeholder="–" id="r_${m.id}_h" onchange="qSaveResult('${m.id}')">
             <span class="score-sep">–</span>
