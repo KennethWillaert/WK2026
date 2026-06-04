@@ -86,6 +86,11 @@ const GROUP_MATCHES=[
   {id:'m71',h:'Algerije',a:'Oostenrijk',g:'J'},{id:'m72',h:'Jordanië',a:'Argentinië',g:'J'},
 ];
 
+function normalizeStr(s){
+  if(!s)return '';
+  return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+}
+
 function calcStandings(grpMatches,resMap){
   const teams={};
   grpMatches.forEach(m=>{
@@ -323,7 +328,7 @@ export default {
         }
         const bp=bonusMap[name];
         if(bp&&bonusResult.champion&&bp.champion===bonusResult.champion)bonusPts+=10;
-        if(bp&&bonusResult.topscorer&&bp.topscorer===bonusResult.topscorer)
+        if(bp&&bonusResult.topscorer&&normalizeStr(bp.topscorer)===normalizeStr(bonusResult.topscorer))
           bonusPts+=(bp.goals!=null&&bp.goals===bonusResult.goals)?8:5;
         pts+=bonusPts;
         return{name,pts,exact,win,filled,bonusPts};

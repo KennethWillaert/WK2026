@@ -102,12 +102,12 @@
     @media(prefers-color-scheme:dark){.badge-bonus{background:#2a1f00;color:#e8c06a}}
     .rank-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:16px}
     .ranking-table{width:100%;border-collapse:collapse}
-    .ranking-table th{text-align:left;padding:10px 14px;font-size:10px;font-weight:700;color:var(--text3);border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.07em}
-    .ranking-table td{padding:13px 14px;border-bottom:1px solid var(--border)}
+    .ranking-table th{text-align:left;padding:8px 6px;font-size:10px;font-weight:700;color:var(--text3);border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.07em}
+    .ranking-table td{padding:10px 6px;border-bottom:1px solid var(--border);vertical-align:middle}
     .ranking-table tr:last-child td{border-bottom:none}
-    .pts-cell{text-align:right;font-size:20px;font-weight:800;color:var(--navy)}
+    .pts-cell{text-align:right;font-size:18px;font-weight:800;color:var(--navy);white-space:nowrap}
     @media(prefers-color-scheme:dark){.pts-cell{color:var(--accent)}}
-    .stat-chips{font-size:12px;color:var(--text2);line-height:2;display:flex;flex-wrap:wrap;gap:3px;align-items:center}
+    .stat-chips{font-size:11px;color:var(--text2);display:flex;flex-wrap:nowrap;gap:3px;align-items:center;white-space:nowrap}
     .loading{text-align:center;padding:2.5rem;color:var(--text2);font-size:14px}
     .error{background:var(--red-bg);color:var(--red-text);border-radius:var(--radius-sm);border-left:3px solid var(--red);padding:10px 14px;font-size:13px;margin-bottom:12px}
     .spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--border2);border-top-color:var(--navy);border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:6px}
@@ -318,7 +318,7 @@
   let token=localStorage.getItem('wk26_token')||'';
   let currentUser=null;
   let results={},curPreds={},bonusPred={},bonusResult={},bracket={};
-  let curPhaseV='bonus',curPhaseS='group',savingTimer={};
+  let curPhaseV='bonus',curPhaseS='bonus',savingTimer={};
 
   function isLocked(ko){return Date.now()>=ko;}
 
@@ -587,10 +587,14 @@
 
   function renderScoresPage(){
     renderPhaseBtns('phase-bar-s',curPhaseS,'setPhaseS');
+    if(curPhaseS==='bonus'){
+      document.getElementById('scores-wrap').innerHTML=renderBonusResultForm();
+      return;
+    }
     const filtered=MATCHES.filter(m=>m.ph===curPhaseS);
     const byDate={};
     filtered.forEach(m=>(byDate[m.date]=byDate[m.date]||[]).push(m));
-    const bonusHtml=curPhaseS==='group'?renderBonusResultForm():'';
+    const bonusHtml='';
     document.getElementById('scores-wrap').innerHTML=bonusHtml+Object.entries(byDate).sort(([a],[b])=>a<b?-1:1).map(([date,ms])=>{
       const d=new Date(date+'T12:00:00');
       const lbl=`${DAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}`;
@@ -672,15 +676,20 @@
       if(!ranking.length){wrap.innerHTML='<div class="loading">Nog geen spelers.</div>';return;}
       const medals=['🥇','🥈','🥉'];
       wrap.innerHTML=`<div class="rank-wrap"><table class="ranking-table">
-        <thead><tr><th>#</th><th>Naam</th><th>Stats</th><th style="text-align:right">Punten</th></tr></thead>
+        <thead><tr><th>#</th><th>Naam</th><th>Stats</th><th style="text-align:right">Ptn</th></tr></thead>
         <tbody>${ranking.map((r,i)=>`<tr>
           <td style="font-size:${i<3?'20':'14'}px;width:40px">${i<3?medals[i]:`<span style="color:var(--text3);font-weight:700">${i+1}</span>`}</td>
           <td style="font-weight:${i===0?'700':'500'}">${esc(r.name)}</td>
-          <td class="stat-chips"><span>${r.filled} voorsp.</span><span class="badge badge-exact">${r.exact}×3</span><span class="badge badge-win">${r.win}×1</span>${r.bonusPts>0?`<span class="badge badge-bonus">+${r.bonusPts} bonus</span>`:''}</td>
+          <td class="stat-chips"><span style="color:var(--text3)">${r.filled}×</span><span class="badge badge-exact">${r.exact}×3</span><span class="badge badge-win">${r.win}×1</span>${r.bonusPts>0?`<span class="badge badge-bonus">+${r.bonusPts} bonus</span>`:''}</td>
           <td class="pts-cell">${r.pts}</td>
         </tr>`).join('')}</tbody>
       </table></div>`;
     }catch(e){wrap.innerHTML=`<div class="error">${e.message}</div>`;}
+  }
+
+  function normalizeStr(s){
+    if(!s)return '';
+    return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
   }
 
   function calcPts(pred,res){
