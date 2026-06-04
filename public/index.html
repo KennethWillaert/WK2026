@@ -898,7 +898,7 @@ async function renderRanking(){
       <tbody>${ranking.map((r,i)=>`<tr>
         <td style="font-size:${i<3?'20':'14'}px;width:36px;text-align:center">${i<3?medals[i]:`<span style="color:#445566;font-weight:700">${i+1}</span>`}</td>
         <td style="font-weight:${i===0?'700':'500'};cursor:pointer" onclick="openStatsModal(this.dataset.name)" data-name="${esc(r.name)}">
-          <span class="rank-flag">${r.avatar||'🏳️'}</span>${esc(r.name)}
+          <span class="rank-flag">${r.avatar||'🏳️'}</span><span style="color:#3a7bd5;text-decoration:underline;text-underline-offset:3px">${esc(r.name)}</span> <span style="font-size:10px;color:#445566">↗</span>
         </td>
         <td class="stat-chips">
           <span style="color:#445566">${r.filled}×</span>
