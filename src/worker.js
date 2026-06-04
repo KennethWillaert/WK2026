@@ -118,7 +118,7 @@ export default {
 
     // POST /api/auth/register
     if(path==='/api/auth/register'&&request.method==='POST'){
-      const{name,email,password}=await request.json();
+      const{name,email,password,avatar}=await request.json();
       if(!name||!email||!password)return err('Alle velden zijn verplicht');
       if(password.length<4)return err('Wachtwoord minimaal 4 tekens');
       if(name.length>30)return err('Naam te lang');
@@ -126,14 +126,14 @@ export default {
       const isAdmin=email.toLowerCase()===ADMIN_EMAIL?1:0;
       try{
         const result=await env.DB.prepare(
-          'INSERT INTO users(name,email,password,is_admin)VALUES(?,?,?,?)'
-        ).bind(name.trim(),email.toLowerCase().trim(),hashed,isAdmin).run();
+          'INSERT INTO users(name,email,password,is_admin,avatar)VALUES(?,?,?,?,?)'
+        ).bind(name.trim(),email.toLowerCase().trim(),hashed,isAdmin,avatar||'🏳️').run();
         const userId=result.meta.last_row_id;
         // Voeg ook toe als player voor bestaande systeem compatibiliteit
         try{await env.DB.prepare('INSERT INTO players(name)VALUES(?)').bind(name.trim()).run();}catch{}
         const token=generateToken();
         await env.DB.prepare('INSERT INTO sessions(token,user_id)VALUES(?,?)').bind(token,userId).run();
-        return json({ok:true,token,name:name.trim(),email:email.toLowerCase(),isAdmin:isAdmin===1});
+        return json({ok:true,token,name:name.trim(),email:email.toLowerCase(),isAdmin:isAdmin===1,avatar:avatar||'🏳️'});
       }catch(e){
         if(e.message?.includes('UNIQUE'))return err('Email al in gebruik');
         return err('Registratie mislukt');
@@ -146,12 +146,12 @@ export default {
       if(!email||!password)return err('Email en wachtwoord verplicht');
       const hashed=await hashPassword(password);
       const user=await env.DB.prepare(
-        'SELECT id,name,email,is_admin FROM users WHERE email=? AND password=?'
+        'SELECT id,name,email,is_admin,avatar FROM users WHERE email=? AND password=?'
       ).bind(email.toLowerCase().trim(),hashed).first();
       if(!user)return err('Ongeldig email of wachtwoord');
       const token=generateToken();
       await env.DB.prepare('INSERT INTO sessions(token,user_id)VALUES(?,?)').bind(token,user.id).run();
-      return json({ok:true,token,name:user.name,email:user.email,isAdmin:user.is_admin===1});
+      return json({ok:true,token,name:user.name,email:user.email,isAdmin:user.is_admin===1,avatar:user.avatar||'🏳️'});
     }
 
     // POST /api/auth/logout
@@ -166,7 +166,7 @@ export default {
     if(path==='/api/auth/me'&&request.method==='GET'){
       const user=await getUser(request,env);
       if(!user)return err('Niet ingelogd',401);
-      return json({name:user.name,email:user.email,isAdmin:user.is_admin===1});
+      return json({name:user.name,email:user.email,isAdmin:user.is_admin===1,avatar:user.avatar||'🏳️'});
     }
 
     // ── PLAYERS (voor ranking compatibiliteit) ────────────
@@ -295,7 +295,7 @@ export default {
 
     // ── RANKING ───────────────────────────────────────────
     if(path==='/api/ranking'&&request.method==='GET'){
-      const users=await env.DB.prepare('SELECT name FROM users ORDER BY created_at').all();
+      const users=await env.DB.prepare('SELECT name,avatar FROM users ORDER BY created_at').all();
       const allPreds=await env.DB.prepare('SELECT player,match_id,home_score,away_score FROM predictions').all();
       const allResults=await env.DB.prepare('SELECT match_id,home_score,away_score FROM results').all();
       const allBonus=await env.DB.prepare('SELECT * FROM bonus_predictions').all();
@@ -311,7 +311,7 @@ export default {
       });
       const bonusMap={};
       allBonus.results.forEach(r=>{bonusMap[r.player]=r;});
-      const ranking=users.results.map(({name})=>{
+      const ranking=users.results.map(({name,avatar})=>{
         let pts=0,exact=0,win=0,filled=0,bonusPts=0;
         const preds=predsMap[name]||{};
         for(const[mid,pred]of Object.entries(preds)){
@@ -331,7 +331,7 @@ export default {
         if(bp&&bonusResult.topscorer&&normalizeStr(bp.topscorer)===normalizeStr(bonusResult.topscorer))
           bonusPts+=(bp.goals!=null&&bp.goals===bonusResult.goals)?8:5;
         pts+=bonusPts;
-        return{name,pts,exact,win,filled,bonusPts};
+        return{name,avatar:avatar||'🏳️',pts,exact,win,filled,bonusPts};
       }).sort((a,b)=>b.pts-a.pts||b.exact-a.exact);
       return json(ranking);
     }

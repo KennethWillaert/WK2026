@@ -47,6 +47,11 @@
     .auth-btn:hover{opacity:0.9}
     .auth-error{background:var(--red-bg);color:var(--red-text);border-radius:var(--radius-sm);padding:10px 12px;font-size:13px;margin-bottom:12px;display:none}
     .auth-error.show{display:block}
+    .avatar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:6px;max-height:200px;overflow-y:auto;padding:4px}
+    .avatar-opt{font-size:22px;text-align:center;padding:6px 4px;border-radius:8px;cursor:pointer;border:2px solid transparent;transition:all 0.15s;background:#f5f7fa}
+    .avatar-opt:hover{background:#e6ecf5;border-color:#0A2240}
+    .avatar-opt.selected{border-color:#0A2240;background:#e6ecf5;transform:scale(1.1)}
+    .avatar-display{font-size:22px;margin-right:6px;vertical-align:middle}
 
     /* ── APP ── */
     header{background:var(--navy);padding:10px 16px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10}
@@ -157,6 +162,11 @@
       <div class="auth-field"><label>Naam</label><input type="text" id="r-name" placeholder="Jouw naam" maxlength="25" onkeydown="if(event.key==='Enter')doRegister()"></div>
       <div class="auth-field"><label>Email</label><input type="email" id="r-email" placeholder="jouw@email.com" onkeydown="if(event.key==='Enter')doRegister()"></div>
       <div class="auth-field"><label>Wachtwoord</label><input type="password" id="r-password" placeholder="Min. 4 tekens" onkeydown="if(event.key==='Enter')doRegister()"></div>
+      <div class="auth-field">
+        <label>Kies je vlag 🏳️</label>
+        <div class="avatar-grid" id="avatar-grid"></div>
+        <input type="hidden" id="r-avatar" value="🏳️">
+      </div>
       <button class="auth-btn" onclick="doRegister()">Registreren</button>
     </div>
   </div>
@@ -181,6 +191,12 @@
   </nav>
   <main>
     <div id="page-pronostiek" class="page active">
+      <div class="info-box" style="margin-bottom:12px">
+        <strong>Spelregels</strong><br>
+        Exacte score = 3 pt &nbsp;·&nbsp; Juiste winnaar of gelijkspel = 1 pt<br>
+        Geen prono ingevuld = 0 pt &nbsp;·&nbsp; Prono sluit bij aftrap 🔒<br>
+        Wereldkampioen juist = 10 pt &nbsp;·&nbsp; Topscorer juist = 5 pt &nbsp;·&nbsp; Topscorer + exact doelpunten = 8 pt
+      </div>
       <div class="phase-bar" id="phase-bar-v"></div>
       <div id="matches-wrap"></div>
     </div>
@@ -200,6 +216,8 @@
 
 <script>
   const API='/api';
+  const FLAGS=[("🇲🇽", "Mexico"), ("🇿🇦", "Zuid-Afrika"), ("🇰🇷", "Zuid-Korea"), ("🇨🇿", "Tsjechië"), ("🇨🇦", "Canada"), ("🇧🇦", "Bosnië"), ("🇶🇦", "Qatar"), ("🇨🇭", "Zwitserland"), ("🇮🇹", "Italië"), ("🇧🇷", "Brazilië"), ("🇲🇦", "Marokko"), ("🇭🇹", "Haïti"), ("🇬🇧", "Schotland"), ("🇦🇺", "Australië"), ("🇹🇷", "Turkije"), ("🇺🇸", "VS"), ("🇵🇾", "Paraguay"), ("🇩🇪", "Duitsland"), ("🇨🇮", "Ivoorkust"), ("🇪🇨", "Ecuador"), ("🇨🇼", "Curaçao"), ("🇳🇱", "Nederland"), ("🇯🇵", "Japan"), ("🇺🇦", "Oekraïne"), ("🇹🇳", "Tunesië"), ("🇪🇸", "Spanje"), ("🇧🇪", "België"), ("🇸🇦", "Saoedi-Arabië"), ("🇺🇾", "Uruguay"), ("🇨🇻", "Kaapverdië"), ("🇮🇷", "Iran"), ("🇳🇿", "Nieuw-Zeeland"), ("🇪🇬", "Egypte"), ("🇫🇷", "Frankrijk"), ("🇸🇳", "Senegal"), ("🇳🇴", "Noorwegen"), ("🇮🇶", "Irak"), ("🇦🇷", "Argentinië"), ("🇦🇹", "Oostenrijk"), ("🇩🇿", "Algerije"), ("🇯🇴", "Jordanië"), ("🇵🇹", "Portugal"), ("🇨🇴", "Colombia"), ("🇺🇿", "Oezbekistan"), ("🇨🇩", "DRC"), ("🏴\U000e0067\U000e0062\U000e0065\U000e006e\U000e0067\U000e007f", "Engeland"), ("🇭🇷", "Kroatië"), ("🇵🇦", "Panama"), ("🇬🇭", "Ghana")];
+
   const TEAMS=['Algerije','Argentinië','Australië','België','Bosnië','Brazilië','Canada','Colombia','DRC','Curaçao','Duitsland','Ecuador','Egypte','Engeland','Frankrijk','Ghana','Haïti','Iran','Irak','Ivoorkust','Japan','Jordanië','Kaapverdië','Kroatië','Marokko','Mexico','Nederland','Nieuw-Zeeland','Noorwegen','Oostenrijk','Oekraïne','Oezbekistan','Panama','Paraguay','Portugal','Qatar','Saoedi-Arabië','Schotland','Senegal','Spanje','Tunesië','Turkije','Uruguay','VS','Zuid-Afrika','Zuid-Korea','Zwitserland','Italië'];
   const PHASES=[{id:'bonus',label:'🏆 Bonus'},{id:'group',label:'Groepsfase'},{id:'r32',label:'Ronde van 32'},{id:'r16',label:'Ronde van 16'},{id:'qf',label:'Kwartfinales'},{id:'sf',label:'Halve finales'},{id:'final',label:'Finale'}];
   const DAYS=['zo','ma','di','wo','do','vr','za'];
@@ -337,6 +355,20 @@
     document.getElementById('auth-login').style.display=tab==='login'?'block':'none';
     document.getElementById('auth-register').style.display=tab==='register'?'block':'none';
     document.getElementById('auth-error').classList.remove('show');
+    if(tab==='register')renderAvatarGrid();
+  }
+
+  function renderAvatarGrid(){
+    const grid=document.getElementById('avatar-grid');
+    if(!grid)return;
+    grid.innerHTML=FLAGS.map(([flag,country])=>
+      `<div class="avatar-opt${document.getElementById('r-avatar')?.value===flag?' selected':''}" title="${country}" onclick="selectAvatar('${flag}')">${flag}</div>`
+    ).join('');
+  }
+
+  function selectAvatar(flag){
+    document.getElementById('r-avatar').value=flag;
+    document.querySelectorAll('.avatar-opt').forEach(el=>el.classList.toggle('selected',el.textContent===flag));
   }
 
   function showAuthError(msg){const el=document.getElementById('auth-error');el.textContent=msg;el.classList.add('show');}
@@ -348,7 +380,7 @@
     try{
       const data=await apiFetch('/auth/login',{method:'POST',body:JSON.stringify({email,password})});
       token=data.token;localStorage.setItem('wk26_token',token);
-      currentUser={name:data.name,email:data.email,isAdmin:data.isAdmin};
+      currentUser={name:data.name,email:data.email,isAdmin:data.isAdmin,avatar:data.avatar||'🏳️'};
       showApp();
     }catch(e){showAuthError(e.message);}
   }
@@ -357,11 +389,12 @@
     const name=document.getElementById('r-name').value.trim();
     const email=document.getElementById('r-email').value.trim();
     const password=document.getElementById('r-password').value;
+    const avatar=document.getElementById('r-avatar')?.value||'🏳️';
     if(!name||!email||!password){showAuthError('Vul alle velden in');return;}
     try{
-      const data=await apiFetch('/auth/register',{method:'POST',body:JSON.stringify({name,email,password})});
+      const data=await apiFetch('/auth/register',{method:'POST',body:JSON.stringify({name,email,password,avatar})});
       token=data.token;localStorage.setItem('wk26_token',token);
-      currentUser={name:data.name,email:data.email,isAdmin:data.isAdmin};
+      currentUser={name:data.name,email:data.email,isAdmin:data.isAdmin,avatar:data.avatar||'🏳️'};
       showApp();
     }catch(e){showAuthError(e.message);}
   }
@@ -376,7 +409,7 @@
   function showApp(){
     document.getElementById('auth-screen').style.display='none';
     document.getElementById('app-screen').style.display='block';
-    document.getElementById('user-badge').textContent=currentUser.name;
+    document.getElementById('user-badge').textContent=currentUser.avatar+' '+currentUser.name;
     // Toon Scores tab enkel voor admin
     const nav=document.getElementById('main-nav');
     if(currentUser.isAdmin&&!document.getElementById('nav-scores')){
@@ -392,7 +425,7 @@
     if(token){
       try{
         const me=await apiFetch('/auth/me');
-        currentUser={name:me.name,email:me.email,isAdmin:me.isAdmin};
+        currentUser={name:me.name,email:me.email,isAdmin:me.isAdmin,avatar:me.avatar||'🏳️'};
         showApp();
       }catch{token='';localStorage.removeItem('wk26_token');}
     }
@@ -679,7 +712,7 @@
         <thead><tr><th>#</th><th>Naam</th><th>Stats</th><th style="text-align:right">Ptn</th></tr></thead>
         <tbody>${ranking.map((r,i)=>`<tr>
           <td style="font-size:${i<3?'20':'14'}px;width:40px">${i<3?medals[i]:`<span style="color:var(--text3);font-weight:700">${i+1}</span>`}</td>
-          <td style="font-weight:${i===0?'700':'500'}">${esc(r.name)}</td>
+          <td style="font-weight:${i===0?'700':'500'}"><span class='avatar-display'>${r.avatar||'🏳️'}</span>${esc(r.name)}</td>
           <td class="stat-chips"><span style="color:var(--text3)">${r.filled}×</span><span class="badge badge-exact">${r.exact}×3</span><span class="badge badge-win">${r.win}×1</span>${r.bonusPts>0?`<span class="badge badge-bonus">+${r.bonusPts} bonus</span>`:''}</td>
           <td class="pts-cell">${r.pts}</td>
         </tr>`).join('')}</tbody>
