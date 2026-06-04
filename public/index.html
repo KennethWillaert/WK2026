@@ -724,6 +724,7 @@ function renderMatchList(wrap){
       const pred=curPreds[m.id]||{};
       const res=results[m.id];
       const locked=Date.now()>=m.ko;
+      const unlocked=Date.now()>=(m.ko-UNLOCK_BEFORE);
       let badge='';
       if(res&&pred.h!=null){
         const p=calcPts(pred,res);
@@ -731,6 +732,21 @@ function renderMatchList(wrap){
       }
       const phLbl=m.ph==='group'?`Groep ${m.g}`:PHASES.find(p=>p.id===m.ph)?.label||'';
       const timeStr=`${String(new Date(m.ko).getHours()).padStart(2,'0')}:${String(new Date(m.ko).getMinutes()).padStart(2,'0')}`;
+      if(!unlocked) return`<div class="card locked" style="opacity:0.4">
+        <div class="card-meta">
+          <div class="card-meta-left"><span>${m.ph==='group'?'Groep '+m.g:''}</span></div>
+          <span style="font-size:11px;color:#445566">🔒 Beschikbaar vanaf ${new Date(m.ko-UNLOCK_BEFORE).toLocaleDateString('nl-BE',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</span>
+        </div>
+        <div class="match-grid">
+          <div class="team">${teamWithFlag(resolveTeam(m.h))}</div>
+          <div class="score-inputs">
+            <input type="number" disabled placeholder="–" style="width:38px;text-align:center">
+            <span class="score-sep">–</span>
+            <input type="number" disabled placeholder="–" style="width:38px;text-align:center">
+          </div>
+          <div class="team right">${teamWithFlagRight(resolveTeam(m.a))}</div>
+        </div>
+      </div>`;
       return`<div class="card${locked?' locked':''}">
         <div class="card-meta">
           <div class="card-meta-left">
