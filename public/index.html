@@ -39,8 +39,10 @@
     .auth-tab.active{background:#ffffff;color:#0A2240;font-weight:600;box-shadow:0 1px 4px rgba(0,0,0,0.1)}
     .auth-field{margin-bottom:14px}
     .auth-field label{display:block;font-size:12px;font-weight:600;color:#4a5a70;margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em}
-    .auth-field input{width:100%;padding:10px 12px;border:1px solid var(--border2);border-radius:var(--radius-sm);background:#f5f7fa;color:#0d1b2e;font-size:14px;font-family:inherit;outline:none}
-    .auth-field input:focus{border-color:#0A2240;background:#fff}
+    .auth-field input{width:100%;padding:10px 12px;border:1px solid var(--border2);border-radius:var(--radius-sm);background:#f5f7fa;color:#0d1b2e;font-size:14px;-webkit-text-fill-color:#0d1b2e;font-family:inherit;outline:none}
+    .auth-field input:focus{border-color:#0A2240;background:#fff;color:#0d1b2e;-webkit-text-fill-color:#0d1b2e}
+    .auth-field input::-webkit-input-placeholder{color:#8a9ab0}
+    .auth-field input:-webkit-autofill{-webkit-box-shadow:0 0 0 30px #f5f7fa inset!important;-webkit-text-fill-color:#0d1b2e!important}
     .auth-btn{width:100%;padding:12px;background:#0A2240;color:#fff;border:none;border-radius:var(--radius-sm);font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:4px}
     .auth-btn:hover{opacity:0.9}
     .auth-error{background:var(--red-bg);color:var(--red-text);border-radius:var(--radius-sm);padding:10px 12px;font-size:13px;margin-bottom:12px;display:none}
