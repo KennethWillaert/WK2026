@@ -194,14 +194,14 @@
       <button class="auth-tab" onclick="switchAuthTab('register')">Registreren</button>
     </div>
     <div id="auth-login">
-      <div class="auth-field"><label>Email</label><input type="email" id="l-email" onkeydown="if(event.key==='Enter')doLogin()" placeholder="jouw@email.com" style="color:#0d1b2e;background:#fff" onfocus="this.style.background='#fff'" onblur="this.style.background='#fff'"></div>
-      <div class="auth-field"><label>Wachtwoord</label><input type="password" id="l-password" onkeydown="if(event.key==='Enter')doLogin()" placeholder="••••••••" style="color:#0d1b2e;background:#fff"></div>
+      <div class="auth-field"><label>Email</label><input type="email" id="l-email" onkeydown="if(event.key==='Enter')doLogin()" placeholder="jouw@email.com" style="color:#0d1b2e;background:#fff;border:1px solid #4a5a70" onfocus="this.style.background='#fff'" onblur="this.style.background='#fff'"></div>
+      <div class="auth-field"><label>Wachtwoord</label><input type="password" id="l-password" onkeydown="if(event.key==='Enter')doLogin()" placeholder="••••••••" style="color:#0d1b2e;background:#fff;border:1px solid #4a5a70"></div>
       <button class="auth-btn" onclick="doLogin()">Inloggen</button>
     </div>
     <div id="auth-register" style="display:none">
-      <div class="auth-field"><label>Naam</label><input type="text" id="r-name" placeholder="Jouw naam" maxlength="25" style="color:#0d1b2e;background:#fff"></div>
-      <div class="auth-field"><label>Email</label><input type="email" id="r-email" placeholder="jouw@email.com" style="color:#0d1b2e;background:#fff"></div>
-      <div class="auth-field"><label>Wachtwoord</label><input type="password" id="r-password" placeholder="Min. 4 tekens" style="color:#0d1b2e;background:#fff"></div>
+      <div class="auth-field"><label>Naam</label><input type="text" id="r-name" placeholder="Jouw naam" maxlength="25" style="color:#0d1b2e;background:#fff;border:1px solid #4a5a70"></div>
+      <div class="auth-field"><label>Email</label><input type="email" id="r-email" placeholder="jouw@email.com" style="color:#0d1b2e;background:#fff;border:1px solid #4a5a70"></div>
+      <div class="auth-field"><label>Wachtwoord</label><input type="password" id="r-password" placeholder="Min. 4 tekens" style="color:#0d1b2e;background:#fff;border:1px solid #4a5a70"></div>
       <div class="auth-field">
         <label>Kies je vlag</label>
         <div class="avatar-grid" id="avatar-grid-reg"></div>
