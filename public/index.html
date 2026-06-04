@@ -730,7 +730,7 @@ async function renderStandings(){
           <tbody>${table.map((t,i)=>{
             const pos=i===0?`<span class="pos-badge pos-1">1</span>`:i===1?`<span class="pos-badge pos-2">2</span>`:`<span style="display:inline-block;width:16px;margin-right:4px;text-align:center;font-size:10px;color:#445566">${i+1}</span>`;
             return`<tr class="${i<2?'qualified':''}">
-              <td>${pos}${esc(t.name)}</td>
+              <td>${pos}${teamWithFlag(t.name)}</td>
               <td>${t.played}</td><td>${t.w}</td><td>${t.d}</td><td>${t.l}</td>
               <td>${t.gf}</td><td>${t.ga}</td>
               <td style="color:${t.gd>0?'#50d080':t.gd<0?'#f08090':'#7a90aa'}">${t.gd>0?'+':''}${t.gd}</td>
