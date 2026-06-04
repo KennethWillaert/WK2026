@@ -239,11 +239,12 @@
         Exacte score = 3 pt<br>
         Juiste winnaar of gelijkspel = 1 pt<br>
         Geen prono ingevuld = 0 pt<br><br>
-        Wereldkampioen juist = 10 pt<br>
-        Topscorer juist = 5 pt<br>
-        Topscorer + exact aantal doelpunten = 8 pt<br><br>
+        Wereldkampioen juist = 8 pt<br>
+        Topscorer juist = 8 pt<br>
+        Topscorer + exact aantal doelpunten = 12 pt<br><br>
         🔒 Prono sluit bij aftrap<br>
-        🏆 Bonus sluit bij aftrap eerste wedstrijd (11 jun 21:00)
+        🏆 Bonus sluit bij aftrap eerste wedstrijd (11 jun 21:00)<br>
+        🔒 Wedstrijden beschikbaar 24u voor aftrap
       </div>
       <div class="phase-bar" id="phase-bar-v"></div>
       <div id="matches-wrap"></div>
@@ -674,7 +675,7 @@ function renderBonusForm(wrap){
   const locked=Date.now()>=bonusDeadline||bonusResult.champion!=null;
   wrap.innerHTML=`
     <div class="bonus-card">
-      <h3>🏆 Wereldkampioen <small style="font-weight:400;color:#445566">= 10 pt</small></h3>
+      <h3>🏆 Wereldkampioen <small style="font-weight:400;color:#445566">= 8 pt</small></h3>
       <div class="bonus-field">
         <label>Welk land wint het WK?</label>
         <select id="bon-champion" onchange="saveBonus()" ${locked?'disabled':''}>
@@ -685,10 +686,11 @@ function renderBonusForm(wrap){
       ${locked?'<div class="info-box" style="margin-top:8px">🔒 Bonus gesloten</div>':''}
     </div>
     <div class="bonus-card">
-      <h3>⚽ Topscorer <small style="font-weight:400;color:#445566">= 5 pt / 8 pt exact</small></h3>
+      <h3>⚽ Topscorer <small style="font-weight:400;color:#445566">= 8 pt / 12 pt exact</small></h3>
       <div class="bonus-field">
         <label>Naam topscorer</label>
-        <input type="text" id="bon-topscorer" value="${esc(bonusPred.topscorer||'')}" placeholder="Naam speler..." maxlength="40" ${locked?'disabled':''} onchange="saveBonus()">
+        <input type="text" id="bon-topscorer" value="${esc(bonusPred.topscorer||'')}" placeholder="bv. Lamine Yamal, Mbappé..." maxlength="40" ${locked?'disabled':''} onchange="saveBonus()">
+        <div style="font-size:11px;color:#445566;margin-top:4px">⚠️ Gebruik de volledige naam (bv. Lamine Yamal, niet enkel Yamal)</div>
       </div>
       <div class="bonus-field">
         <label>Aantal doelpunten</label>

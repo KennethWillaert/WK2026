@@ -486,9 +486,9 @@ export default {
           }
         }
         const bp=bonusMap[name];
-        if(bp&&bonusResult.champion&&bp.champion===bonusResult.champion)bonusPts+=10;
+        if(bp&&bonusResult.champion&&bp.champion===bonusResult.champion)bonusPts+=8;
         if(bp&&bonusResult.topscorer&&normalizeStr(bp.topscorer)===normalizeStr(bonusResult.topscorer))
-          bonusPts+=(bp.goals!=null&&bp.goals===bonusResult.goals)?8:5;
+          bonusPts+=(bp.goals!=null&&bp.goals===bonusResult.goals)?12:8;
         pts+=bonusPts;
         return{name,avatar:avatar||'🏳️',pts,exact,win,filled,bonusPts};
       }).sort((a,b)=>b.pts-a.pts||b.exact-a.exact);
