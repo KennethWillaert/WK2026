@@ -271,6 +271,10 @@ const TEAMS=FLAGS.map(f=>f[1]);
     const flag=flagFor(name);
     return flag?`<span style="margin-right:4px">${flag}</span>${esc(name)}`:esc(name);
   }
+  function teamWithFlagRight(name){
+    const flag=flagFor(name);
+    return flag?`${esc(name)}<span style="margin-left:4px">${flag}</span>`:esc(name);
+  }
 const PHASES=[
   {id:'bonus',label:'🏆 Bonus',unlock:0,lock:ko('2026-06-11','21:00')},
   {id:'group',label:'Groepsfase',unlock:0},
@@ -702,7 +706,7 @@ function renderMatchList(wrap){
             <span class="score-sep">–</span>
             <input type="number" min="0" max="20" value="${pred.a!=null?pred.a:''}" placeholder="–" id="v_${m.id}_a" ${locked?'disabled':''} onchange="qSavePred('${m.id}',${m.ko})">
           </div>
-          <div class="team right">${teamWithFlag(resolveTeam(m.a))}</div>
+          <div class="team right">${teamWithFlagRight(resolveTeam(m.a))}</div>
         </div>
         <div class="saved-msg" id="sv_${m.id}"></div>
       </div>`;
@@ -784,7 +788,7 @@ function renderScoresPage(){
             <span class="score-sep">–</span>
             <input type="number" min="0" max="20" value="${res.a!=null?res.a:''}" placeholder="–" id="r_${m.id}_a" onchange="qSaveResult('${m.id}')">
           </div>
-          <div class="team right">${teamWithFlag(resolveTeam(m.a))}</div>
+          <div class="team right">${teamWithFlagRight(resolveTeam(m.a))}</div>
         </div>
         <div class="saved-msg" id="sr_${m.id}"></div>
       </div>`;
