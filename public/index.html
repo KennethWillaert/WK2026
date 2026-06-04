@@ -259,6 +259,15 @@ const FLAGS=[
   ['🇵🇦','Panama'],['🇬🇭','Ghana'],
 ];
 const TEAMS=FLAGS.map(f=>f[1]);
+
+  function flagFor(name){
+    const entry=FLAGS.find(([f,l])=>l===name);
+    return entry?entry[0]:'';
+  }
+  function teamWithFlag(name){
+    const flag=flagFor(name);
+    return flag?`<span style="margin-right:4px">${flag}</span>${esc(name)}`:esc(name);
+  }
 const PHASES=[
   {id:'bonus',label:'🏆 Bonus',unlock:0,lock:ko('2026-06-11','21:00')},
   {id:'group',label:'Groepsfase',unlock:0},
