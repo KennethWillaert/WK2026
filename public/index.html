@@ -55,7 +55,7 @@
     .header-text h1{font-size:15px;font-weight:700;color:#fff}
     .header-text p{font-size:11px;color:rgba(255,255,255,0.5);margin-top:1px}
     .header-right{display:flex;align-items:center;gap:8px}
-    .user-badge{font-size:12px;color:rgba(255,255,255,0.7);background:rgba(255,255,255,0.1);border-radius:20px;padding:4px 10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100px}
+    .user-badge{font-size:13px;color:rgba(255,255,255,0.85);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px}
     .logout-btn{background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:var(--radius-sm);padding:6px 10px;cursor:pointer;color:rgba(255,255,255,0.7);font-size:12px;font-family:inherit;white-space:nowrap}
     .refresh-btn{background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:var(--radius-sm);padding:7px 10px;cursor:pointer;color:rgba(255,255,255,0.8);font-size:14px}
     nav{display:flex;background:var(--navy2);overflow-x:auto;border-bottom:2px solid rgba(255,255,255,0.06)}
@@ -107,7 +107,7 @@
     .ranking-table tr:last-child td{border-bottom:none}
     .pts-cell{text-align:right;font-size:20px;font-weight:800;color:var(--navy)}
     @media(prefers-color-scheme:dark){.pts-cell{color:var(--accent)}}
-    .stat-chips{font-size:12px;color:var(--text2)}
+    .stat-chips{font-size:12px;color:var(--text2);line-height:2;display:flex;flex-wrap:wrap;gap:3px;align-items:center}
     .loading{text-align:center;padding:2.5rem;color:var(--text2);font-size:14px}
     .error{background:var(--red-bg);color:var(--red-text);border-radius:var(--radius-sm);border-left:3px solid var(--red);padding:10px 14px;font-size:13px;margin-bottom:12px}
     .spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--border2);border-top-color:var(--navy);border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:6px}
@@ -172,11 +172,7 @@
         <p>FIFA World Cup United 2026 · by DUUUB</p>
       </div>
     </div>
-    <div class="header-right">
-      <span class="user-badge" id="user-badge"></span>
-      <button class="refresh-btn" onclick="loadAll()" title="Vernieuwen">↻</button>
-      <button class="logout-btn" onclick="doLogout()">Uitloggen</button>
-    </div>
+    <span class="user-badge" id="user-badge"></span>
   </header>
   <nav id="main-nav">
     <button class="active" onclick="nav('pronostiek')">Pronostiek</button>
@@ -680,7 +676,7 @@
         <tbody>${ranking.map((r,i)=>`<tr>
           <td style="font-size:${i<3?'20':'14'}px;width:40px">${i<3?medals[i]:`<span style="color:var(--text3);font-weight:700">${i+1}</span>`}</td>
           <td style="font-weight:${i===0?'700':'500'}">${esc(r.name)}</td>
-          <td class="stat-chips">${r.filled} voorsp.&nbsp;<span class="badge badge-exact">${r.exact}×3</span>&nbsp;<span class="badge badge-win">${r.win}×1</span>${r.bonusPts>0?`&nbsp;<span class="badge badge-bonus">+${r.bonusPts} bonus</span>`:''}</td>
+          <td class="stat-chips"><span>${r.filled} voorsp.</span><span class="badge badge-exact">${r.exact}×3</span><span class="badge badge-win">${r.win}×1</span>${r.bonusPts>0?`<span class="badge badge-bonus">+${r.bonusPts} bonus</span>`:''}</td>
           <td class="pts-cell">${r.pts}</td>
         </tr>`).join('')}</tbody>
       </table></div>`;
