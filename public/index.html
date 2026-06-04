@@ -43,6 +43,17 @@
     .avatar-opt:hover{background:#e6ecf5;border-color:#0A2240}
     .avatar-opt.selected{border-color:#0A2240;background:#e6ecf5}
     .avatar-opt img,.avatar-display img,.user-flag img{width:22px;height:22px;vertical-align:middle}
+    .help-toggle{width:100%;margin-top:14px;padding:9px;background:none;border:1px solid rgba(10,34,64,0.15);border-radius:6px;font-size:13px;color:#4a5a70;cursor:pointer;font-family:inherit;text-align:center}
+    .help-toggle:hover{background:#f0f4fa}
+    .help-body{display:none;margin-top:12px;border-top:1px solid rgba(10,34,64,0.1);padding-top:12px}
+    .help-body.open{display:block}
+    .help-step{margin-bottom:14px}
+    .help-step h4{font-size:12px;font-weight:700;color:#0A2240;text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px}
+    .help-step p,.help-step li{font-size:12px;color:#4a5a70;line-height:1.6}
+    .help-step ul{padding-left:16px}
+    .help-divider{border:none;border-top:1px solid rgba(10,34,64,0.08);margin:10px 0}
+    .help-pts{display:flex;flex-direction:column;gap:3px}
+    .help-pts span{font-size:12px;color:#4a5a70}
 
     /* APP */
     header{background:#0A2240;padding:10px 14px;display:flex;align-items:flex-start;gap:10px;position:sticky;top:0;z-index:10}
@@ -198,6 +209,57 @@
       </div>
       <button class="auth-btn" onclick="doRegister()">Registreren</button>
     </div>
+    <button class="help-toggle" onclick="toggleHelp()">❓ Hoe werkt het?</button>
+    <div class="help-body" id="help-body">
+      <div class="help-step">
+        <h4>📲 Stap 1 — Open de app</h4>
+        <ul>
+          <li>📱 iPhone → gebruik <strong>Safari</strong></li>
+          <li>🤖 Android → gebruik <strong>Chrome</strong></li>
+        </ul>
+      </div>
+      <hr class="help-divider">
+      <div class="help-step">
+        <h4>📝 Stap 2 — Registreer je</h4>
+        <ul>
+          <li>Tik op "Registreren"</li>
+          <li>Vul naam, email en wachtwoord in</li>
+          <li>Kies je vlag 🏳️</li>
+        </ul>
+      </div>
+      <hr class="help-divider">
+      <div class="help-step">
+        <h4>📥 Stap 3 — Zet op startscherm</h4>
+        <ul>
+          <li>📱 iPhone: tik ↑ onderaan → "Zet op beginscherm"</li>
+          <li>🤖 Android: tik ⋮ rechtsboven → "App installeren"</li>
+        </ul>
+      </div>
+      <hr class="help-divider">
+      <div class="help-step">
+        <h4>🏆 Stap 4 — Vul pronostieken in</h4>
+        <ul>
+          <li>Ga naar "Pronostiek" → vul eerst de 🏆 Bonus in</li>
+          <li>Bonus sluit op <strong>11 juni om 21:00</strong>!</li>
+          <li>Per wedstrijd sluit prono bij aftrap 🔒</li>
+        </ul>
+      </div>
+      <hr class="help-divider">
+      <div class="help-step">
+        <h4>🎯 Puntensysteem</h4>
+        <div class="help-pts">
+          <span>✅ Exacte score = <strong>3 pt</strong></span>
+          <span>✅ Juiste winnaar/gelijkspel = <strong>1 pt</strong></span>
+          <span>🏆 Wereldkampioen juist = <strong>10 pt</strong></span>
+          <span>⚽ Topscorer juist = <strong>5 pt</strong></span>
+          <span>⚽ Topscorer + exact doelpunten = <strong>8 pt</strong></span>
+        </div>
+      </div>
+      <hr class="help-divider">
+      <div class="help-step">
+        <p>❓ Problemen? Stuur een berichtje naar <strong>DUUUB</strong> 😄</p>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -279,6 +341,12 @@
 </div>
 
 <script>
+function toggleHelp(){
+  const b=document.getElementById('help-body');
+  const btn=document.querySelector('.help-toggle');
+  const open=b.classList.toggle('open');
+  btn.textContent=open?'✖ Sluit instructies':'❓ Hoe werkt het?';
+}
 const API='/api';
 const FLAGS=[
   ['🇧🇪','België'],['🇳🇱','Nederland'],['🇫🇷','Frankrijk'],['🇩🇪','Duitsland'],
