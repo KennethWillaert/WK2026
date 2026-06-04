@@ -375,7 +375,8 @@
   // ── API ────────────────────────────────────────────────
   async function apiFetch(path,opts={}){
     const headers={'Content-Type':'application/json'};
-    if(token)headers['Authorization']='Bearer '+token;
+    const t=localStorage.getItem('wk26_token')||token;
+    if(t)headers['Authorization']='Bearer '+t;
     const res=await fetch(API+path,{headers,...opts});
     if(!res.ok){const e=await res.json().catch(()=>({error:'Serverfout'}));throw new Error(e.error||'Fout');}
     return res.json();
@@ -412,9 +413,10 @@
     if(!email||!password){showAuthError('Vul email en wachtwoord in');return;}
     try{
       const data=await apiFetch('/auth/login',{method:'POST',body:JSON.stringify({email,password})});
-      token=data.token;localStorage.setItem('wk26_token',token);
+      token=data.token;
+      localStorage.setItem('wk26_token',token);
       currentUser={name:data.name,email:data.email,isAdmin:data.isAdmin,avatar:data.avatar||'🏳️'};
-      showApp();
+      await showApp();
     }catch(e){showAuthError(e.message);}
   }
 
@@ -450,8 +452,8 @@
       twemoji.parse(document.getElementById('user-avatar-btn'),{folder:'svg',ext:'.svg'});
     }
     // Toon Scores tab enkel voor admin
-    const nav=document.getElementById('main-nav');
     if(currentUser.isAdmin&&!document.getElementById('nav-scores')){
+      const nav=document.getElementById('main-nav');
       const btn=document.createElement('button');
       btn.id='nav-scores';btn.textContent='Scores';btn.onclick=()=>nav_('scores');
       nav.appendChild(btn);
