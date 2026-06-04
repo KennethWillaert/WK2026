@@ -49,6 +49,9 @@
     .auth-error.show{display:block}
     .avatar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:6px;max-height:200px;overflow-y:auto;padding:4px}
     .avatar-opt{font-size:22px;text-align:center;padding:6px 4px;border-radius:8px;cursor:pointer;border:2px solid transparent;transition:all 0.15s;background:#f5f7fa}
+    .avatar-opt img{width:24px;height:24px;pointer-events:none}
+    .user-badge img{width:16px;height:16px;vertical-align:middle}
+    .avatar-display img{width:22px;height:22px;vertical-align:middle}
     .avatar-opt:hover{background:#e6ecf5;border-color:#0A2240}
     .avatar-opt.selected{border-color:#0A2240;background:#e6ecf5;transform:scale(1.1)}
     .avatar-display{font-size:22px;margin-right:6px;vertical-align:middle}
@@ -137,6 +140,7 @@
     .pos-1{background:var(--green-bg);color:var(--green-text)}
     .pos-2{background:var(--accent-bg);color:var(--accent-text)}
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/@twemoji/api@latest/dist/twemoji.min.js" crossorigin="anonymous"></script>
 </head>
 <body>
 
@@ -364,6 +368,7 @@
     grid.innerHTML=FLAGS.map(([flag,country])=>
       `<div class="avatar-opt${document.getElementById('r-avatar')?.value===flag?' selected':''}" title="${country}" onclick="selectAvatar('${flag}')">${flag}</div>`
     ).join('');
+    if(window.twemoji)twemoji.parse(grid,{folder:'svg',ext:'.svg'});
   }
 
   function selectAvatar(flag){
@@ -409,7 +414,8 @@
   function showApp(){
     document.getElementById('auth-screen').style.display='none';
     document.getElementById('app-screen').style.display='block';
-    document.getElementById('user-badge').textContent=currentUser.avatar+' '+currentUser.name;
+    document.getElementById('user-badge').innerHTML=currentUser.avatar+' '+esc(currentUser.name);
+    if(window.twemoji)twemoji.parse(document.getElementById('user-badge'),{folder:'svg',ext:'.svg'});
     // Toon Scores tab enkel voor admin
     const nav=document.getElementById('main-nav');
     if(currentUser.isAdmin&&!document.getElementById('nav-scores')){
