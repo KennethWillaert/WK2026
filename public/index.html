@@ -723,6 +723,7 @@ function renderMatchList(wrap){
     return`<div class="date-hdr">${lbl}</div>`+ms.map(m=>{
       const pred=curPreds[m.id]||{};
       const res=results[m.id];
+      const UNLOCK_BEFORE=24*60*60*1000;
       const locked=Date.now()>=m.ko;
       const unlocked=Date.now()>=(m.ko-UNLOCK_BEFORE);
       let badge='';
