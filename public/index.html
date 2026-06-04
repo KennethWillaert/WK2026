@@ -749,6 +749,7 @@ async function renderStandings(){
         </table>
       </div>`;
     }).join('')}</div>`;
+    if(window.twemoji)twemoji.parse(wrap,{folder:'svg',ext:'.svg'});
   }catch(e){wrap.innerHTML=`<div class="error-msg">${e.message}</div>`;}
 }
 
