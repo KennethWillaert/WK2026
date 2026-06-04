@@ -45,7 +45,9 @@
     .header-text{flex:1;min-width:0}
     .header-text h1{font-size:15px;font-weight:700;color:#fff}
     .header-text p{font-size:11px;color:rgba(255,255,255,0.5)}
-    .profile-btn{background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:20px;padding:5px 12px;cursor:pointer;color:#fff;font-size:13px;font-family:inherit;display:flex;align-items:center;gap:5px;white-space:nowrap}
+    .profile-btn{background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:20px;padding:5px 12px;cursor:pointer;color:#fff;font-size:13px;font-family:inherit;display:flex;align-items:center;gap:6px;white-space:nowrap}
+    #hdr-flag{display:inline-flex;align-items:center;width:20px;height:16px;overflow:hidden}
+    #hdr-flag img{width:20px!important;height:16px!important;display:block}
     .profile-btn:hover{background:rgba(255,255,255,0.2)}
     .profile-menu{position:fixed;top:56px;right:12px;background:#1e2a3a;border:1px solid rgba(255,255,255,0.15);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,0.4);z-index:100;min-width:180px;overflow:hidden;display:none}
     .profile-menu.open{display:block}
@@ -110,8 +112,8 @@
     .error-msg{background:#2a0a10;color:#f08090;border-radius:6px;border-left:3px solid #D2001E;padding:10px 14px;font-size:13px;margin-bottom:12px}
     .spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,0.1);border-top-color:#3a7bd5;border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:6px}
     @keyframes spin{to{transform:rotate(360deg)}}
-    .rank-flag{display:inline-block;width:20px;height:16px;margin-right:6px;vertical-align:middle;overflow:hidden}
-    .rank-flag img{width:20px!important;height:16px!important;vertical-align:middle}
+    .rank-flag{display:inline-block;width:20px;height:16px;margin-right:6px;vertical-align:middle;position:relative;top:-1px;overflow:hidden}
+    .rank-flag img{width:20px!important;height:16px!important;vertical-align:middle;display:block}
     .bonus-card{background:#111e2e;border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:16px;margin-bottom:12px}
     .bonus-card h3{font-size:14px;font-weight:700;color:#e4eaf4;margin-bottom:12px}
     .bonus-field{margin-bottom:10px}
