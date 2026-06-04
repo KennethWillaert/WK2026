@@ -4,7 +4,7 @@
   "description": "Voorspel wedstrijdscores voor het WK 2026",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#f8f8f6",
+  "background_color": "#0A2240",
   "theme_color": "#0A2240",
   "orientation": "portrait-primary",
   "icons": [
