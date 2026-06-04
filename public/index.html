@@ -203,6 +203,7 @@
     <button class="active" onclick="nav('pronostiek')">Pronostiek</button>
     <button onclick="nav('standen')">Standen</button>
     <button onclick="nav('ranking')">Ranking</button>
+    <button onclick="nav('topscorers')">⚽ Scorers</button>
   </nav>
   <main>
     <div id="page-pronostiek" class="page active">
@@ -222,11 +223,16 @@
     </div>
     <div id="page-standen" class="page"><div id="standen-wrap"></div></div>
     <div id="page-scores" class="page">
-      <div class="info-box">Officiële uitslagen invoeren. Enkel zichtbaar voor admin.</div>
+      <div class="info-box">
+        Uitslagen worden automatisch gesynchroniseerd via football-data.org (elke 5 min).<br>
+        <button onclick="manualSync()" id="sync-btn" class="primary" style="margin-top:8px;font-size:13px;padding:7px 14px">🔄 Nu synchroniseren</button>
+        <span id="sync-status" style="font-size:12px;color:#1d9e75;margin-left:8px"></span>
+      </div>
       <div class="phase-bar" id="phase-bar-s"></div>
       <div id="scores-wrap"></div>
     </div>
     <div id="page-ranking" class="page"><div id="ranking-wrap"></div></div>
+    <div id="page-topscorers" class="page"><div id="topscorers-wrap"></div></div>
   </main>
 </div>
 
