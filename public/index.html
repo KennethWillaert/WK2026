@@ -85,6 +85,8 @@
     .ph{padding:5px 12px;border:1px solid var(--border2);border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;background:var(--bg2);color:var(--text2);font-family:inherit}
     .ph.active{background:var(--navy);color:#fff;border-color:var(--navy)}
     .ph:hover:not(.active){border-color:var(--navy);color:var(--navy)}
+    .ph-locked{opacity:0.4;cursor:not-allowed!important}
+    .ph-locked:hover{border-color:var(--border2)!important;color:var(--text2)!important}
     .date-hdr{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;padding:4px 0;border-bottom:1px solid var(--border);margin:16px 0 8px}
     .date-hdr:first-child{margin-top:0}
     .card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin-bottom:8px}
@@ -126,6 +128,20 @@
     .bonus-field label{font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:5px}
     .bonus-pts-info{font-size:11px;color:var(--text3);margin-top:3px}
     .bonus-saved{font-size:12px;color:var(--green);font-weight:500;height:18px;margin-top:6px}
+    .profile-btn{background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:20px;padding:5px 10px;cursor:pointer;color:#fff;font-size:13px;font-family:inherit;display:flex;align-items:center;gap:5px;white-space:nowrap}
+    .profile-btn:hover{background:rgba(255,255,255,0.2)}
+    .profile-menu{position:fixed;top:56px;right:12px;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius);box-shadow:0 8px 24px rgba(0,0,0,0.2);z-index:100;min-width:180px;overflow:hidden;display:none}
+    .profile-menu.open{display:block}
+    .profile-menu-header{padding:12px 14px;border-bottom:1px solid var(--border);background:var(--bg3)}
+    .profile-menu-header .pname{font-weight:600;font-size:14px;color:var(--text)}
+    .profile-menu-header .pemail{font-size:11px;color:var(--text3);margin-top:1px}
+    .profile-menu-item{padding:11px 14px;font-size:13px;color:var(--text);cursor:pointer;display:flex;align-items:center;gap:8px;border:none;background:none;width:100%;text-align:left;font-family:inherit}
+    .profile-menu-item:hover{background:var(--bg3)}
+    .profile-menu-item.danger{color:var(--red)}
+    .avatar-modal{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;display:none}
+    .avatar-modal.open{display:flex}
+    .avatar-modal-card{background:var(--bg2);border-radius:var(--radius);padding:20px;width:100%;max-width:360px}
+    .avatar-modal-card h3{font-size:15px;font-weight:700;color:var(--text);margin-bottom:12px}
     .standings-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
     .standings-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:4px}
     .standings-card h3{font-size:12px;font-weight:700;color:#fff;background:var(--navy);padding:8px 12px;letter-spacing:.06em;text-transform:uppercase}
@@ -196,10 +212,14 @@
   <main>
     <div id="page-pronostiek" class="page active">
       <div class="info-box" style="margin-bottom:12px">
-        <strong>Spelregels</strong><br>
-        Exacte score = 3 pt &nbsp;·&nbsp; Juiste winnaar of gelijkspel = 1 pt<br>
-        Geen prono ingevuld = 0 pt &nbsp;·&nbsp; Prono sluit bij aftrap 🔒<br>
-        Wereldkampioen juist = 10 pt &nbsp;·&nbsp; Topscorer juist = 5 pt &nbsp;·&nbsp; Topscorer + exact doelpunten = 8 pt
+        <strong>Spelregels</strong><br><br>
+        Exacte score = 3 pt<br>
+        Juiste winnaar of gelijkspel = 1 pt<br>
+        Geen prono ingevuld = 0 pt<br><br>
+        Wereldkampioen juist = 10 pt<br>
+        Topscorer juist = 5 pt<br>
+        Topscorer + exact aantal doelpunten = 8 pt<br><br>
+        🔒 Prono sluit bij aftrap
       </div>
       <div class="phase-bar" id="phase-bar-v"></div>
       <div id="matches-wrap"></div>
@@ -223,7 +243,15 @@
   const FLAGS=[("🇲🇽", "Mexico"), ("🇿🇦", "Zuid-Afrika"), ("🇰🇷", "Zuid-Korea"), ("🇨🇿", "Tsjechië"), ("🇨🇦", "Canada"), ("🇧🇦", "Bosnië"), ("🇶🇦", "Qatar"), ("🇨🇭", "Zwitserland"), ("🇮🇹", "Italië"), ("🇧🇷", "Brazilië"), ("🇲🇦", "Marokko"), ("🇭🇹", "Haïti"), ("🇬🇧", "Schotland"), ("🇦🇺", "Australië"), ("🇹🇷", "Turkije"), ("🇺🇸", "VS"), ("🇵🇾", "Paraguay"), ("🇩🇪", "Duitsland"), ("🇨🇮", "Ivoorkust"), ("🇪🇨", "Ecuador"), ("🇨🇼", "Curaçao"), ("🇳🇱", "Nederland"), ("🇯🇵", "Japan"), ("🇺🇦", "Oekraïne"), ("🇹🇳", "Tunesië"), ("🇪🇸", "Spanje"), ("🇧🇪", "België"), ("🇸🇦", "Saoedi-Arabië"), ("🇺🇾", "Uruguay"), ("🇨🇻", "Kaapverdië"), ("🇮🇷", "Iran"), ("🇳🇿", "Nieuw-Zeeland"), ("🇪🇬", "Egypte"), ("🇫🇷", "Frankrijk"), ("🇸🇳", "Senegal"), ("🇳🇴", "Noorwegen"), ("🇮🇶", "Irak"), ("🇦🇷", "Argentinië"), ("🇦🇹", "Oostenrijk"), ("🇩🇿", "Algerije"), ("🇯🇴", "Jordanië"), ("🇵🇹", "Portugal"), ("🇨🇴", "Colombia"), ("🇺🇿", "Oezbekistan"), ("🇨🇩", "DRC"), ("🏴\U000e0067\U000e0062\U000e0065\U000e006e\U000e0067\U000e007f", "Engeland"), ("🇭🇷", "Kroatië"), ("🇵🇦", "Panama"), ("🇬🇭", "Ghana")];
 
   const TEAMS=['Algerije','Argentinië','Australië','België','Bosnië','Brazilië','Canada','Colombia','DRC','Curaçao','Duitsland','Ecuador','Egypte','Engeland','Frankrijk','Ghana','Haïti','Iran','Irak','Ivoorkust','Japan','Jordanië','Kaapverdië','Kroatië','Marokko','Mexico','Nederland','Nieuw-Zeeland','Noorwegen','Oostenrijk','Oekraïne','Oezbekistan','Panama','Paraguay','Portugal','Qatar','Saoedi-Arabië','Schotland','Senegal','Spanje','Tunesië','Turkije','Uruguay','VS','Zuid-Afrika','Zuid-Korea','Zwitserland','Italië'];
-  const PHASES=[{id:'bonus',label:'🏆 Bonus'},{id:'group',label:'Groepsfase'},{id:'r32',label:'Ronde van 32'},{id:'r16',label:'Ronde van 16'},{id:'qf',label:'Kwartfinales'},{id:'sf',label:'Halve finales'},{id:'final',label:'Finale'}];
+  const PHASES=[
+    {id:'bonus',label:'🏆 Bonus',unlock:0,lock:cest('2026-06-11','21:00')},
+    {id:'group',label:'Groepsfase',unlock:0},
+    {id:'r32',label:'Ronde van 32',unlock:cest('2026-06-28','21:00')},
+    {id:'r16',label:'Ronde van 16',unlock:cest('2026-07-04','19:00')},
+    {id:'qf',label:'Kwartfinales',unlock:cest('2026-07-09','22:00')},
+    {id:'sf',label:'Halve finales',unlock:cest('2026-07-14','21:00')},
+    {id:'final',label:'Finale',unlock:cest('2026-07-18','23:00')},
+  ];
   const DAYS=['zo','ma','di','wo','do','vr','za'];
   const MONTHS=['jan','feb','mrt','apr','mei','jun','jul','aug','sep','okt','nov','dec'];
 
@@ -414,8 +442,13 @@
   function showApp(){
     document.getElementById('auth-screen').style.display='none';
     document.getElementById('app-screen').style.display='block';
-    document.getElementById('user-badge').innerHTML=currentUser.avatar+' '+esc(currentUser.name);
-    if(window.twemoji)twemoji.parse(document.getElementById('user-badge'),{folder:'svg',ext:'.svg'});
+    document.getElementById('user-name-btn').textContent=currentUser.name;
+    document.getElementById('user-avatar-btn').textContent=currentUser.avatar||'👤';
+    document.getElementById('menu-name').textContent=currentUser.name;
+    document.getElementById('menu-email').textContent=currentUser.email;
+    if(window.twemoji){
+      twemoji.parse(document.getElementById('user-avatar-btn'),{folder:'svg',ext:'.svg'});
+    }
     // Toon Scores tab enkel voor admin
     const nav=document.getElementById('main-nav');
     if(currentUser.isAdmin&&!document.getElementById('nav-scores')){
@@ -474,7 +507,13 @@
   function resolveTeam(name){return bracket[name]||name;}
 
   function renderPhaseBtns(containerId,active,setter){
-    document.getElementById(containerId).innerHTML=PHASES.map(ph=>`<button class="ph${active===ph.id?' active':''}" onclick="${setter}('${ph.id}')">${ph.label}</button>`).join('');
+    const now=Date.now();
+    document.getElementById(containerId).innerHTML=PHASES.map(ph=>{
+      const locked=ph.unlock>0&&now<ph.unlock;
+      return`<button class="ph${active===ph.id?' active':''}${locked?' ph-locked':''}"
+        ${locked?'disabled title="Nog niet beschikbaar"':`onclick="${setter}('${ph.id}')"`}
+        >${ph.label}${locked?' 🔒':''}</button>`;
+    }).join('');
   }
 
   async function renderPredPage(){
@@ -496,8 +535,10 @@
   window.setPhaseV=setPhaseV;window.setPhaseS=setPhaseS;
 
   function renderBonusForm(wrap){
-    const champLocked=bonusResult.champion!=null;
-    const tsLocked=bonusResult.topscorer!=null;
+    const bonusDeadline=cest('2026-06-11','21:00');
+    const bonusLocked=Date.now()>=bonusDeadline||bonusResult.champion!=null;
+    const champLocked=bonusLocked;
+    const tsLocked=bonusLocked;
     wrap.innerHTML=`
       <div class="bonus-card">
         <h3>🏆 Wereldkampioen <small style="font-weight:400;color:var(--text3)">= 10 pt</small></h3>
@@ -508,7 +549,7 @@
             ${TEAMS.sort().map(t=>`<option value="${t}"${bonusPred.champion===t?' selected':''}>${t}</option>`).join('')}
           </select>
         </div>
-        ${champLocked?'<div class="info-box" style="margin-top:8px">✓ Vergrendeld</div>':''}
+        ${champLocked?'<div class="info-box" style="margin-top:8px">🔒 Bonus gesloten sinds 11 juni 21:00</div>':''}
       </div>
       <div class="bonus-card">
         <h3>⚽ Topscorer <small style="font-weight:400;color:var(--text3)">= 5 pt / 8 pt met exact aantal</small></h3>
@@ -520,7 +561,7 @@
           <label>Aantal doelpunten</label>
           <input type="number" id="bon-goals" min="0" max="20" value="${bonusPred.goals!=null?bonusPred.goals:''}" placeholder="0" ${tsLocked?'disabled':''} onchange="saveBonus()">
         </div>
-        ${tsLocked?'<div class="info-box" style="margin-top:8px">✓ Vergrendeld</div>':''}
+        ${tsLocked?'<div class="info-box" style="margin-top:8px">🔒 Bonus gesloten sinds 11 juni 21:00</div>':''}
       </div>
       <div class="bonus-saved" id="bonus-saved"></div>`;
   }
@@ -740,6 +781,48 @@
   }
 
   function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+  function toggleProfileMenu(){
+    document.getElementById('profile-menu').classList.toggle('open');
+  }
+  document.addEventListener('click',function(e){
+    const menu=document.getElementById('profile-menu');
+    const btn=document.getElementById('profile-btn');
+    if(menu&&btn&&!menu.contains(e.target)&&!btn.contains(e.target)){
+      menu.classList.remove('open');
+    }
+  });
+
+  function openAvatarModal(){
+    document.getElementById('profile-menu').classList.remove('open');
+    const grid=document.getElementById('avatar-grid-modal');
+    grid.innerHTML=FLAGS.map(([flag,country])=>
+      `<div class="avatar-opt${currentUser.avatar===flag?' selected':''}" title="${country}" onclick="selectAvatarModal('${flag}')">${flag}</div>`
+    ).join('');
+    if(window.twemoji)twemoji.parse(grid,{folder:'svg',ext:'.svg'});
+    document.getElementById('avatar-modal').classList.add('open');
+  }
+
+  function closeAvatarModalOutside(e){
+    if(e.target===document.getElementById('avatar-modal'))
+      document.getElementById('avatar-modal').classList.remove('open');
+  }
+
+  function selectAvatarModal(flag){
+    currentUser.avatar=flag;
+    document.querySelectorAll('#avatar-grid-modal .avatar-opt').forEach(el=>
+      el.classList.toggle('selected',el.title===FLAGS.find(f=>f[0]===flag)?.[1]||'')
+    );
+  }
+
+  async function saveAvatarChange(){
+    try{
+      await apiFetch('/auth/avatar',{method:'PUT',body:JSON.stringify({avatar:currentUser.avatar})});
+      document.getElementById('user-avatar-btn').textContent=currentUser.avatar;
+      if(window.twemoji)twemoji.parse(document.getElementById('user-avatar-btn'),{folder:'svg',ext:'.svg'});
+      document.getElementById('avatar-modal').classList.remove('open');
+    }catch(e){showError(e.message);}
+  }
 
   if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').catch(()=>{});}
   init();

@@ -169,6 +169,15 @@ export default {
       return json({name:user.name,email:user.email,isAdmin:user.is_admin===1,avatar:user.avatar||'🏳️'});
     }
 
+    // PUT /api/auth/avatar
+    if(path==='/api/auth/avatar'&&request.method==='PUT'){
+      const user=await getUser(request,env);
+      if(!user)return err('Niet ingelogd',401);
+      const{avatar}=await request.json();
+      await env.DB.prepare('UPDATE users SET avatar=? WHERE id=?').bind(avatar||'🏳️',user.id).run();
+      return json({ok:true});
+    }
+
     // ── PLAYERS (voor ranking compatibiliteit) ────────────
     if(path==='/api/players'&&request.method==='GET'){
       const rows=await env.DB.prepare('SELECT name FROM users ORDER BY created_at').all();
