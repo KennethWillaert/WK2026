@@ -690,7 +690,7 @@ function renderMatchList(wrap){
             <span class="score-sep">–</span>
             <input type="number" min="0" max="20" value="${pred.a!=null?pred.a:''}" placeholder="–" id="v_${m.id}_a" ${locked?'disabled':''} onchange="qSavePred('${m.id}',${m.ko})">
           </div>
-          <div class="team right">${esc(resolveTeam(m.a))}</div>
+          <div class="team right">${teamWithFlag(resolveTeam(m.a))}</div>
         </div>
         <div class="saved-msg" id="sv_${m.id}"></div>
       </div>`;
@@ -771,7 +771,7 @@ function renderScoresPage(){
             <span class="score-sep">–</span>
             <input type="number" min="0" max="20" value="${res.a!=null?res.a:''}" placeholder="–" id="r_${m.id}_a" onchange="qSaveResult('${m.id}')">
           </div>
-          <div class="team right">${esc(resolveTeam(m.a))}</div>
+          <div class="team right">${teamWithFlag(resolveTeam(m.a))}</div>
         </div>
         <div class="saved-msg" id="sr_${m.id}"></div>
       </div>`;
@@ -872,7 +872,7 @@ async function renderTopscorers(){
         <tbody>${scorers.map((s,i)=>`<tr>
           <td style="font-size:${i<3?'18':'14'}px;width:36px">${i<3?medals[i]:`<span style="color:#445566;font-weight:700">${i+1}</span>`}</td>
           <td style="font-weight:${i===0?'700':'500'}">${esc(s.name)}</td>
-          <td style="font-size:13px;color:#7a90aa">${esc(s.team)}</td>
+          <td style="font-size:13px;color:#7a90aa">${teamWithFlag(s.team)}</td>
           <td style="text-align:right;font-size:18px;font-weight:800;color:#3a7bd5">${s.goals}</td>
         </tr>`).join('')}</tbody>
       </table></div>`;
