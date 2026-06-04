@@ -444,6 +444,11 @@ export default {
       return json({ok:true});
     }
 
+    if(path==='/api/bonus-all'&&request.method==='GET'){
+      const rows=await env.DB.prepare('SELECT player,champion,topscorer,goals FROM bonus_predictions').all();
+      return json(rows.results.map(r=>({name:r.player,champion:r.champion||'',topscorer:r.topscorer||'',goals:r.goals!=null?r.goals:null})));
+    }
+
     // ── RANKING ───────────────────────────────────────────
     if(path==='/api/ranking'&&request.method==='GET'){
       const users=await env.DB.prepare('SELECT name,avatar FROM users ORDER BY created_at').all();
