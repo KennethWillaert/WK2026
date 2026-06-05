@@ -293,19 +293,37 @@ export default {
   async scheduled(event,env,ctx){
     ctx.waitUntil((async()=>{
       await syncFromFootballData(env);
-      // Pregame push: wedstrijden die over ~60 min beginnen
       const now=Date.now();
+
+      // Push 1: wedstrijden die over ~60 min beginnen (prono reminder)
       const soon=now+65*60*1000;
       const recent=now+55*60*1000;
-      const matches=await env.DB.prepare(
+      const matchesSoon=await env.DB.prepare(
         'SELECT home_team,away_team,kickoff FROM matches WHERE kickoff>? AND kickoff<?'
       ).bind(recent,soon).all();
-      if(matches.results.length>0){
+      if(matchesSoon.results.length>0){
         const subs=await env.DB.prepare('SELECT endpoint,p256dh,auth FROM push_subscriptions').all();
-        for(const m of matches.results){
+        for(const m of matchesSoon.results){
           await Promise.allSettled(subs.results.map(s=>sendPush(env,s,{
             title:'⏰ Vergeet je prono niet!',
             body:`${m.home_team} vs ${m.away_team} begint over 1 uur`,
+            url:'/'
+          })));
+        }
+      }
+
+      // Push 2: wedstrijden die net unlocked zijn (12u voor aftrap ±5 min)
+      const unlockSoon=now+12*60*60*1000+5*60*1000;
+      const unlockRecent=now+12*60*60*1000-5*60*1000;
+      const matchesUnlocked=await env.DB.prepare(
+        'SELECT home_team,away_team,kickoff FROM matches WHERE kickoff>? AND kickoff<?'
+      ).bind(unlockRecent,unlockSoon).all();
+      if(matchesUnlocked.results.length>0){
+        const subs=await env.DB.prepare('SELECT endpoint,p256dh,auth FROM push_subscriptions').all();
+        for(const m of matchesUnlocked.results){
+          await Promise.allSettled(subs.results.map(s=>sendPush(env,s,{
+            title:'🔓 Prono beschikbaar!',
+            body:`Vul je voorspelling in voor ${m.home_team} vs ${m.away_team}`,
             url:'/'
           })));
         }
