@@ -697,15 +697,14 @@ function showApp(){
   }
   loadAll();
   initPush();
-  // Vraag push toestemming na login (met kleine vertraging)
+  // Vraag push toestemming automatisch na login
   setTimeout(()=>{
     OneSignalDeferred.push(async function(OneSignal){
-      const permission=await OneSignal.Notifications.permission;
-      if(!permission){
-        await OneSignal.Slidedown.promptPush();
-      }
+      await OneSignal.Notifications.requestPermission();
+      const toggle=document.getElementById('push-toggle');
+      if(toggle)toggle.checked=!!(await OneSignal.Notifications.permission);
     });
-  }, 3000);
+  }, 2000);
 }
 
 async function init(){
