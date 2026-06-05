@@ -234,58 +234,23 @@ async function syncFromFootballData(env){
 }
 
 
-async function sendPush(env,sub,payload){
-  const vapidPublic=env.VAPID_PUBLIC;
-  const vapidPrivate=env.VAPID_PRIVATE;
-  const vapidEmail=env.VAPID_EMAIL;
-
-  // Build VAPID JWT
-  const audience=new URL(sub.endpoint).origin;
-  const now=Math.floor(Date.now()/1000);
-  const header={typ:'JWT',alg:'ES256'};
-  const claims={aud:audience,exp:now+43200,sub:vapidEmail};
-
-  function b64url(buf){
-    return btoa(String.fromCharCode(...new Uint8Array(buf)))
-      .replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
-  }
-  function strToB64(str){return b64url(new TextEncoder().encode(str));}
-
-  const headerB64=strToB64(JSON.stringify(header));
-  const claimsB64=strToB64(JSON.stringify(claims));
-  const sigInput=`${headerB64}.${claimsB64}`;
-
-  // Import private key
-  const privKeyBytes=Uint8Array.from(atob(vapidPrivate.replace(/-/g,'+').replace(/_/g,'/')),c=>c.charCodeAt(0));
-  const privKey=await crypto.subtle.importKey('pkcs8',privKeyBytes.buffer,{name:'ECDSA',namedCurve:'P-256'},false,['sign'])
-    .catch(async()=>{
-      // Try raw format
-      return crypto.subtle.importKey('raw',privKeyBytes.buffer,{name:'ECDSA',namedCurve:'P-256'},false,['sign']);
-    });
-
-  const sig=await crypto.subtle.sign({name:'ECDSA',hash:'SHA-256'},privKey,new TextEncoder().encode(sigInput));
-  const jwt=`${sigInput}.${b64url(sig)}`;
-
-  const authHeader=`vapid t=${jwt},k=${vapidPublic}`;
-
-  // Encrypt payload using Web Push encryption
-  const payloadStr=JSON.stringify(payload);
-
-  const response=await fetch(sub.endpoint,{
+async function sendPush(env,payload){
+  const apiKey=env.ONESIGNAL_API_KEY;
+  if(!apiKey)return;
+  await fetch('https://onesignal.com/api/v1/notifications',{
     method:'POST',
-    headers:{
-      'Authorization':authHeader,
-      'Content-Type':'application/json',
-      'TTL':'86400',
-    },
-    body:payloadStr
+    headers:{'Content-Type':'application/json','Authorization':`Basic ${apiKey}`},
+    body:JSON.stringify({
+      app_id:'6adb9c17-2469-4c00-8b83-e6eb8df5116f',
+      included_segments:['Total Subscriptions'],
+      headings:{en:payload.title},
+      contents:{en:payload.body},
+      url:payload.url||'/',
+      web_url:payload.url||'/'
+    })
   });
+}
 
-  if(!response.ok){
-    const t=await response.text();
-    throw new Error(`Push failed ${response.status}: ${t}`);
-  }
-  return true;
 }
 
 export default {
@@ -304,12 +269,11 @@ export default {
       if(matchesSoon.results.length>0){
         const subs=await env.DB.prepare('SELECT endpoint,p256dh,auth FROM push_subscriptions').all();
         for(const m of matchesSoon.results){
-          await Promise.allSettled(subs.results.map(s=>sendPush(env,s,{
+          await Promise.allSettled(sendPush(env,{
             title:'⏰ Vergeet je prono niet!',
             body:`${m.home_team} vs ${m.away_team} begint over 1 uur`,
             url:'/'
-          })));
-        }
+          })
       }
 
       // Push 2: wedstrijden die net unlocked zijn (12u voor aftrap ±5 min)
@@ -321,12 +285,11 @@ export default {
       if(matchesUnlocked.results.length>0){
         const subs=await env.DB.prepare('SELECT endpoint,p256dh,auth FROM push_subscriptions').all();
         for(const m of matchesUnlocked.results){
-          await Promise.allSettled(subs.results.map(s=>sendPush(env,s,{
+          await Promise.allSettled(sendPush(env,{
             title:'🔓 Prono beschikbaar!',
             body:`Vul je voorspelling in voor ${m.home_team} vs ${m.away_team}`,
             url:'/'
-          })));
-        }
+          })
       }
     })());
   },
@@ -481,7 +444,7 @@ export default {
         bracket[`3${grp}`]=overrides[`3${grp}`]||table[2]?.name||`3${grp}`;
       }
       const thirds=Object.entries(standings)
-        .map(([grp,table])=>({...(table[2]||{}),grp}))
+        .map(([grp,table])=>({...(table[2]||{}),grp})
         .filter(t=>t.played>0)
         .sort((a,b)=>b.pts-a.pts||b.gd-a.gd||b.gf-a.gf)
         .slice(0,8);
@@ -556,18 +519,17 @@ export default {
 
     if(path==='/api/push/send'&&request.method==='POST'){
       const user=await getUser(request,env);
-      if(!user||!user.isAdmin)return err('Geen toegang',403);
+      if(!user)return err('Niet ingelogd',401);
       const{title,body,url}=await request.json();
       const subs=await env.DB.prepare('SELECT endpoint,p256dh,auth FROM push_subscriptions').all();
-      const results=await Promise.allSettled(subs.results.map(s=>sendPush(env,s,{title,body,url})));
+      const results=await Promise.allSettled(sendPush(env,{title,body,url})));
       const ok=results.filter(r=>r.status==='fulfilled').length;
       return json({sent:ok,total:subs.results.length});
     }
 
     if(path==='/api/bonus-all'&&request.method==='GET'){
       const rows=await env.DB.prepare('SELECT player,champion,topscorer,goals FROM bonus_predictions').all();
-      return json(rows.results.map(r=>({name:r.player,champion:r.champion||'',topscorer:r.topscorer||'',goals:r.goals!=null?r.goals:null})));
-    }
+      return json(rows.results.map(r=>({name:r.player,champion:r.champion||'',topscorer:r.topscorer||'',goals:r.goals!=null?r.goals:null})
 
     // ── RANKING ───────────────────────────────────────────
     if(path==='/api/ranking'&&request.method==='GET'){
