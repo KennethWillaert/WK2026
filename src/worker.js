@@ -444,6 +444,13 @@ export default {
       return json({ok:true});
     }
 
+    if(path==='/api/match-pronos'&&request.method==='GET'){
+      const matchId=url.searchParams.get('match_id');
+      if(!matchId) return err('match_id vereist');
+      const rows=await env.DB.prepare('SELECT p.player,p.home_score,p.away_score,u.avatar FROM predictions p LEFT JOIN users u ON u.name=p.player WHERE p.match_id=?').bind(matchId).all();
+      return json(rows.results.map(r=>({name:r.player,h:r.home_score,a:r.away_score,avatar:r.avatar||'🏳️'})));
+    }
+
     if(path==='/api/bonus-all'&&request.method==='GET'){
       const rows=await env.DB.prepare('SELECT player,champion,topscorer,goals FROM bonus_predictions').all();
       return json(rows.results.map(r=>({name:r.player,champion:r.champion||'',topscorer:r.topscorer||'',goals:r.goals!=null?r.goals:null})));

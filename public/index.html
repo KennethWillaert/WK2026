@@ -44,7 +44,12 @@
     .avatar-opt:hover{background:#e6ecf5;border-color:#0A2240}
     .avatar-opt.selected{border-color:#0A2240;background:#e6ecf5}
     .avatar-opt img,.avatar-display img,.user-flag img{width:22px;height:22px;vertical-align:middle}
-    .help-toggle{width:100%;margin-top:14px;padding:9px;display:flex;align-items:center;justify-content:center;gap:6px;background:none;border:1px solid rgba(10,34,64,0.15);border-radius:6px;font-size:13px;color:#4a5a70;cursor:pointer;font-family:inherit;text-align:center}
+    .pronos-toggle{display:inline-flex;align-items:center;gap:5px;margin-top:8px;padding:5px 10px;background:none;border:1px solid rgba(255,255,255,0.1);border-radius:20px;color:#7a90aa;font-size:11px;cursor:pointer;font-family:inherit}
+    .pronos-toggle:hover{background:rgba(255,255,255,0.05)}
+    .pronos-list{margin-top:8px;display:flex;flex-direction:column;gap:4px}
+    .prono-row{display:flex;align-items:center;justify-content:space-between;padding:5px 8px;background:rgba(255,255,255,0.04);border-radius:6px;font-size:12px}
+    .prono-row .prono-name{display:flex;align-items:center;gap:6px;color:#c0cde0}
+    .prono-row .prono-score{font-weight:700;color:#3a7bd5;letter-spacing:.05em}display:flex;align-items:center;justify-content:center;gap:6px;background:none;border:1px solid rgba(10,34,64,0.15);border-radius:6px;font-size:13px;color:#4a5a70;cursor:pointer;font-family:inherit;text-align:center}
     .help-toggle:hover{background:#f0f4fa}
     .help-body{display:none;margin-top:12px;border-top:1px solid rgba(10,34,64,0.1);padding-top:12px}
     .help-body.open{display:block}
@@ -860,10 +865,38 @@ function renderMatchList(wrap){
           <div class="team right">${teamWithFlagRight(resolveTeam(m.a))}</div>
         </div>
         <div class="saved-msg" id="sv_${m.id}"></div>
+        ${locked?`<button class="pronos-toggle" onclick="togglePronos('${m.id}',this)">
+          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          Zie pronos
+        </button>
+        <div class="pronos-list" id="pronos_${m.id}" style="display:none"></div>`:''}
       </div>`;
     }).join('');
   }).join('');
 }
+
+window.togglePronos=async function(mid,btn){
+  const list=document.getElementById(`pronos_${mid}`);
+  if(list.style.display!=='none'){
+    list.style.display='none';
+    btn.innerHTML=`<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> Zie pronos`;
+    return;
+  }
+  btn.innerHTML='<span class="spinner" style="width:12px;height:12px;border-width:2px"></span> Laden...';
+  try{
+    const pronos=await apiFetch(`/match-pronos?match_id=${mid}`);
+    if(!pronos.length){list.innerHTML='<span style="font-size:11px;color:#445566;padding:4px 8px">Nog geen pronos ingevuld</span>';}
+    else{
+      list.innerHTML=pronos.map(p=>`<div class="prono-row">
+        <span class="prono-name">${p.avatar||'🏳️'} ${esc(p.name)}</span>
+        <span class="prono-score">${p.h} – ${p.a}</span>
+      </div>`).join('');
+      if(window.twemoji)twemoji.parse(list,{folder:'svg',ext:'.svg'});
+    }
+    list.style.display='flex';
+    btn.innerHTML=`<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg> Verberg pronos`;
+  }catch(e){list.innerHTML=`<span style="font-size:11px;color:#f08090;padding:4px 8px">${esc(e.message)}</span>`;list.style.display='flex';}
+};
 
 window.qSavePred=function(mid,koTime){
   if(Date.now()>=koTime)return;
