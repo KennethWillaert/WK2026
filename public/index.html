@@ -22,7 +22,7 @@
           slidedown: {
             prompts: [{
               type: "push",
-              autoPrompt: true,
+              autoPrompt: false,
               text: {
                 actionMessage: "Ontvang meldingen wanneer je prono beschikbaar is en uitslagen bekend zijn!",
                 acceptButton: "Ja, zet aan",
@@ -243,18 +243,7 @@
     <button class="help-toggle" onclick="toggleHelp()"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Hoe werkt het?</button>
     <div class="help-body" id="help-body">
       <div class="help-step">
-        <h4><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Stap 1 — Registreer je</h4>
-        <ul>
-          <li>Tik op "Registreren"</li>
-          <li>Vul in: je voornaam, emailadres en wachtwoord (min. 4 tekens)</li>
-          <li>Kies je vlag uit het raster 🏳️</li>
-          <li>Tik op de grote blauwe knop "Registreren"</li>
-        </ul>
-        <p style="margin-top:6px"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> Telefoon vraagt wachtwoord te onthouden? Tik <strong>JA</strong>! 😊</p>
-      </div>
-      <hr class="help-divider">
-      <div class="help-step">
-        <h4><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Stap 2 — Zet op startscherm</h4>
+        <h4><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Stap 1 — Zet op startscherm</h4>
         <p><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg> <strong>iPhone (Safari):</strong></p>
         <ul>
           <li>Tik onderaan op het icoontje met vakje + pijltje omhoog ↑</li>
@@ -268,6 +257,17 @@
           <li>Tik op "Toevoegen" in het popup-venster <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><circle cx="12" cy="12" r="1"/><path d="M20.2 20.2c2.04-2.03.02-7.36-4.5-11.9C11.22 3.8 5.9 1.77 3.87 3.8c-2.04 2.04-.02 7.37 4.5 11.9 4.53 4.5 9.86 6.53 11.9 4.5z"/><path d="M15.7 15.7c4.52 4.52 6.55 9.85 4.5 11.9"/></svg></li>
         </ul>
         <p style="margin-top:6px"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> Voortaan open je de app gewoon via het icoontje!</p>
+      </div>
+      <hr class="help-divider">
+      <div class="help-step">
+        <h4><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Stap 2 — Registreer je</h4>
+        <ul>
+          <li>Tik op "Registreren"</li>
+          <li>Vul in: je voornaam, emailadres en wachtwoord (min. 4 tekens)</li>
+          <li>Kies je vlag uit het raster 🏳️</li>
+          <li>Tik op de grote blauwe knop "Registreren"</li>
+        </ul>
+        <p style="margin-top:6px"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> Telefoon vraagt wachtwoord te onthouden? Tik <strong>JA</strong>! 😊</p>
       </div>
       <hr class="help-divider">
       <div class="help-step">
@@ -288,19 +288,19 @@
       </div>
       <hr class="help-divider">
       <div class="help-step">
-        <h4><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg> Stap 4 — Meldingen aanzetten</h4>
+        <h4><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg> Stap 4 — Meldingen aanzetten ⚠️</h4>
         <ul>
-          <li>Tik rechtsboven op je naam/vlag</li>
+          <li>Tik rechtsboven op je <strong>naam/vlag</strong></li>
           <li>Tik op <strong>"Meldingen aan"</strong></li>
-          <li>Geef toestemming als je apparaat daarom vraagt</li>
+          <li>Tik <strong>JA / Toestaan</strong> als je apparaat om toestemming vraagt</li>
         </ul>
-        <p style="margin-top:6px">Je krijgt automatisch een melding:</p>
+        <p style="margin-top:6px">Je krijgt dan automatisch:</p>
         <ul>
-          <li>Wanneer je prono beschikbaar is (12u voor aftrap)</li>
-          <li>1 uur voor aftrap als herinnering</li>
-          <li>Wanneer een uitslag bekend is</li>
+          <li>🔓 Melding wanneer prono beschikbaar is (12u voor aftrap)</li>
+          <li>⏰ Herinnering 1 uur voor aftrap</li>
         </ul>
-        <p style="margin-top:6px"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> iPhone: app moet op startscherm staan voor meldingen!</p>
+        <p style="margin-top:6px"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> iPhone: app <strong>moet op startscherm staan</strong> voor meldingen werken!</p>
+        <p style="margin-top:4px"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> Android: zorg dat meldingen voor Chrome niet geblokkeerd zijn</p>
       </div>
       <hr class="help-divider">
       <div class="help-step">
@@ -685,6 +685,15 @@ function showApp(){
   }
   loadAll();
   initPush();
+  // Vraag push toestemming na login (met kleine vertraging)
+  setTimeout(()=>{
+    OneSignalDeferred.push(async function(OneSignal){
+      const permission=await OneSignal.Notifications.permission;
+      if(!permission){
+        await OneSignal.Slidedown.promptPush();
+      }
+    });
+  }, 3000);
 }
 
 async function init(){
