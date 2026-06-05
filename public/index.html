@@ -611,7 +611,7 @@ function showApp(){
   // Admin scores tab
   if(currentUser.isAdmin && !document.getElementById('nav-scores')){
     const btn=document.createElement('button');
-    btn.id='nav-scores'; btn.textContent='Scores';
+    btn.id='nav-scores'; btn.textContent='Admin';
     btn.onclick=()=>navTo('scores');
     document.getElementById('main-nav').appendChild(btn);
   }
