@@ -339,7 +339,7 @@
       <div class="phase-bar" id="phase-bar-v"></div>
       <div id="matches-wrap"></div>
       <div id="test-lock-btn" style="display:none;text-align:center;margin:16px 0">
-        <button onclick="window._testLock=!window._testLock;this.textContent=window._testLock?'🔴 TESTMODE AAN (klik om uit)':'⚪ Test lock aan';renderMatchList(document.getElementById('matches-wrap'))" style="background:none;border:1px dashed #445566;border-radius:20px;color:#445566;font-size:11px;padding:5px 12px;cursor:pointer;font-family:inherit">⚪ Test lock aan</button>
+        <button onclick="window._testLock=!window._testLock;this.textContent=window._testLock?'🔴 TESTMODE AAN (klik om uit)':'⚪ Test lock aan';const w=document.getElementById('matches-wrap');w.innerHTML='';renderMatchList(w);" style="background:none;border:1px dashed #445566;border-radius:20px;color:#445566;font-size:11px;padding:5px 12px;cursor:pointer;font-family:inherit">⚪ Test lock aan</button>
       </div>
     </div>
     <div id="page-standen" class="page"><div id="standen-wrap"></div></div>
@@ -828,7 +828,7 @@ function renderMatchList(wrap){
       const UNLOCK_BEFORE=12*60*60*1000;
       const locked=window._testLock||Date.now()>=m.ko;
       const unlockTime=m.ko-UNLOCK_BEFORE;
-      const unlocked=Date.now()>=unlockTime;
+      const unlocked=window._testLock||Date.now()>=unlockTime;
       let badge='';
       if(res&&pred.h!=null){
         const p=calcPts(pred,res);
