@@ -29,7 +29,7 @@
     .auth-tab.active{background:#fff;color:#0A2240;box-shadow:0 1px 4px rgba(0,0,0,0.1);font-weight:600}
     .auth-field{margin-bottom:14px}
     .auth-field label{display:block;font-size:12px;font-weight:600;color:#4a5a70;margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em}
-    .auth-field input{width:100%;padding:10px 12px;border:1px solid #4a5a70;border-radius:6px;background:#ffffff;color:#0d1b2e;font-size:14px;font-family:inherit;outline:none;-webkit-text-fill-color:#0d1b2e}
+    .auth-field input{width:100%;padding:10px 12px;border:1px solid #4a5a70;border-radius:6px;background:#ffffff;color:#0d1b2e;font-size:16px;font-family:inherit;outline:none;-webkit-text-fill-color:#0d1b2e}
     .auth-field input::placeholder{color:#999!important;opacity:1!important}
     .auth-field input::-webkit-input-placeholder{color:#999!important}
     .auth-field input::-moz-placeholder{color:#999!important}
@@ -92,7 +92,7 @@
     .page{display:none}.page.active{display:block}
     .info-box{background:#0d2040;border-left:3px solid #3a7bd5;border-radius:0 6px 6px 0;padding:10px 14px;font-size:13px;color:#7ab0f0;margin-bottom:16px;line-height:1.8}
     .info-box strong{color:#e4eaf4}
-    input[type=text],input[type=number],input[type=email],input[type=password],select{width:100%;padding:9px 12px;border:1px solid rgba(255,255,255,0.15);border-radius:6px;background:#1e2a3a;color:#e4eaf4;font-size:14px;font-family:inherit;outline:none}
+    input[type=text],input[type=number],input[type=email],input[type=password],select{width:100%;padding:9px 12px;border:1px solid rgba(255,255,255,0.15);border-radius:6px;background:#1e2a3a;color:#e4eaf4;font-size:16px;font-family:inherit;outline:none}
     input[type=number]{-moz-appearance:textfield}
     input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
     input:focus,select:focus{border-color:#3a7bd5}
@@ -115,7 +115,7 @@
     .team{font-size:13px;font-weight:600;color:#e4eaf4;word-break:break-word;hyphens:auto}
     .team.right{text-align:right}
     .score-inputs{display:flex;align-items:center;gap:4px}
-    .score-inputs input{width:38px;text-align:center;font-size:15px;font-weight:700;padding:5px 2px;border-radius:6px;border:1px solid rgba(255,255,255,0.15);background:#0a1220}
+    .score-inputs input{width:38px;text-align:center;font-size:16px;font-weight:700;padding:5px 2px;border-radius:6px;border:1px solid rgba(255,255,255,0.15);background:#0a1220}
     .score-inputs input:focus{border-color:#3a7bd5;background:#1e2a3a}
     .score-sep{color:#445566;font-size:16px;font-weight:700;padding:0 2px}
     .saved-msg{font-size:11px;color:#1d9e75;text-align:center;height:16px;margin-top:5px;font-weight:500}
@@ -347,6 +347,20 @@
         Uitslagen worden automatisch gesynchroniseerd via football-data.org (elke 5 min).<br>
         <button onclick="manualSync()" id="sync-btn" class="primary" style="margin-top:8px;font-size:13px;padding:7px 14px"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> Nu synchroniseren</button>
         <span id="sync-status" style="font-size:12px;color:#1d9e75;margin-left:8px"></span>
+        <div style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.08)">
+          <div style="font-size:12px;color:#7a90aa;margin-bottom:8px">Stuur push notificatie naar alle subscribers:</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button onclick="sendManualPush('prono')" class="primary" style="font-size:12px;padding:6px 12px">
+              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+              Prono reminder
+            </button>
+            <button onclick="sendManualPush('uitslag')" class="primary" style="font-size:12px;padding:6px 12px">
+              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+              Uitslag bekend
+            </button>
+          </div>
+          <span id="push-status" style="font-size:12px;color:#1d9e75;margin-top:6px;display:block"></span>
+        </div>
       </div>
       <div class="phase-bar" id="phase-bar-s"></div>
       <div id="scores-wrap"></div>
@@ -624,6 +638,7 @@ function showApp(){
     document.getElementById('test-lock-btn').style.display='block';
   }
   loadAll();
+  initPush();
 }
 
 async function init(){
@@ -918,6 +933,60 @@ window.qSavePred=function(mid,koTime){
   },600);
 };
 
+
+// ── PUSH NOTIFICATIONS ──────────────────────────
+const VAPID_PUBLIC = 'BEbUXynNGZ0CcuPZqscHEcNciexskn97rJy786q7Kz5SoGQJ4EEsSUzsNSYLf1lQbWalAFUnCuA7CKVGljCxjQE';
+
+function urlB64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = atob(base64);
+  return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
+}
+
+async function initPush() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+  const reg = await navigator.serviceWorker.ready;
+  const sub = await reg.pushManager.getSubscription();
+  const btn = document.getElementById('push-btn');
+  if (btn) {
+    if (sub) {
+      btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg> Meldingen uit`;
+    } else {
+      btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg> Meldingen aan`;
+    }
+  }
+}
+
+async function togglePushSubscription() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+    alert('Push notificaties worden niet ondersteund op dit apparaat.');
+    return;
+  }
+  const reg = await navigator.serviceWorker.ready;
+  const existing = await reg.pushManager.getSubscription();
+  const btn = document.getElementById('push-btn');
+
+  if (existing) {
+    // Unsubscribe
+    await existing.unsubscribe();
+    await apiFetch('/push/unsubscribe', {method:'POST', body:JSON.stringify({endpoint:existing.endpoint})});
+    if (btn) btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg> Meldingen aan`;
+  } else {
+    // Request permission
+    const perm = await Notification.requestPermission();
+    if (perm !== 'granted') { alert('Toestemming geweigerd voor meldingen.'); return; }
+    const sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlB64ToUint8Array(VAPID_PUBLIC)
+    });
+    const {endpoint, keys} = sub.toJSON();
+    await apiFetch('/push/subscribe', {method:'POST', body:JSON.stringify({endpoint, p256dh:keys.p256dh, auth:keys.auth})});
+    if (btn) btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg> Meldingen uit`;
+  }
+  document.getElementById('profile-menu').classList.remove('open');
+}
+
 // ── STANDEN ─────────────────────────────────────
 async function renderStandings(){
   const wrap=document.getElementById('standen-wrap');
@@ -1082,6 +1151,23 @@ async function renderTopscorers(){
       </table></div>`;
     }catch(e){wrap.innerHTML=`<div class="error-msg">${e.message}</div>`;}
   }
+
+  window.sendManualPush=async function(type){
+    const status=document.getElementById('push-status');
+    status.textContent='Bezig...';
+    status.style.color='#7a90aa';
+    try{
+      const payload=type==='prono'
+        ? {title:'⏰ Vergeet je prono niet!',body:'Vul snel je voorspelling in voor de volgende wedstrijd!',url:'/'}
+        : {title:'⚽ Uitslag bekend!',body:'Bekijk hoeveel punten je hebt gescoord in de app.',url:'/'};
+      const res=await apiFetch('/push/send',{method:'POST',body:JSON.stringify(payload)});
+      status.textContent=`✓ Verstuurd naar ${res.sent}/${res.total} subscribers`;
+      status.style.color='#1d9e75';
+    }catch(e){
+      status.textContent='Fout: '+e.message;
+      status.style.color='#f08090';
+    }
+  };
 
   window.manualSync=async function(){
     const btn=document.getElementById('sync-btn');

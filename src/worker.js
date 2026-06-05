@@ -233,10 +233,84 @@ async function syncFromFootballData(env){
   return{synced,message:`${synced} wedstrijden gesynchroniseerd`};
 }
 
+
+async function sendPush(env,sub,payload){
+  const vapidPublic=env.VAPID_PUBLIC;
+  const vapidPrivate=env.VAPID_PRIVATE;
+  const vapidEmail=env.VAPID_EMAIL;
+
+  // Build VAPID JWT
+  const audience=new URL(sub.endpoint).origin;
+  const now=Math.floor(Date.now()/1000);
+  const header={typ:'JWT',alg:'ES256'};
+  const claims={aud:audience,exp:now+43200,sub:vapidEmail};
+
+  function b64url(buf){
+    return btoa(String.fromCharCode(...new Uint8Array(buf)))
+      .replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+  }
+  function strToB64(str){return b64url(new TextEncoder().encode(str));}
+
+  const headerB64=strToB64(JSON.stringify(header));
+  const claimsB64=strToB64(JSON.stringify(claims));
+  const sigInput=`${headerB64}.${claimsB64}`;
+
+  // Import private key
+  const privKeyBytes=Uint8Array.from(atob(vapidPrivate.replace(/-/g,'+').replace(/_/g,'/')),c=>c.charCodeAt(0));
+  const privKey=await crypto.subtle.importKey('pkcs8',privKeyBytes.buffer,{name:'ECDSA',namedCurve:'P-256'},false,['sign'])
+    .catch(async()=>{
+      // Try raw format
+      return crypto.subtle.importKey('raw',privKeyBytes.buffer,{name:'ECDSA',namedCurve:'P-256'},false,['sign']);
+    });
+
+  const sig=await crypto.subtle.sign({name:'ECDSA',hash:'SHA-256'},privKey,new TextEncoder().encode(sigInput));
+  const jwt=`${sigInput}.${b64url(sig)}`;
+
+  const authHeader=`vapid t=${jwt},k=${vapidPublic}`;
+
+  // Encrypt payload using Web Push encryption
+  const payloadStr=JSON.stringify(payload);
+
+  const response=await fetch(sub.endpoint,{
+    method:'POST',
+    headers:{
+      'Authorization':authHeader,
+      'Content-Type':'application/json',
+      'TTL':'86400',
+    },
+    body:payloadStr
+  });
+
+  if(!response.ok){
+    const t=await response.text();
+    throw new Error(`Push failed ${response.status}: ${t}`);
+  }
+  return true;
+}
+
 export default {
   // Cron trigger: elke 5 minuten tijdens het WK
   async scheduled(event,env,ctx){
-    ctx.waitUntil(syncFromFootballData(env));
+    ctx.waitUntil((async()=>{
+      await syncFromFootballData(env);
+      // Pregame push: wedstrijden die over ~60 min beginnen
+      const now=Date.now();
+      const soon=now+65*60*1000;
+      const recent=now+55*60*1000;
+      const matches=await env.DB.prepare(
+        'SELECT home_team,away_team,kickoff FROM matches WHERE kickoff>? AND kickoff<?'
+      ).bind(recent,soon).all();
+      if(matches.results.length>0){
+        const subs=await env.DB.prepare('SELECT endpoint,p256dh,auth FROM push_subscriptions').all();
+        for(const m of matches.results){
+          await Promise.allSettled(subs.results.map(s=>sendPush(env,s,{
+            title:'⏰ Vergeet je prono niet!',
+            body:`${m.home_team} vs ${m.away_team} begint over 1 uur`,
+            url:'/'
+          })));
+        }
+      }
+    })());
   },
 
   async fetch(request,env){
@@ -444,11 +518,32 @@ export default {
       return json({ok:true});
     }
 
-    if(path==='/api/match-pronos'&&request.method==='GET'){
-      const matchId=url.searchParams.get('match_id');
-      if(!matchId) return err('match_id vereist');
-      const rows=await env.DB.prepare('SELECT p.player,p.home_score,p.away_score,u.avatar FROM predictions p LEFT JOIN users u ON u.name=p.player WHERE p.match_id=?').bind(matchId).all();
-      return json(rows.results.map(r=>({name:r.player,h:r.home_score,a:r.away_score,avatar:r.avatar||'🏳️'})));
+
+    if(path==='/api/push/subscribe'&&request.method==='POST'){
+      const user=await getUser(request,env);
+      if(!user)return err('Niet ingelogd',401);
+      const{endpoint,p256dh,auth}=await request.json();
+      if(!endpoint||!p256dh||!auth)return err('Ongeldige subscription');
+      await env.DB.prepare(
+        'INSERT INTO push_subscriptions(player,endpoint,p256dh,auth)VALUES(?,?,?,?)ON CONFLICT(endpoint)DO UPDATE SET player=excluded.player'
+      ).bind(user.name,endpoint,p256dh,auth).run();
+      return json({ok:true});
+    }
+
+    if(path==='/api/push/unsubscribe'&&request.method==='POST'){
+      const{endpoint}=await request.json();
+      await env.DB.prepare('DELETE FROM push_subscriptions WHERE endpoint=?').bind(endpoint).run();
+      return json({ok:true});
+    }
+
+    if(path==='/api/push/send'&&request.method==='POST'){
+      const user=await getUser(request,env);
+      if(!user||!user.isAdmin)return err('Geen toegang',403);
+      const{title,body,url}=await request.json();
+      const subs=await env.DB.prepare('SELECT endpoint,p256dh,auth FROM push_subscriptions').all();
+      const results=await Promise.allSettled(subs.results.map(s=>sendPush(env,s,{title,body,url})));
+      const ok=results.filter(r=>r.status==='fulfilled').length;
+      return json({sent:ok,total:subs.results.length});
     }
 
     if(path==='/api/bonus-all'&&request.method==='GET'){
