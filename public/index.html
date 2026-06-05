@@ -14,7 +14,25 @@
   <script>
     window.OneSignalDeferred = window.OneSignalDeferred || [];
     OneSignalDeferred.push(async function(OneSignal) {
-      await OneSignal.init({ appId: "6adb9c17-2469-4c00-8b83-e6eb8df5116f" });
+      await OneSignal.init({
+        appId: "6adb9c17-2469-4c00-8b83-e6eb8df5116f",
+        serviceWorkerPath: "/OneSignalSDKWorker.js",
+        notifyButton: { enable: false },
+        promptOptions: {
+          slidedown: {
+            prompts: [{
+              type: "push",
+              autoPrompt: true,
+              text: {
+                actionMessage: "Ontvang meldingen wanneer je prono beschikbaar is en uitslagen bekend zijn!",
+                acceptButton: "Ja, zet aan",
+                cancelButton: "Nee"
+              },
+              delay: { pageViews: 1, timeDelay: 3 }
+            }]
+          }
+        }
+      });
     });
   </script>
   <script src="https://cdn.jsdelivr.net/npm/@twemoji/api@latest/dist/twemoji.min.js" crossorigin="anonymous"></script>
