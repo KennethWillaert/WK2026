@@ -138,6 +138,7 @@
     button.primary{padding:9px 18px;background:#0A2240;color:#fff;border:none;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit}
     button.primary:hover{opacity:0.85}
     .phase-bar{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:14px}
+    .ph.ph-current{border-color:#C9A84C;color:#C9A84C;background:rgba(201,168,76,0.1)}
     .ph{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border:1px solid rgba(255,255,255,0.15);border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;background:#1e2a3a;color:#7a90aa;font-family:inherit}
     .ph.active{background:#0A2240;color:#fff;border-color:#3a7bd5}
     .ph:hover:not(.active):not(:disabled){border-color:#3a7bd5;color:#e4eaf4}
@@ -819,11 +820,23 @@ function showError(msg){
 }
 
 // ── PHASE BUTTONS ───────────────────────────────
+
+function getCurrentPhase(){
+  const now=Date.now();
+  // Find the current phase based on unlock times
+  const phases=[...PHASES].reverse();
+  for(const ph of phases){
+    if(ph.unlock&&now>=ph.unlock)return ph.id;
+  }
+  return 'group'; // default groepsfase
+}
+
 function renderPhaseBtns(containerId, active, setter){
   const now=Date.now();
   document.getElementById(containerId).innerHTML=PHASES.map(ph=>{
     const locked = ph.unlock>0 && now<ph.unlock;
-    return `<button class="ph${active===ph.id?' active':''}${locked?' ph-locked':''}"
+    const isCurrent=ph.id===getCurrentPhase();
+    return `<button class="ph${active===ph.id?' active':''}${locked?' ph-locked':''}${isCurrent?' ph-current':''}"
       ${locked?'disabled':''} onclick="${!locked?setter+'(\''+ph.id+'\')':''}"
     >${ph.label}${locked?' <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>':''}</button>`;
   }).join('');
