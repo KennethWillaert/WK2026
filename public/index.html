@@ -96,7 +96,10 @@
     .reaction-btn.active{background:rgba(201,168,76,0.15);border-color:rgba(201,168,76,0.4)}
     .reaction-btn .r-count{font-size:10px;color:#7a90aa}
     .titles-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
-    .title-card{background:#0d1520;border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:12px;cursor:pointer;transition:border-color .2s;outline:none;-webkit-tap-highlight-color:transparent}
+    .title-card{background:#0d1520;border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:12px;cursor:pointer;transition:border-color .2s,background .2s;outline:none;-webkit-tap-highlight-color:transparent;position:relative}
+    .title-card:hover{border-color:rgba(201,168,76,0.3);background:#111d2e}
+    .title-card:active{background:#0d1828}
+    .title-card::after{content:'ℹ';position:absolute;top:8px;right:10px;font-size:11px;color:#2a3a4a}
     .title-card:hover{border-color:rgba(201,168,76,0.3)}
     .title-card .t-emoji{font-size:24px;display:block;margin-bottom:6px}
     .title-card .t-name{font-size:12px;font-weight:700;color:#e4eaf4;display:block;margin-bottom:2px}
