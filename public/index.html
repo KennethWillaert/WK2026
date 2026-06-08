@@ -387,8 +387,15 @@
   <div id="ticker-wrap" class="ticker-wrap"><div class="ticker-track" id="ticker-track"></div></div>
   <main>
   <div id="page-pronostiek" class="page active">
-      <div class="info-box">
-        <strong>Spelregels</strong>
+      <div class="info-box" style="cursor:pointer;user-select:none" onclick="this.querySelector('.spelregels-body').style.display=this.querySelector('.spelregels-body').style.display==='none'?'block':'none';this.querySelector('.spelregels-chevron').style.transform=this.querySelector('.spelregels-body').style.display==='none'?'rotate(0deg)':'rotate(180deg)'">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <strong>Spelregels</strong>
+          <span style="display:flex;align-items:center;gap:6px;font-size:11px;color:#7a90aa">
+            <span class="spelregels-hint">Tik hier om de spelregels te zien</span>
+            <svg class="spelregels-chevron" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transition:transform 0.2s;flex-shrink:0"><polyline points="6 9 12 15 18 9"/></svg>
+          </span>
+        </div>
+        <div class="spelregels-body" style="display:none">
         <div style="display:flex;flex-direction:column;gap:3px;margin-top:8px">
           <span>Exacte score = 3 pt</span>
           <span>Juiste winnaar of gelijkspel = 1 pt</span>
@@ -410,6 +417,7 @@
           <span style="display:flex;align-items:center;gap:5px"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Prono sluit bij aftrap</span>
           <span style="display:flex;align-items:center;gap:5px"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4a2 2 0 0 1-2-2V5h4"/><path d="M18 9h2a2 2 0 0 0 2-2V5h-4"/><path d="M12 17v4"/><path d="M8 21h8"/><path d="M6 5h12v6a6 6 0 0 1-12 0z"/></svg> Bonus sluit bij aftrap eerste wedstrijd (11 jun 21:00)</span>
           <span style="display:flex;align-items:center;gap:5px"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Wedstrijden beschikbaar 12u voor aftrap</span>
+        </div>
         </div>
       </div>
       <div class="phase-bar" id="phase-bar-v"></div>
