@@ -95,6 +95,20 @@
     .reaction-btn:hover{background:rgba(255,255,255,0.1)}
     .reaction-btn.active{background:rgba(201,168,76,0.15);border-color:rgba(201,168,76,0.4)}
     .reaction-btn .r-count{font-size:10px;color:#7a90aa}
+    .titles-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+    .title-card{background:#0d1520;border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:12px;cursor:pointer;transition:border-color .2s}
+    .title-card:hover{border-color:rgba(201,168,76,0.3)}
+    .title-card .t-emoji{font-size:24px;display:block;margin-bottom:6px}
+    .title-card .t-name{font-size:12px;font-weight:700;color:#e4eaf4;display:block;margin-bottom:2px}
+    .title-card .t-holder{font-size:11px;color:#C9A84C;display:flex;align-items:center;gap:4px}
+    .title-card .t-holder.empty{color:#445566}
+    .title-modal{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px}
+    .title-modal-card{background:#1a2a3a;border-radius:14px;padding:24px;max-width:320px;width:100%;text-align:center}
+    .title-modal-card .tm-emoji{font-size:48px;margin-bottom:12px}
+    .title-modal-card .tm-name{font-size:18px;font-weight:700;color:#e4eaf4;margin-bottom:8px}
+    .title-modal-card .tm-desc{font-size:13px;color:#7a90aa;line-height:1.6;margin-bottom:16px}
+    .title-modal-card .tm-holder{font-size:14px;color:#C9A84C;font-weight:600}
+    .title-modal-card .tm-close{margin-top:16px;padding:8px 20px;background:#0A2240;border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#e4eaf4;cursor:pointer;font-family:inherit;font-size:13px}
     .help-toggle{width:100%;margin-top:14px;padding:9px;display:flex;align-items:center;justify-content:center;gap:6px;background:none;border:1px solid rgba(10,34,64,0.15);border-radius:6px;font-size:13px;color:#4a5a70;cursor:pointer;font-family:inherit;text-align:center}
     .help-toggle:hover{background:#f0f4fa}
     .help-body{display:none;margin-top:12px;border-top:1px solid rgba(10,34,64,0.1);padding-top:12px}
@@ -1281,9 +1295,98 @@ async function renderRanking(){
         <td class="pts-cell">${r.pts}</td>
       </tr>`).join('')}</tbody>
     </table></div>`;
+    // Render titels
+    renderTitles(ranking, wrap);
     if(window.twemoji) twemoji.parse(wrap,{folder:'svg',ext:'.svg'});
   }catch(e){wrap.innerHTML=`<div class="error-msg">${e.message}</div>`;}
 }
+
+function renderTitles(ranking, wrap){
+  const TITLES=[
+    {
+      emoji:'🏆',
+      name:'Baas van het Voetbal',
+      desc:'De leider van de ranking — heeft de meeste punten verzameld.',
+      calc:(r)=>r.sort((a,b)=>b.pts-a.pts)[0]
+    },
+    {
+      emoji:'🎯',
+      name:'Sluipschutter',
+      desc:'Meeste exacte scores geraden — weet precies hoe het zal eindigen.',
+      calc:(r)=>r.sort((a,b)=>b.exact-a.exact)[0]
+    },
+    {
+      emoji:'🍀',
+      name:'Geluksvogel',
+      desc:'Veel punten, weinig exacte scores — wint zonder exact te raden. Puur geluk!',
+      calc:(r)=>{
+        const eligible=r.filter(p=>p.filled>0);
+        return eligible.sort((a,b)=>{
+          const ratioA=a.pts>0?(a.pts-a.exact*3)/a.pts:0;
+          const ratioB=b.pts>0?(b.pts-b.exact*3)/b.pts:0;
+          return ratioB-ratioA||b.pts-a.pts;
+        })[0];
+      }
+    },
+    {
+      emoji:'😴',
+      name:'Mr. Gelijkspel',
+      desc:'Voorspelt het vaakst een gelijkspel — gelooft in harmonie op het veld.',
+      calc:(r)=>r.sort((a,b)=>(b.draws||0)-(a.draws||0))[0]
+    },
+    {
+      emoji:'💀',
+      name:'Pechvogel',
+      desc:'Meeste wedstrijden met 0 punten — het lot zit niet mee.',
+      calc:(r)=>r.filter(p=>p.filled>0).sort((a,b)=>{
+        const missA=a.filled-a.exact-a.win;
+        const missB=b.filled-b.exact-b.win;
+        return missB-missA;
+      })[0]
+    },
+    {
+      emoji:'🥶',
+      name:'IJskoude Analist',
+      desc:'Hoogste hit rate — voorspelt het vaakst de juiste uitkomst.',
+      calc:(r)=>r.filter(p=>p.filled>0).sort((a,b)=>{
+        const hrA=(a.exact+a.win)/a.filled;
+        const hrB=(b.exact+b.win)/b.filled;
+        return hrB-hrA;
+      })[0]
+    }
+  ];
+
+  const hasData=ranking.some(r=>r.filled>0);
+  const titlesHtml=TITLES.map(t=>{
+    const holder=hasData?t.calc([...ranking]):null;
+    return `<div class="title-card" onclick="openTitleModal('${t.emoji}','${t.name.replace(/'/g,"\'")}','${t.desc.replace(/'/g,"\'")}','${holder?esc(holder.name):''}','${holder?holder.avatar||'🏳️':''}')">
+      <span class="t-emoji">${t.emoji}</span>
+      <span class="t-name">${t.name}</span>
+      <span class="t-holder ${holder?'':'empty'}">${holder?`${holder.avatar||'🏳️'} ${esc(holder.name)}`:'— Nog niet bepaald —'}</span>
+    </div>`;
+  }).join('');
+
+  const titlesSection=`<div style="margin-bottom:8px;font-size:12px;font-weight:700;color:#445566;text-transform:uppercase;letter-spacing:.05em">Titels</div><div class="titles-grid">${titlesHtml}</div>`;
+  wrap.innerHTML=titlesSection+wrap.innerHTML;
+}
+
+window.openTitleModal=function(emoji,name,desc,holder,avatar){
+  const existing=document.getElementById('title-modal');
+  if(existing)existing.remove();
+  const modal=document.createElement('div');
+  modal.id='title-modal';
+  modal.className='title-modal';
+  modal.innerHTML=`<div class="title-modal-card">
+    <div class="tm-emoji">${emoji}</div>
+    <div class="tm-name">${name}</div>
+    <div class="tm-desc">${desc}</div>
+    ${holder?`<div class="tm-holder">${avatar} ${holder}</div>`:'<div class="tm-holder" style="color:#445566">— Nog niet bepaald —</div>'}
+    <button class="tm-close" onclick="document.getElementById('title-modal').remove()">Sluiten</button>
+  </div>`;
+  modal.onclick=e=>{if(e.target===modal)modal.remove();};
+  document.body.appendChild(modal);
+  if(window.twemoji)twemoji.parse(modal,{folder:'svg',ext:'.svg'});
+};
 
 // ── HELPERS ──────────────────────────────────────
 async function renderTopscorers(){
