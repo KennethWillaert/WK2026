@@ -236,8 +236,8 @@ async function syncFromFootballData(env){
 
 async function sendPush(env,payload){
   const apiKey=env.ONESIGNAL_API_KEY;
-  if(!apiKey)return;
-  await fetch('https://onesignal.com/api/v1/notifications',{
+  if(!apiKey)return {error:'no api key'};
+  const res=await fetch('https://onesignal.com/api/v1/notifications',{
     method:'POST',
     headers:{'Content-Type':'application/json','Authorization':`Basic ${apiKey}`},
     body:JSON.stringify({
@@ -245,12 +245,11 @@ async function sendPush(env,payload){
       included_segments:['Total Subscriptions'],
       headings:{en:payload.title},
       contents:{en:payload.body},
-      url:payload.url||'/',
-      web_url:payload.url||'/'
+      web_url:'https://wk2026-413.pages.dev'
     })
   });
-}
-
+  const data=await res.json();
+  return data;
 }
 
 export default {
@@ -260,36 +259,53 @@ export default {
       await syncFromFootballData(env);
       const now=Date.now();
 
+      // Haal bracket overrides op voor echte teamnamen
+      const overrideRows=await env.DB.prepare("SELECT match_id,home_score FROM results WHERE match_id LIKE 'override_%'").all();
+      const overrides={};
+      overrideRows.results.forEach(r=>{overrides[r.match_id.replace('override_','')]=r.home_score;});
+      function resolveTeam(t){
+        if(overrides[t])return overrides[t];
+        // Friendly fallback voor bracket placeholders
+        if(/^[12][A-L]$/.test(t))return `Winnaar groep ${t[1]}`;
+        if(/^W\d+$/.test(t))return `Winnaar match ${t.slice(1)}`;
+        if(/^3/.test(t))return 'Beste derde';
+        return t;
+      }
+
       // Push 1: wedstrijden die over ~60 min beginnen (prono reminder)
       const soon=now+65*60*1000;
       const recent=now+55*60*1000;
       const matchesSoon=await env.DB.prepare(
-        'SELECT home_team,away_team,kickoff FROM matches WHERE kickoff>? AND kickoff<?'
+        'SELECT match_id,home_team,away_team,kickoff FROM match_kickoffs WHERE kickoff>? AND kickoff<?'
       ).bind(recent,soon).all();
-      if(matchesSoon.results.length>0){
-        const subs=await env.DB.prepare('SELECT endpoint,p256dh,auth FROM push_subscriptions').all();
-        for(const m of matchesSoon.results){
-          await Promise.allSettled(sendPush(env,{
-            title:'⏰ Vergeet je prono niet!',
-            body:`${m.home_team} vs ${m.away_team} begint over 1 uur`,
-            url:'/'
-          })
+      for(const m of matchesSoon.results){
+        const h=resolveTeam(m.home_team);
+        const a=resolveTeam(m.away_team);
+        const ko1=new Date(m.kickoff);
+        const time1=ko1.toLocaleString('nl-BE',{timeZone:'Europe/Brussels',hour:'2-digit',minute:'2-digit'});
+        await sendPush(env,{
+          title:'Vergeet je prono niet!',
+          body:`${h} vs ${a} — vandaag om ${time1}`,
+          url:'/'
+        });
       }
 
       // Push 2: wedstrijden die net unlocked zijn (12u voor aftrap ±5 min)
       const unlockSoon=now+12*60*60*1000+5*60*1000;
       const unlockRecent=now+12*60*60*1000-5*60*1000;
       const matchesUnlocked=await env.DB.prepare(
-        'SELECT home_team,away_team,kickoff FROM matches WHERE kickoff>? AND kickoff<?'
+        'SELECT match_id,home_team,away_team,kickoff FROM match_kickoffs WHERE kickoff>? AND kickoff<?'
       ).bind(unlockRecent,unlockSoon).all();
-      if(matchesUnlocked.results.length>0){
-        const subs=await env.DB.prepare('SELECT endpoint,p256dh,auth FROM push_subscriptions').all();
-        for(const m of matchesUnlocked.results){
-          await Promise.allSettled(sendPush(env,{
-            title:'🔓 Prono beschikbaar!',
-            body:`Vul je voorspelling in voor ${m.home_team} vs ${m.away_team}`,
-            url:'/'
-          })
+      for(const m of matchesUnlocked.results){
+        const h=resolveTeam(m.home_team);
+        const a=resolveTeam(m.away_team);
+        const ko2=new Date(m.kickoff);
+        const time2=ko2.toLocaleString('nl-BE',{timeZone:'Europe/Brussels',hour:'2-digit',minute:'2-digit',day:'numeric',month:'short'});
+        await sendPush(env,{
+          title:'Prono beschikbaar!',
+          body:`${h} vs ${a} — aftrap ${time2}`,
+          url:'/'
+        });
       }
     })());
   },
@@ -444,7 +460,7 @@ export default {
         bracket[`3${grp}`]=overrides[`3${grp}`]||table[2]?.name||`3${grp}`;
       }
       const thirds=Object.entries(standings)
-        .map(([grp,table])=>({...(table[2]||{}),grp})
+        .map(([grp,table])=>({...(table[2]||{}),grp}))
         .filter(t=>t.played>0)
         .sort((a,b)=>b.pts-a.pts||b.gd-a.gd||b.gf-a.gf)
         .slice(0,8);
@@ -521,15 +537,14 @@ export default {
       const user=await getUser(request,env);
       if(!user)return err('Niet ingelogd',401);
       const{title,body,url}=await request.json();
-      const subs=await env.DB.prepare('SELECT endpoint,p256dh,auth FROM push_subscriptions').all();
-      const results=await Promise.allSettled(sendPush(env,{title,body,url})));
-      const ok=results.filter(r=>r.status==='fulfilled').length;
-      return json({sent:ok,total:subs.results.length});
+      const result=await sendPush(env,{title,body,url});
+      return json({sent:1,onesignal:result});
     }
 
     if(path==='/api/bonus-all'&&request.method==='GET'){
       const rows=await env.DB.prepare('SELECT player,champion,topscorer,goals FROM bonus_predictions').all();
-      return json(rows.results.map(r=>({name:r.player,champion:r.champion||'',topscorer:r.topscorer||'',goals:r.goals!=null?r.goals:null})
+      return json(rows.results.map(r=>({name:r.player,champion:r.champion||'',topscorer:r.topscorer||'',goals:r.goals!=null?r.goals:null})));
+    }
 
     // ── RANKING ───────────────────────────────────────────
     if(path==='/api/ranking'&&request.method==='GET'){
@@ -556,6 +571,13 @@ export default {
         if(!s)return'';
         return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
       }
+      function nameMatch(a,b){
+        const na=normalizeStr(a), nb=normalizeStr(b);
+        if(na===nb)return true;
+        // Gedeeltelijke match: één naam is onderdeel van de andere
+        const partsA=na.split(/\s+/), partsB=nb.split(/\s+/);
+        return partsA.some(p=>p.length>2&&nb.includes(p))||partsB.some(p=>p.length>2&&na.includes(p));
+      }
 
       const ranking=users.results.map(({name,avatar})=>{
         let pts=0,exact=0,win=0,filled=0,bonusPts=0;
@@ -574,7 +596,7 @@ export default {
         }
         const bp=bonusMap[name];
         if(bp&&bonusResult.champion&&bp.champion===bonusResult.champion)bonusPts+=8;
-        if(bp&&bonusResult.topscorer&&normalizeStr(bp.topscorer)===normalizeStr(bonusResult.topscorer))
+        if(bp&&bonusResult.topscorer&&nameMatch(bp.topscorer,bonusResult.topscorer))
           bonusPts+=(bp.goals!=null&&bp.goals===bonusResult.goals)?12:8;
         pts+=bonusPts;
         return{name,avatar:avatar||'🏳️',pts,exact,win,filled,bonusPts};
