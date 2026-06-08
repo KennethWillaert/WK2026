@@ -1366,8 +1366,8 @@ function renderTitles(ranking, wrap){
     </div>`;
   }).join('');
 
-  const titlesSection=`<div style="margin-bottom:8px;font-size:12px;font-weight:700;color:#445566;text-transform:uppercase;letter-spacing:.05em">Titels</div><div class="titles-grid">${titlesHtml}</div>`;
-  wrap.innerHTML=titlesSection+wrap.innerHTML;
+  const titlesSection=`<div style="margin-top:16px;margin-bottom:8px;font-size:12px;font-weight:700;color:#445566;text-transform:uppercase;letter-spacing:.05em">Titels</div><div class="titles-grid">${titlesHtml}</div>`;
+  wrap.innerHTML=wrap.innerHTML+titlesSection;
 }
 
 window.openTitleModal=function(emoji,name,desc,holder,avatar){
