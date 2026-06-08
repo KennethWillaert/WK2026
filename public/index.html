@@ -631,7 +631,16 @@ const MATCHES=[
 // ── STATE ──────────────────────────────────────
 let currentUser = null;
 let results={}, curPreds={}, bonusPred={}, bonusResult={}, bracket={};
-let curPhaseV='bonus', curPhaseS='bonus', savingTimer={};
+function getCurrentPhase(){
+  const now=Date.now();
+  const phases=[...PHASES].reverse();
+  for(const ph of phases){
+    if(ph.unlock&&now>=ph.unlock)return ph.id;
+  }
+  return 'group';
+}
+
+let curPhaseV=getCurrentPhase(), curPhaseS=getCurrentPhase(), savingTimer={};
 
 // ── API ─────────────────────────────────────────
 function getToken(){ return localStorage.getItem('wk26_token')||''; }
@@ -856,15 +865,6 @@ function renderTicker(){
   document.getElementById('ticker-wrap').style.display='flex';
 }
 
-function getCurrentPhase(){
-  const now=Date.now();
-  // Find the current phase based on unlock times
-  const phases=[...PHASES].reverse();
-  for(const ph of phases){
-    if(ph.unlock&&now>=ph.unlock)return ph.id;
-  }
-  return 'group'; // default groepsfase
-}
 
 function renderPhaseBtns(containerId, active, setter){
   const now=Date.now();
