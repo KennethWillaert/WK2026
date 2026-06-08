@@ -1000,7 +1000,6 @@ function renderMatchList(wrap){
           </div>
           <div class="team right">${teamWithFlagRight(resolveTeam(m.a))}</div>
         </div>
-        <div class="saved-msg" id="sv_${m.id}"></div>
         ${['r32','r16','qf','sf','final'].includes(m.ph)&&!locked?`
         <div class="winner-select-wrap">
           <div style="display:flex;flex-direction:column;gap:5px;width:100%">
@@ -1012,6 +1011,7 @@ function renderMatchList(wrap){
             </select>
           </div>
         </div>`:''}
+        <div class="saved-msg" id="sv_${m.id}"></div>
         ${locked?`<div class="pronos-list" id="pronos_${m.id}"></div>`:''}
       </div>`;
     }).join('');
