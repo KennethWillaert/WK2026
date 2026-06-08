@@ -190,8 +190,9 @@ async function syncFromFootballData(env){
     if(match.status!=='FINISHED')continue;
     const h=mapTeam(match.homeTeam?.name||'');
     const a=mapTeam(match.awayTeam?.name||'');
-    const hs=match.score?.fullTime?.home;
-    const as_=match.score?.fullTime?.away;
+    // Voor puntentelling: score na 90 min (regularTime), niet na verlengingen
+    const hs=match.score?.regularTime?.home??match.score?.fullTime?.home;
+    const as_=match.score?.regularTime?.away??match.score?.fullTime?.away;
     if(hs==null||as_==null)continue;
 
     // Zoek onze match ID op basis van teamnamen
