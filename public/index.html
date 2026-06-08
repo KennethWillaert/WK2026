@@ -819,6 +819,7 @@ async function loadAll(){
     [results, bonusResult] = await Promise.all([apiFetch('/results'), apiFetch('/bonus-result')]);
     try{const s=await apiFetch('/standings'); bracket=s.bracket||{}; lastStandings=s.standings||{};}catch{}
     renderCurrent();
+    renderTicker();
   }catch(e){showError(e.message);}
 }
 
