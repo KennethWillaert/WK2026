@@ -165,8 +165,8 @@
     .score-inputs{display:flex;align-items:center;gap:4px}
     .score-inputs input{width:38px;text-align:center;font-size:16px;font-weight:700;padding:5px 2px;border-radius:6px;border:1px solid rgba(255,255,255,0.15);background:#0a1220}
     .score-inputs input:focus{border-color:#3a7bd5;background:#1e2a3a}
-    .winner-select-wrap{margin-top:8px;display:flex;align-items:center;gap:8px;font-size:12px;color:#7a90aa}
-    .winner-select{flex:1;padding:7px 10px;border:1px solid rgba(255,255,255,0.15);border-radius:6px;background:#0a1220;color:#e4eaf4;font-size:13px;font-family:inherit;outline:none}
+    .winner-select-wrap{margin-top:8px;display:flex;align-items:center;gap:6px;font-size:11px;color:#7a90aa}
+    .winner-select{flex:1;min-width:0;padding:5px 8px;border:1px solid rgba(255,255,255,0.15);border-radius:6px;background:#0a1220;color:#e4eaf4;font-size:12px;font-family:inherit;outline:none}
     .winner-select:focus{border-color:#C9A84C}
     .winner-select option{background:#1e2a3a}
     .score-sep{color:#445566;font-size:16px;font-weight:700;padding:0 2px}
@@ -511,7 +511,7 @@ const PHASES=[
   {id:'bonus',label:'<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><path d="M6 9H4a2 2 0 0 1-2-2V5h4"/><path d="M18 9h2a2 2 0 0 0 2-2V5h-4"/><path d="M12 17v4"/><path d="M8 21h8"/><path d="M6 5h12v6a6 6 0 0 1-12 0z"/></svg> Bonus',unlock:0,lock:ko('2026-06-11','21:00')},
   {id:'group',label:'Groepsfase',unlock:0},
   {id:'r32',label:'Ronde van 32',unlock:ko('2026-06-08','00:00')},
-  {id:'r16',label:'Ronde van 16',unlock:ko('2026-07-04','19:00')},
+  {id:'r16',label:'Achtste finales',unlock:ko('2026-07-04','19:00')},
   {id:'qf',label:'Kwartfinales',unlock:ko('2026-07-09','22:00')},
   {id:'sf',label:'Halve finales',unlock:ko('2026-07-14','21:00')},
   {id:'final',label:'Finale',unlock:ko('2026-07-18','23:00')},
@@ -1003,7 +1003,7 @@ function renderMatchList(wrap){
         ${['r32','r16','qf','sf','final'].includes(m.ph)&&!locked?`
         <div class="winner-select-wrap">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4a2 2 0 0 1-2-2V5h4"/><path d="M18 9h2a2 2 0 0 0 2-2V5h-4"/><path d="M12 17v4"/><path d="M8 21h8"/><path d="M6 5h12v6a6 6 0 0 1-12 0z"/></svg>
-          <span>Doorwinnaar:</span>
+          <span style="white-space:nowrap">Wie gaat door?</span>
           <select class="winner-select" id="v_${m.id}_w" onchange="qSavePred('${m.id}',${m.ko})">
             <option value="">— Kies —</option>
             <option value="${resolveTeam(m.h)}" ${pred.winner===resolveTeam(m.h)?'selected':''}>${resolveTeam(m.h)}</option>
