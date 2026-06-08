@@ -75,7 +75,11 @@
     .pronos-list{margin-top:8px;display:flex;flex-direction:column;gap:4px}
     .prono-row{display:flex;align-items:center;justify-content:space-between;padding:5px 8px;background:rgba(255,255,255,0.04);border-radius:6px;font-size:12px}
     .prono-row .prono-name{display:flex;align-items:center;gap:6px;color:#c0cde0}
-    .prono-row .prono-score{font-weight:700;color:#3a7bd5;letter-spacing:.05em}
+    .prono-row .prono-score{font-weight:700;letter-spacing:.05em;color:#7a90aa}
+    .prono-row .prono-pts{font-size:11px;font-weight:700;padding:2px 6px;border-radius:10px;min-width:36px;text-align:center}
+    .pts-3{background:rgba(29,158,117,0.2);color:#1d9e75}
+    .pts-1{background:rgba(201,168,76,0.2);color:#C9A84C}
+    .pts-0{background:rgba(100,110,130,0.15);color:#7a90aa}
     .help-toggle{width:100%;margin-top:14px;padding:9px;display:flex;align-items:center;justify-content:center;gap:6px;background:none;border:1px solid rgba(10,34,64,0.15);border-radius:6px;font-size:13px;color:#4a5a70;cursor:pointer;font-family:inherit;text-align:center}
     .help-toggle:hover{background:#f0f4fa}
     .help-body{display:none;margin-top:12px;border-top:1px solid rgba(10,34,64,0.1);padding-top:12px}
@@ -349,6 +353,7 @@
       <div class="pemail" id="menu-email"></div>
     </div>
     <button class="profile-menu-item" onclick="openFlagModal()"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg> Wijzig vlag</button>
+    <button class="profile-menu-item" id="push-btn" onclick="togglePushSubscription()"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg> Meldingen aan</button>
 
     <button class="profile-menu-item danger" onclick="doLogout()"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg> Uitloggen</button>
   </div>
@@ -910,6 +915,7 @@ function renderMatchList(wrap){
       }
       const phLbl=m.ph==='group'?`Groep ${m.g}`:PHASES.find(p=>p.id===m.ph)?.label||'';
       const timeStr=`${String(new Date(m.ko).getHours()).padStart(2,'0')}:${String(new Date(m.ko).getMinutes()).padStart(2,'0')}`;
+      if(locked){setTimeout(()=>autoLoadPronos(m.id,res),50);}
       if(!unlocked) return`<div class="card locked" style="opacity:0.4">
         <div class="card-meta">
           <div class="card-meta-left"><span>${m.ph==='group'?'Groep '+m.g:''}</span></div>
@@ -943,36 +949,44 @@ function renderMatchList(wrap){
           <div class="team right">${teamWithFlagRight(resolveTeam(m.a))}</div>
         </div>
         <div class="saved-msg" id="sv_${m.id}"></div>
-        ${locked?`<button class="pronos-toggle" onclick="togglePronos('${m.id}',this)">
-          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-          Pronos van anderen
-        </button>
-        <div class="pronos-list" id="pronos_${m.id}" style="display:none"></div>`:''}
+        ${locked?`<div class="pronos-list" id="pronos_${m.id}"></div>`:''}
       </div>`;
     }).join('');
   }).join('');
 }
 
-window.togglePronos=async function(mid,btn){
+function calcMatchPts(pred,res){
+  if(!res||res.h==null)return null;
+  if(pred.h===res.h&&pred.a===res.a)return 3;
+  const pw=pred.h>pred.a?1:pred.h<pred.a?-1:0;
+  const rw=res.h>res.a?1:res.h<res.a?-1:0;
+  return pw===rw?1:0;
+}
+
+window.autoLoadPronos=async function(mid,res){
   const list=document.getElementById(`pronos_${mid}`);
-  if(list.style.display!=='none'){
-    list.style.display='none';
-    btn.innerHTML=`<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> Pronos van anderen`;
-    return;
-  }
-  btn.innerHTML='<span class="spinner" style="width:12px;height:12px;border-width:2px"></span> Laden...';
+  if(!list||list.dataset.loaded)return;
+  list.dataset.loaded='1';
   try{
     const pronos=await apiFetch(`/match-pronos?match_id=${mid}`);
-    if(!pronos.length){list.innerHTML='<span style="font-size:11px;color:#445566;padding:4px 8px">Nog geen pronos ingevuld</span>';}
-    else{
-      list.innerHTML=pronos.map(p=>`<div class="prono-row">
-        <span class="prono-name">${esc(p.name)}</span>
-        <span class="prono-score">${p.h} – ${p.a}</span>
-      </div>`).join('');
+    if(!pronos.length){
+      list.innerHTML='<span style="font-size:11px;color:#445566;padding:4px 8px">Nog geen pronos ingevuld</span>';
+    } else {
+      list.innerHTML=pronos.map(p=>{
+        const pts=calcMatchPts({h:p.h,a:p.a},res);
+        const ptsClass=pts===3?'pts-3':pts===1?'pts-1':'pts-0';
+        const ptsLabel=pts===null?'':pts===3?'3 pt':pts===1?'1 pt':'0 pt';
+        return `<div class="prono-row">
+          <span class="prono-name">${esc(p.name)}</span>
+          <span style="display:flex;align-items:center;gap:8px">
+            <span class="prono-score">${p.h} – ${p.a}</span>
+            ${ptsLabel?`<span class="prono-pts ${ptsClass}">${ptsLabel}</span>`:''}
+          </span>
+        </div>`;
+      }).join('');
       if(window.twemoji)twemoji.parse(list,{folder:'svg',ext:'.svg'});
     }
     list.style.display='flex';
-    btn.innerHTML=`<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg> Verberg pronos`;
   }catch(e){list.innerHTML=`<span style="font-size:11px;color:#f08090;padding:4px 8px">${esc(e.message)}</span>`;list.style.display='flex';}
 };
 
