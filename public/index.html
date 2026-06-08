@@ -834,8 +834,20 @@ function showError(msg){
 
 function renderTicker(){
   const today=new Date().toISOString().slice(0,10);
-  const todayMatches=MATCHES.filter(m=>m.date===today&&results[m.id]&&results[m.id].h!=null);
-  if(!todayMatches.length){document.getElementById('ticker-wrap').style.display='none';return;}
+  let todayMatches=MATCHES.filter(m=>m.date===today&&results[m.id]&&results[m.id].h!=null);
+  
+  // TEST: fake data als er geen uitslagen zijn (verwijderen na WK start)
+  if(!todayMatches.length){
+    const fakeItems=[
+      {h:'Mexico',a:'Zuid-Afrika',r:{h:2,a:1}},
+      {h:'Canada',a:'Bosnië',r:{h:0,a:0}},
+      {h:'VS',a:'Paraguay',r:{h:3,a:1}},
+    ];
+    const items=fakeItems.map(m=>`<span class="ticker-item">${m.h} <span class="t-score">${m.r.h} – ${m.r.a}</span> ${m.a}</span><span class="ticker-item t-sep">•</span>`).join('');
+    document.getElementById('ticker-track').innerHTML=items+items;
+    document.getElementById('ticker-wrap').style.display='flex';
+    return;
+  }
   const items=todayMatches.map(m=>{
     const r=results[m.id];
     return `<span class="ticker-item">${m.h} <span class="t-score">${r.h} – ${r.a}</span> ${m.a}</span><span class="ticker-item t-sep">•</span>`;
