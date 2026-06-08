@@ -70,6 +70,15 @@
     .avatar-opt:hover{background:#e6ecf5;border-color:#0A2240}
     .avatar-opt.selected{border-color:#0A2240;background:#e6ecf5}
     .avatar-opt img,.avatar-display img,.user-flag img{width:22px;height:22px;vertical-align:middle}
+
+    .ticker-wrap{overflow:hidden;background:#0d1520;border-bottom:1px solid rgba(255,255,255,0.06);height:26px;display:flex;align-items:center}
+    .ticker-track{display:flex;gap:0;white-space:nowrap;animation:ticker 30s linear infinite}
+    .ticker-track:hover{animation-play-state:paused}
+    .ticker-item{font-size:11px;color:#7a90aa;padding:0 20px;display:inline-flex;align-items:center;gap:6px}
+    .ticker-item .t-score{color:#e4eaf4;font-weight:700}
+    .ticker-item .t-sep{color:#2a3a4a;margin:0 4px}
+    @keyframes ticker{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+    #ticker-wrap{display:none}
     .pronos-toggle{display:inline-flex;align-items:center;gap:5px;margin-top:8px;padding:5px 10px;background:none;border:1px solid rgba(255,255,255,0.1);border-radius:20px;color:#7a90aa;font-size:11px;cursor:pointer;font-family:inherit}
     .pronos-toggle:hover{background:rgba(255,255,255,0.05)}
     .pronos-list{margin-top:8px;display:flex;flex-direction:column;gap:4px}
@@ -372,7 +381,8 @@
     <button onclick="nav('ranking')">Ranking</button>
   </nav>
   <main>
-    <div id="page-pronostiek" class="page active">
+    <div id="ticker-wrap" class="ticker-wrap"><div class="ticker-track" id="ticker-track"></div></div>
+  <div id="page-pronostiek" class="page active">
       <div class="info-box">
         <strong>Spelregels</strong>
         <div style="display:flex;flex-direction:column;gap:3px;margin-top:8px">
@@ -821,6 +831,20 @@ function showError(msg){
 
 // ── PHASE BUTTONS ───────────────────────────────
 
+
+function renderTicker(){
+  const today=new Date().toISOString().slice(0,10);
+  const todayMatches=MATCHES.filter(m=>m.date===today&&results[m.id]&&results[m.id].h!=null);
+  if(!todayMatches.length){document.getElementById('ticker-wrap').style.display='none';return;}
+  const items=todayMatches.map(m=>{
+    const r=results[m.id];
+    return `<span class="ticker-item">${m.h} <span class="t-score">${r.h} – ${r.a}</span> ${m.a}</span><span class="ticker-item t-sep">•</span>`;
+  }).join('');
+  // Duplicate for seamless loop
+  document.getElementById('ticker-track').innerHTML=items+items;
+  document.getElementById('ticker-wrap').style.display='flex';
+}
+
 function getCurrentPhase(){
   const now=Date.now();
   // Find the current phase based on unlock times
@@ -855,7 +879,8 @@ async function renderPredPage(){
     return;
   }
   wrap.innerHTML='<div class="loading"><span class="spinner"></span>Laden...</div>';
-  try{curPreds=await apiFetch('/predictions'); renderMatchList(wrap);}
+  try{curPreds=await apiFetch('/predictions'); renderMatchList(wrap);
+  renderTicker();}
   catch(e){wrap.innerHTML=`<div class="error-msg">${e.message}</div>`;}
 }
 
