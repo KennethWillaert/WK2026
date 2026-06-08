@@ -585,7 +585,7 @@ export default {
       }
 
       const ranking=users.results.map(({name,avatar})=>{
-        let pts=0,exact=0,win=0,filled=0,bonusPts=0;
+        let pts=0,exact=0,win=0,filled=0,bonusPts=0,knockoutPts=0;
         const preds=predsMap[name]||{};
         for(const[mid,pred]of Object.entries(preds)){
           filled++;
@@ -598,7 +598,7 @@ export default {
               if(pw===rw){pts+=1;win++;}
             }
             // Knockout bonus: +1 pt voor juiste doorwinnaar
-            if(pred.winner&&res.winner&&pred.winner===res.winner){pts+=1;}
+            if(pred.winner&&res.winner&&pred.winner===res.winner){pts+=1;knockoutPts+=1;}
           }
         }
         const bp=bonusMap[name];
@@ -606,7 +606,7 @@ export default {
         if(bp&&bonusResult.topscorer&&nameMatch(bp.topscorer,bonusResult.topscorer))
           bonusPts+=(bp.goals!=null&&bp.goals===bonusResult.goals)?12:8;
         pts+=bonusPts;
-        return{name,avatar:avatar||'🏳️',pts,exact,win,filled,bonusPts};
+        return{name,avatar:avatar||'🏳️',pts,exact,win,filled,bonusPts,knockoutPts};
       }).sort((a,b)=>b.pts-a.pts||b.exact-a.exact);
       return json(ranking);
     }
