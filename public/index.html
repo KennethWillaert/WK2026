@@ -400,6 +400,7 @@
           <span style="display:flex;align-items:center;gap:5px"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Prono sluit bij aftrap</span>
           <span style="display:flex;align-items:center;gap:5px"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4a2 2 0 0 1-2-2V5h4"/><path d="M18 9h2a2 2 0 0 0 2-2V5h-4"/><path d="M12 17v4"/><path d="M8 21h8"/><path d="M6 5h12v6a6 6 0 0 1-12 0z"/></svg> Bonus sluit bij aftrap eerste wedstrijd (11 jun 21:00)</span>
           <span style="display:flex;align-items:center;gap:5px"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Wedstrijden beschikbaar 12u voor aftrap</span>
+          <span style="display:flex;align-items:center;gap:5px;margin-top:4px;font-size:11px;color:#7a90aa"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> Punten worden berekend op basis van de stand na 90 min. Voor verlengingen/penalties zoeken we nog een oplossing na de groepsfase.</span>
         </div>
       </div>
       <div class="phase-bar" id="phase-bar-v"></div>
@@ -947,8 +948,11 @@ function renderMatchList(wrap){
       const locked=Date.now()>=m.ko;
       const unlockTime=m.ko-UNLOCK_BEFORE;
       const unlocked=Date.now()>=unlockTime;
+      const isLive=Date.now()>=m.ko&&Date.now()<=m.ko+105*60*1000&&!res;
       let badge='';
-      if(res&&pred.h!=null){
+      if(isLive){
+        badge='<span class="badge-live"><span class="live-dot"></span>LIVE</span>';
+      } else if(res&&pred.h!=null){
         const p=calcPts(pred,res);
         badge=p===3?'<span class="badge badge-exact">3 pt</span>':p===1?'<span class="badge badge-win">1 pt</span>':'<span class="badge badge-zero">0 pt</span>';
       }
