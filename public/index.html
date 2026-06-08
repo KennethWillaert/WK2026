@@ -165,6 +165,10 @@
     .score-inputs{display:flex;align-items:center;gap:4px}
     .score-inputs input{width:38px;text-align:center;font-size:16px;font-weight:700;padding:5px 2px;border-radius:6px;border:1px solid rgba(255,255,255,0.15);background:#0a1220}
     .score-inputs input:focus{border-color:#3a7bd5;background:#1e2a3a}
+    .winner-select-wrap{margin-top:8px;display:flex;align-items:center;gap:8px;font-size:12px;color:#7a90aa}
+    .winner-select{flex:1;padding:7px 10px;border:1px solid rgba(255,255,255,0.15);border-radius:6px;background:#0a1220;color:#e4eaf4;font-size:13px;font-family:inherit;outline:none}
+    .winner-select:focus{border-color:#C9A84C}
+    .winner-select option{background:#1e2a3a}
     .score-sep{color:#445566;font-size:16px;font-weight:700;padding:0 2px}
     .saved-msg{font-size:11px;color:#1d9e75;text-align:center;height:16px;margin-top:5px;font-weight:500}
     .badge{display:inline-block;border-radius:4px;font-size:11px;font-weight:700;padding:2px 8px}
@@ -996,6 +1000,16 @@ function renderMatchList(wrap){
           </div>
           <div class="team right">${teamWithFlagRight(resolveTeam(m.a))}</div>
         </div>
+        ${['r32','r16','qf','sf','final'].includes(m.ph)&&!locked?`
+        <div class="winner-select-wrap">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4a2 2 0 0 1-2-2V5h4"/><path d="M18 9h2a2 2 0 0 0 2-2V5h-4"/><path d="M12 17v4"/><path d="M8 21h8"/><path d="M6 5h12v6a6 6 0 0 1-12 0z"/></svg>
+          <span>Doorwinnaar:</span>
+          <select class="winner-select" id="v_${m.id}_w" onchange="qSavePred('${m.id}',${m.ko})">
+            <option value="">— Kies —</option>
+            <option value="${resolveTeam(m.h)}" ${pred.winner===resolveTeam(m.h)?'selected':''}>${resolveTeam(m.h)}</option>
+            <option value="${resolveTeam(m.a)}" ${pred.winner===resolveTeam(m.a)?'selected':''}>${resolveTeam(m.a)}</option>
+          </select>
+        </div>`:''}
         <div class="saved-msg" id="sv_${m.id}"></div>
         ${locked?`<div class="pronos-list" id="pronos_${m.id}"></div>`:''}
       </div>`;
@@ -1045,10 +1059,11 @@ window.qSavePred=function(mid,koTime){
     if(Date.now()>=koTime){showError('Wedstrijd al begonnen');return;}
     const h=document.getElementById(`v_${mid}_h`)?.value;
     const a=document.getElementById(`v_${mid}_a`)?.value;
+    const w=document.getElementById(`v_${mid}_w`)?.value||null;
     if(h===''||a==='')return;
     try{
-      await apiFetch('/predictions',{method:'PUT',body:JSON.stringify({matchId:mid,h:+h,a:+a,kickoff:koTime})});
-      curPreds[mid]={h:+h,a:+a};
+      await apiFetch('/predictions',{method:'PUT',body:JSON.stringify({matchId:mid,h:+h,a:+a,kickoff:koTime,winner:w})});
+      curPreds[mid]={h:+h,a:+a,winner:w};
       const sv=document.getElementById(`sv_${mid}`);
       if(sv){sv.innerHTML='<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#50d080" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><polyline points="20 6 9 11 4 18"/></svg> Opgeslagen';setTimeout(()=>{if(sv)sv.innerHTML='';},2000);}
     }catch(e){showError(e.message);}

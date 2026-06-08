@@ -193,6 +193,8 @@ async function syncFromFootballData(env){
     // Voor puntentelling: score na 90 min (regularTime), niet na verlengingen
     const hs=match.score?.regularTime?.home??match.score?.fullTime?.home;
     const as_=match.score?.regularTime?.away??match.score?.fullTime?.away;
+    // Doorwinnaar voor knockout (HOME_TEAM, AWAY_TEAM, DRAW)
+    const winner=match.score?.winner||null;
     if(hs==null||as_==null)continue;
 
     // Zoek onze match ID op basis van teamnamen
@@ -204,11 +206,13 @@ async function syncFromFootballData(env){
     // Wissel scores om als teams omgekeerd staan
     const homeScore=th===h?hs:as_;
     const awayScore=th===h?as_:hs;
+    // Vertaal HOME_TEAM/AWAY_TEAM naar teamnaam
+    const winnerName=winner==='HOME_TEAM'?(th===h?th:ta):winner==='AWAY_TEAM'?(th===h?ta:th):null;
 
     await env.DB.prepare(
-      `INSERT INTO results(match_id,home_score,away_score)VALUES(?,?,?)
-       ON CONFLICT(match_id)DO UPDATE SET home_score=excluded.home_score,away_score=excluded.away_score`
-    ).bind(mid,homeScore,awayScore).run();
+      `INSERT INTO results(match_id,home_score,away_score,winner)VALUES(?,?,?,?)
+       ON CONFLICT(match_id)DO UPDATE SET home_score=excluded.home_score,away_score=excluded.away_score,winner=excluded.winner`
+    ).bind(mid,homeScore,awayScore,winnerName).run();
     synced++;
   }
 
@@ -400,7 +404,7 @@ export default {
     if(path==='/api/predictions'&&request.method==='PUT'){
       const user=await getUser(request,env);
       if(!user)return err('Niet ingelogd',401);
-      const{matchId,h,a,kickoff}=await request.json();
+      const{matchId,h,a,kickoff,winner}=await request.json();
       if(!matchId||h==null||a==null)return err('Ontbrekende velden');
       if(kickoff&&Date.now()>=kickoff)return err('Wedstrijd is al begonnen — prono vergrendeld');
       await env.DB.prepare(
@@ -412,7 +416,7 @@ export default {
 
     // ── RESULTS ───────────────────────────────────────────
     if(path==='/api/results'&&request.method==='GET'){
-      const rows=await env.DB.prepare('SELECT match_id,home_score,away_score FROM results').all();
+      const rows=await env.DB.prepare('SELECT match_id,home_score,away_score,winner FROM results').all();
       const result={};
       rows.results.forEach(r=>{result[r.match_id]={h:r.home_score,a:r.away_score};});
       return json(result);
@@ -439,7 +443,7 @@ export default {
 
     // ── STANDINGS ─────────────────────────────────────────
     if(path==='/api/standings'&&request.method==='GET'){
-      const rows=await env.DB.prepare('SELECT match_id,home_score,away_score FROM results').all();
+      const rows=await env.DB.prepare('SELECT match_id,home_score,away_score,winner FROM results').all();
       const resMap={};
       rows.results.forEach(r=>{
         if(!r.match_id.startsWith('override_')&&r.match_id!=='bonus'&&r.match_id!=='topscorers')
@@ -551,7 +555,7 @@ export default {
     if(path==='/api/ranking'&&request.method==='GET'){
       const users=await env.DB.prepare('SELECT name,avatar FROM users ORDER BY created_at').all();
       const allPreds=await env.DB.prepare('SELECT player,match_id,home_score,away_score FROM predictions').all();
-      const allResults=await env.DB.prepare('SELECT match_id,home_score,away_score FROM results').all();
+      const allResults=await env.DB.prepare('SELECT match_id,home_score,away_score,winner FROM results').all();
       const allBonus=await env.DB.prepare('SELECT * FROM bonus_predictions').all();
       const predsMap={};
       allPreds.results.forEach(r=>{
@@ -593,6 +597,8 @@ export default {
               const rw=res.h>res.a?1:res.h<res.a?-1:0;
               if(pw===rw){pts+=1;win++;}
             }
+            // Knockout bonus: +1 pt voor juiste doorwinnaar
+            if(pred.winner&&res.winner&&pred.winner===res.winner){pts+=1;}
           }
         }
         const bp=bonusMap[name];
