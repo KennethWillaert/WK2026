@@ -546,6 +546,29 @@ export default {
       return json({sent:1,onesignal:result});
     }
 
+
+    if(path==='/api/reactions'&&request.method==='GET'){
+      const matchId=url.searchParams.get('match_id');
+      if(!matchId)return err('match_id vereist');
+      const rows=await env.DB.prepare('SELECT from_player,on_player,emoji FROM reactions WHERE match_id=?').bind(matchId).all();
+      return json(rows.results);
+    }
+
+    if(path==='/api/reactions'&&request.method==='POST'){
+      const user=await getUser(request,env);
+      if(!user)return err('Niet ingelogd',401);
+      const{onPlayer,matchId,emoji}=await request.json();
+      if(!onPlayer||!matchId||!emoji)return err('Ongeldige data');
+      // Verwijder als al zelfde emoji, anders update
+      const existing=await env.DB.prepare('SELECT emoji FROM reactions WHERE from_player=? AND on_player=? AND match_id=?').bind(user.name,onPlayer,matchId).first();
+      if(existing&&existing.emoji===emoji){
+        await env.DB.prepare('DELETE FROM reactions WHERE from_player=? AND on_player=? AND match_id=?').bind(user.name,onPlayer,matchId).run();
+        return json({ok:true,removed:true});
+      }
+      await env.DB.prepare('INSERT INTO reactions(from_player,on_player,match_id,emoji)VALUES(?,?,?,?)ON CONFLICT(from_player,on_player,match_id)DO UPDATE SET emoji=excluded.emoji').bind(user.name,onPlayer,matchId,emoji).run();
+      return json({ok:true});
+    }
+
     if(path==='/api/bonus-all'&&request.method==='GET'){
       const rows=await env.DB.prepare('SELECT player,champion,topscorer,goals FROM bonus_predictions').all();
       return json(rows.results.map(r=>({name:r.player,champion:r.champion||'',topscorer:r.topscorer||'',goals:r.goals!=null?r.goals:null})));
