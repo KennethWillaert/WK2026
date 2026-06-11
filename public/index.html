@@ -473,6 +473,10 @@
           <span id="push-status" style="font-size:12px;color:#1d9e75;margin-top:6px;display:block"></span>
         </div>
       </div>
+      <div class="info-box" style="margin-top:12px">
+        <div style="font-size:12px;font-weight:700;color:#7a90aa;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">Gebruikers</div>
+        <div id="admin-users-wrap"><span style="font-size:12px;color:#445566">Laden...</span></div>
+      </div>
       <div class="phase-bar" id="phase-bar-s"></div>
       <div id="scores-wrap"></div>
     </div>
@@ -859,7 +863,7 @@ window.nav=navTo;
 function renderCurrent(){
   if(curPage==='pronostiek') renderPredPage();
   if(curPage==='standen') renderStandings();
-  if(curPage==='scores') renderScoresPage();
+  if(curPage==='scores'){renderScoresPage(); loadAdminUsers();}
   if(curPage==='ranking') renderRanking();
   if(curPage==='topscorers') renderTopscorers();
 }
@@ -1191,6 +1195,30 @@ async function renderStandings(){
 }
 
 // ── SCORES (admin) ──────────────────────────────
+async function loadAdminUsers(){
+  const wrap=document.getElementById('admin-users-wrap');
+  if(!wrap)return;
+  try{
+    const users=await apiFetch('/admin/users');
+    wrap.innerHTML=users.map(u=>{
+      const now=Date.now();
+      const isOnline=u.last_seen&&(now-u.last_seen)<5*60*1000;
+      const lastSeen=u.last_seen?new Date(u.last_seen).toLocaleString('nl-BE',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'Nog nooit';
+      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.05)">
+        <span style="display:flex;align-items:center;gap:6px;font-size:13px">
+          <span style="position:relative;display:inline-flex">
+            ${u.avatar||'🏳️'}
+            ${isOnline?'<span style="position:absolute;bottom:-1px;right:-1px;width:7px;height:7px;background:#1d9e75;border-radius:50%;border:1px solid #0d1520"></span>':''}
+          </span>
+          ${esc(u.name)}
+        </span>
+        <span style="font-size:11px;color:${isOnline?'#1d9e75':'#445566'}">${isOnline?'Online':''+lastSeen}</span>
+      </div>`;
+    }).join('');
+    if(window.twemoji)twemoji.parse(wrap,{folder:'svg',ext:'.svg'});
+  }catch(e){if(wrap)wrap.innerHTML=`<span style="font-size:12px;color:#f08090">${e.message}</span>`;}
+}
+
 function setPhaseS(ph){curPhaseS=ph; renderScoresPage();}
 window.setPhaseS=setPhaseS;
 

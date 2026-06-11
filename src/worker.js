@@ -261,8 +261,10 @@ export default {
   // Cron trigger: elke 5 minuten tijdens het WK
   async scheduled(event,env,ctx){
     ctx.waitUntil((async()=>{
-      await syncFromFootballData(env);
-      const now=Date.now();
+      // Sync en push apart uitvoeren zodat een sync fout de push niet blokkeert
+      try{await syncFromFootballData(env);}catch(e){console.error('Sync error:',e);}
+      try{
+        const now=Date.now();
 
       // Haal bracket overrides op voor echte teamnamen
       const overrideRows=await env.DB.prepare("SELECT match_id,home_score FROM results WHERE match_id LIKE 'override_%'").all();
@@ -312,6 +314,7 @@ export default {
           url:'/'
         });
       }
+      }catch(e){console.error('Push error:',e);}
     })());
   },
 
@@ -366,6 +369,7 @@ export default {
     if(path==='/api/auth/me'&&request.method==='GET'){
       const user=await getUser(request,env);
       if(!user)return err('Niet ingelogd',401);
+      await env.DB.prepare('UPDATE users SET last_seen=? WHERE name=?').bind(Date.now(),user.name).run();
       return json({name:user.name,email:user.email,isAdmin:user.is_admin===1,avatar:user.avatar||'🏳️'});
     }
 
@@ -567,6 +571,14 @@ export default {
       }
       await env.DB.prepare('INSERT INTO reactions(from_player,on_player,match_id,emoji)VALUES(?,?,?,?)ON CONFLICT(from_player,on_player,match_id)DO UPDATE SET emoji=excluded.emoji').bind(user.name,onPlayer,matchId,emoji).run();
       return json({ok:true});
+    }
+
+
+    if(path==='/api/admin/users'&&request.method==='GET'){
+      const user=await getUser(request,env);
+      if(!user||!user.isAdmin)return err('Geen toegang',403);
+      const rows=await env.DB.prepare('SELECT name,email,avatar,last_seen FROM users ORDER BY last_seen DESC NULLS LAST').all();
+      return json(rows.results);
     }
 
     if(path==='/api/bonus-all'&&request.method==='GET'){
