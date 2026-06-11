@@ -78,6 +78,11 @@
     .ticker-item{font-size:11px;color:#7a90aa;padding:0 20px;display:inline-flex;align-items:center;gap:6px}
     .ticker-item .t-score{color:#e4eaf4;font-weight:700}
     .ticker-item .t-sep{color:#2a3a4a;margin:0 4px}
+    .ticker-item .t-live{color:#1d9e75;font-size:9px;font-weight:700;letter-spacing:.5px;background:rgba(29,158,117,0.15);border-radius:3px;padding:1px 4px}
+    .ticker-item .t-rust{color:#c9a84c;font-size:9px;font-weight:700;letter-spacing:.5px;background:rgba(201,168,76,0.15);border-radius:3px;padding:1px 4px}
+    .badge-live{display:inline-flex;align-items:center;gap:4px;background:rgba(29,158,117,0.15);border:1px solid rgba(29,158,117,0.3);border-radius:4px;padding:1px 6px;font-size:10px;font-weight:700;color:#1d9e75}
+    .live-dot{width:5px;height:5px;border-radius:50%;background:#1d9e75;animation:pulse 1.2s ease-in-out infinite}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
     @keyframes ticker{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
     #ticker-wrap{display:none}
     .pronos-toggle{display:inline-flex;align-items:center;gap:5px;margin-top:8px;padding:5px 10px;background:none;border:1px solid rgba(255,255,255,0.1);border-radius:20px;color:#7a90aa;font-size:11px;cursor:pointer;font-family:inherit}
@@ -896,7 +901,11 @@ function renderTicker(){
   if(!todayMatches.length){document.getElementById('ticker-wrap').style.display='none';return;}
   const items=todayMatches.map(m=>{
     const r=results[m.id];
-    return `<span class="ticker-item">${m.h} <span class="t-score">${r.h} – ${r.a}</span> ${m.a}</span><span class="ticker-item t-sep">•</span>`;
+    const st=r.status||'FINISHED';
+    let label='';
+    if(st==='IN_PLAY')label='<span class="t-live">LIVE</span>';
+    else if(st==='PAUSED'||st==='HALFTIME')label='<span class="t-rust">RT</span>';
+    return `<span class="ticker-item">${label}${m.h} <span class="t-score">${r.h} – ${r.a}</span> ${m.a}</span><span class="ticker-item t-sep">•</span>`;
   }).join('');
   // Duplicate for seamless loop
   document.getElementById('ticker-track').innerHTML=items+items;
