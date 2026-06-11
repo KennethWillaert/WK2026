@@ -407,6 +407,20 @@ export default {
       return json(result);
     }
 
+    // ── MATCH PRONOS (pronos van anderen, enkel na kickoff) ──
+    if(path==='/api/match-pronos'&&request.method==='GET'){
+      const user=await getUser(request,env);
+      if(!user)return err('Niet ingelogd',401);
+      const matchId=url.searchParams.get('match_id');
+      if(!matchId)return err('match_id vereist');
+      const kickoffRow=await env.DB.prepare('SELECT kickoff FROM match_kickoffs WHERE match_id=?').bind(matchId).first();
+      if(!kickoffRow||Date.now()<kickoffRow.kickoff)return json([]);
+      const rows=await env.DB.prepare(
+        'SELECT player,home_score,away_score FROM predictions WHERE match_id=? ORDER BY player'
+      ).bind(matchId).all();
+      return json(rows.results.map(r=>({name:r.player,h:r.home_score,a:r.away_score})));
+    }
+
     if(path==='/api/predictions'&&request.method==='PUT'){
       const user=await getUser(request,env);
       if(!user)return err('Niet ingelogd',401);
