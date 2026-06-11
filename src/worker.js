@@ -216,22 +216,20 @@ async function syncFromFootballData(env){
     synced++;
   }
 
-  // Sync topscorers — alleen als er al wedstrijden gespeeld zijn
-  if(synced>0){
-    const scoreResp=await fetch(`${FD_BASE}/competitions/WC/scorers?limit=20`,{headers});
-    if(scoreResp.ok){
-      const scoreData=await scoreResp.json();
-      const scorers=(scoreData.scorers||[]).filter(s=>s.goals>0).map(s=>({
-        name:s.player?.name||'',
-        team:mapTeam(s.team?.name||''),
-        goals:s.goals||0,
-      }));
-      if(scorers.length>0){
-        await env.DB.prepare(
-          `INSERT INTO results(match_id,home_score,away_score)VALUES('topscorers',?,0)
-           ON CONFLICT(match_id)DO UPDATE SET home_score=excluded.home_score`
-        ).bind(JSON.stringify(scorers)).run();
-      }
+  // Sync topscorers — elke cron run
+  const scoreResp=await fetch(`${FD_BASE}/competitions/WC/scorers?limit=20`,{headers});
+  if(scoreResp.ok){
+    const scoreData=await scoreResp.json();
+    const scorers=(scoreData.scorers||[]).filter(s=>s.goals>0).map(s=>({
+      name:s.player?.name||'',
+      team:mapTeam(s.team?.name||''),
+      goals:s.goals||0,
+    }));
+    if(scorers.length>0){
+      await env.DB.prepare(
+        `INSERT INTO results(match_id,home_score,away_score)VALUES('topscorers',?,0)
+         ON CONFLICT(match_id)DO UPDATE SET home_score=excluded.home_score`
+      ).bind(JSON.stringify(scorers)).run();
     }
   }
 
