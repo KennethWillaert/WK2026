@@ -474,6 +474,12 @@
         </div>
       </div>
       <div class="info-box" style="margin-top:12px">
+        <div style="font-size:12px;font-weight:700;color:#7a90aa;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">Titels</div>
+        <div style="font-size:12px;color:#7a90aa;margin-bottom:8px">Titels zijn enkel zichtbaar voor spelers als je ze hier vrijgeeft.</div>
+        <button onclick="toggleTitlesUnlocked()" id="titles-unlock-btn" class="primary" style="font-size:13px;padding:7px 14px">Laden...</button>
+        <span id="titles-unlock-status" style="font-size:12px;color:#1d9e75;margin-left:8px"></span>
+      </div>
+      <div class="info-box" style="margin-top:12px">
         <div style="font-size:12px;font-weight:700;color:#7a90aa;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">Gebruikers</div>
         <div id="admin-users-wrap"><span style="font-size:12px;color:#445566">Laden...</span></div>
       </div>
@@ -863,7 +869,7 @@ window.nav=navTo;
 function renderCurrent(){
   if(curPage==='pronostiek') renderPredPage();
   if(curPage==='standen') renderStandings();
-  if(curPage==='scores'){renderScoresPage(); loadAdminUsers();}
+  if(curPage==='scores'){renderScoresPage(); loadAdminUsers(); loadTitlesStatus();}
   if(curPage==='ranking') renderRanking();
   if(curPage==='topscorers') renderTopscorers();
 }
@@ -1194,6 +1200,31 @@ async function renderStandings(){
   }catch(e){wrap.innerHTML=`<div class="error-msg">${e.message}</div>`;}
 }
 
+// ── TITLES UNLOCK (admin) ────────────────────────
+let titlesCurrentlyUnlocked=false;
+async function loadTitlesStatus(){
+  const btn=document.getElementById('titles-unlock-btn');
+  if(!btn)return;
+  try{
+    const ts=await apiFetch('/titles-unlocked');
+    titlesCurrentlyUnlocked=ts.unlocked;
+    btn.textContent=ts.unlocked?'🔒 Titels verbergen':'🏆 Titels vrijgeven';
+  }catch{btn.textContent='🏆 Titels vrijgeven';}
+}
+window.toggleTitlesUnlocked=async function(){
+  const btn=document.getElementById('titles-unlock-btn');
+  const status=document.getElementById('titles-unlock-status');
+  const newState=!titlesCurrentlyUnlocked;
+  try{
+    btn.disabled=true;
+    await apiFetch('/titles-unlocked',{method:'PUT',body:JSON.stringify({unlocked:newState})});
+    titlesCurrentlyUnlocked=newState;
+    btn.textContent=newState?'🔒 Titels verbergen':'🏆 Titels vrijgeven';
+    if(status){status.textContent=newState?'✓ Titels zijn nu zichtbaar':'✓ Titels verborgen';setTimeout(()=>{if(status)status.textContent='';},2500);}
+  }catch(e){if(status){status.textContent=e.message;status.style.color='#f08090';}}
+  finally{btn.disabled=false;}
+};
+
 // ── SCORES (admin) ──────────────────────────────
 async function loadAdminUsers(){
   const wrap=document.getElementById('admin-users-wrap');
@@ -1328,7 +1359,15 @@ async function renderRanking(){
       </tr>`).join('')}</tbody>
     </table></div>`;
     // Render titels
-    renderTitles(ranking, wrap);
+    let titlesUnlocked=false;
+    try{const ts=await apiFetch('/titles-unlocked');titlesUnlocked=ts.unlocked;}catch{}
+    if(titlesUnlocked){
+      renderTitles(ranking, wrap);
+    }else{
+      wrap.innerHTML+=`<div style="margin-top:16px;padding:14px;background:#0d1520;border:1px solid rgba(255,255,255,0.07);border-radius:10px;text-align:center;font-size:13px;color:#445566">
+        🏆 Titels worden uitgedeeld na het toernooi
+      </div>`;
+    }
     if(window.twemoji) twemoji.parse(wrap,{folder:'svg',ext:'.svg'});
   }catch(e){wrap.innerHTML=`<div class="error-msg">${e.message}</div>`;}
 }
@@ -1388,7 +1427,7 @@ function renderTitles(ranking, wrap){
     }
   ];
 
-  const hasData=ranking.some(r=>r.filled>0);
+  const hasData=ranking.some(r=>r.pts>0||r.exact>0||r.win>0);
   const titlesHtml=TITLES.map(t=>{
     const holder=hasData?t.calc([...ranking]):null;
     return `<div class="title-card" onclick="openTitleModal('${t.emoji}','${t.name.replace(/'/g,"\'")}','${t.desc.replace(/'/g,"\'")}','${holder?esc(holder.name):''}','${holder?holder.avatar||'🏳️':''}')">

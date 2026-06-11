@@ -450,7 +450,7 @@ export default {
       const rows=await env.DB.prepare('SELECT match_id,home_score,away_score,winner FROM results').all();
       const resMap={};
       rows.results.forEach(r=>{
-        if(!r.match_id.startsWith('override_')&&r.match_id!=='bonus'&&r.match_id!=='topscorers')
+        if(!r.match_id.startsWith('override_')&&r.match_id!=='bonus'&&r.match_id!=='topscorers'&&r.match_id!=='titles_unlocked')
           resMap[r.match_id]={h:r.home_score,a:r.away_score};
       });
       const overrides={};
@@ -576,7 +576,7 @@ export default {
 
     if(path==='/api/admin/users'&&request.method==='GET'){
       const user=await getUser(request,env);
-      if(!user||!user.isAdmin)return err('Geen toegang',403);
+      if(!user||!user.is_admin)return err('Geen toegang',403);
       const rows=await env.DB.prepare('SELECT name,email,avatar,last_seen FROM users ORDER BY last_seen DESC NULLS LAST').all();
       return json(rows.results);
     }
@@ -584,6 +584,22 @@ export default {
     if(path==='/api/bonus-all'&&request.method==='GET'){
       const rows=await env.DB.prepare('SELECT player,champion,topscorer,goals FROM bonus_predictions').all();
       return json(rows.results.map(r=>({name:r.player,champion:r.champion||'',topscorer:r.topscorer||'',goals:r.goals!=null?r.goals:null})));
+    }
+
+    if(path==='/api/titles-unlocked'&&request.method==='GET'){
+      const row=await env.DB.prepare("SELECT home_score FROM results WHERE match_id='titles_unlocked'").first();
+      return json({unlocked:row?.home_score===1});
+    }
+
+    if(path==='/api/titles-unlocked'&&request.method==='PUT'){
+      const user=await getUser(request,env);
+      if(!user||!user.is_admin)return err('Geen toegang',403);
+      const{unlocked}=await request.json();
+      await env.DB.prepare(
+        `INSERT INTO results(match_id,home_score,away_score)VALUES('titles_unlocked',?,0)
+         ON CONFLICT(match_id)DO UPDATE SET home_score=excluded.home_score`
+      ).bind(unlocked?1:0).run();
+      return json({ok:true});
     }
 
     // ── RANKING ───────────────────────────────────────────
@@ -600,7 +616,7 @@ export default {
       const resMap={};let bonusResult={};
       allResults.results.forEach(r=>{
         if(r.match_id==='bonus'){try{bonusResult=JSON.parse(r.home_score);}catch{}}
-        else if(!r.match_id.startsWith('override_')&&r.match_id!=='topscorers'){
+        else if(!r.match_id.startsWith('override_')&&r.match_id!=='topscorers'&&r.match_id!=='titles_unlocked'){
           resMap[r.match_id]={h:r.home_score,a:r.away_score};
         }
       });
@@ -620,10 +636,11 @@ export default {
       }
 
       const ranking=users.results.map(({name,avatar})=>{
-        let pts=0,exact=0,win=0,filled=0,bonusPts=0,knockoutPts=0;
+        let pts=0,exact=0,win=0,draws=0,filled=0,bonusPts=0,knockoutPts=0;
         const preds=predsMap[name]||{};
         for(const[mid,pred]of Object.entries(preds)){
           filled++;
+          if(pred.h===pred.a)draws++;
           const res=resMap[mid];
           if(res){
             if(pred.h===res.h&&pred.a===res.a){pts+=3;exact++;}
@@ -641,7 +658,7 @@ export default {
         if(bp&&bonusResult.topscorer&&nameMatch(bp.topscorer,bonusResult.topscorer))
           bonusPts+=(bp.goals!=null&&bp.goals===bonusResult.goals)?12:8;
         pts+=bonusPts;
-        return{name,avatar:avatar||'🏳️',pts,exact,win,filled,bonusPts,knockoutPts};
+        return{name,avatar:avatar||'🏳️',pts,exact,win,draws,filled,bonusPts,knockoutPts};
       }).sort((a,b)=>b.pts-a.pts||b.exact-a.exact);
       return json(ranking);
     }
