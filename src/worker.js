@@ -283,7 +283,7 @@ export default {
       const soon=now+65*60*1000;
       const recent=now+55*60*1000;
       const matchesSoon=await env.DB.prepare(
-        'SELECT match_id,home_team,away_team,kickoff FROM match_kickoffs WHERE kickoff>? AND kickoff<?'
+        'SELECT match_id,home_team,away_team,kickoff FROM match_kickoffs WHERE kickoff>? AND kickoff<? AND notified_soon=0'
       ).bind(recent,soon).all();
       for(const m of matchesSoon.results){
         const h=resolveTeam(m.home_team);
@@ -295,13 +295,14 @@ export default {
           body:`${h} vs ${a} — vandaag om ${time1}`,
           url:'/'
         });
+        await env.DB.prepare('UPDATE match_kickoffs SET notified_soon=1 WHERE match_id=?').bind(m.match_id).run();
       }
 
-      // Push 2: wedstrijden die net unlocked zijn (12u voor aftrap ±5 min)
-      const unlockSoon=now+12*60*60*1000+5*60*1000;
-      const unlockRecent=now+12*60*60*1000-5*60*1000;
+      // Push 2: wedstrijden die net unlocked zijn (net ná 12u voor aftrap, nooit ervoor)
+      const unlockSoon=now+12*60*60*1000;
+      const unlockRecent=now+12*60*60*1000-10*60*1000;
       const matchesUnlocked=await env.DB.prepare(
-        'SELECT match_id,home_team,away_team,kickoff FROM match_kickoffs WHERE kickoff>? AND kickoff<?'
+        'SELECT match_id,home_team,away_team,kickoff FROM match_kickoffs WHERE kickoff>? AND kickoff<? AND notified_unlock=0'
       ).bind(unlockRecent,unlockSoon).all();
       for(const m of matchesUnlocked.results){
         const h=resolveTeam(m.home_team);
@@ -313,6 +314,7 @@ export default {
           body:`${h} vs ${a} — aftrap ${time2}`,
           url:'/'
         });
+        await env.DB.prepare('UPDATE match_kickoffs SET notified_unlock=1 WHERE match_id=?').bind(m.match_id).run();
       }
       }catch(e){console.error('Push error:',e);}
     })());
