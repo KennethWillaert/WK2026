@@ -1057,7 +1057,7 @@ function renderMatchList(wrap){
             <span>${phLbl}</span>
             ${!locked?`<span class="kickoff-time" style="color:#445566">${timeStr}</span>`:''}
           </div>
-          ${isLive?'<span class="badge-live"><span class="live-dot"></span>LIVE</span>':res&&res.h!=null?'<span class="pill-done">Afgelopen</span>':locked?'<span class="pill-closed">Gesloten</span>':`<span class="pill-open">Open</span>`}
+          ${isLive?'<span class="badge-live"><span class="live-dot"></span>LIVE</span>':res&&res.h!=null?'<span class="pill-done">Afgelopen</span>':locked?'<span class="pill-closed" style="color:#e05555">Gesloten</span>':`<span class="pill-open" style="color:#2dd4a0">Open</span>`}
         </div>
         <div class="match-grid">
           <div class="team">${teamWithFlag(resolveTeam(m.h))}</div>
