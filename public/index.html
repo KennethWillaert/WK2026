@@ -1433,7 +1433,7 @@ window.updateSearchLinks=function(){
   if(!match)return;
   const home=resolveTeam(match.h);
   const away=resolveTeam(match.a);
-  const q=encodeURIComponent(`${home} ${away} WK 2026`);
+  const q=encodeURIComponent(`prognose ${home} ${away} WK 2026`);
   const btnStyle='display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:6px;font-size:11px;font-weight:600;text-decoration:none;border:1px solid';
   linksDiv.innerHTML=`
     <a href="https://sporza.be/nl/zoek/?q=${q}" target="_blank" style="${btnStyle} rgba(255,255,255,0.15);color:#e4eaf4;background:rgba(255,255,255,0.05)">Sporza</a>
