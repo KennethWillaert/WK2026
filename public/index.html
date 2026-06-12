@@ -72,14 +72,14 @@
     .avatar-opt.selected{border-color:#0A2240;background:#e6ecf5}
     .avatar-opt img,.avatar-display img,.user-flag img{width:22px;height:22px;vertical-align:middle}
 
-    .ticker-wrap{overflow:hidden;background:#0d1520;border-bottom:1px solid rgba(255,255,255,0.06);height:26px;display:flex;align-items:center;}
+    .ticker-wrap{overflow:hidden;background:#0d1520;border-bottom:1px solid rgba(255,255,255,0.06);height:32px;display:flex;align-items:center;}
     .ticker-track{display:flex;gap:0;white-space:nowrap;animation:ticker 30s linear infinite}
     .ticker-track:hover{animation-play-state:paused}
-    .ticker-item{font-size:11px;color:#7a90aa;padding:0 20px;display:inline-flex;align-items:center;gap:6px}
+    .ticker-item{font-size:13px;color:#7a90aa;padding:0 24px;display:inline-flex;align-items:center;gap:6px}
     .ticker-item .t-score{color:#e4eaf4;font-weight:700}
     .ticker-item .t-sep{color:#2a3a4a;margin:0 4px}
-    .ticker-item .t-live{color:#1d9e75;font-size:9px;font-weight:700;letter-spacing:.5px;background:rgba(29,158,117,0.15);border-radius:3px;padding:1px 4px}
-    .ticker-item .t-rust{color:#c9a84c;font-size:9px;font-weight:700;letter-spacing:.5px;background:rgba(201,168,76,0.15);border-radius:3px;padding:1px 4px}
+    .ticker-item .t-live{color:#1d9e75;font-size:11px;font-weight:700;letter-spacing:.5px;background:rgba(29,158,117,0.15);border-radius:3px;padding:1px 4px}
+    .ticker-item .t-rust{color:#c9a84c;font-size:11px;font-weight:700;letter-spacing:.5px;background:rgba(201,168,76,0.15);border-radius:3px;padding:1px 4px}
     .badge-live{display:inline-flex;align-items:center;gap:4px;background:rgba(29,158,117,0.15);border:1px solid rgba(29,158,117,0.3);border-radius:4px;padding:1px 6px;font-size:10px;font-weight:700;color:#1d9e75}
     .live-dot{width:5px;height:5px;border-radius:50%;background:#1d9e75;animation:pulse 1.2s ease-in-out infinite}
     @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
@@ -217,6 +217,8 @@
     .ranking-table td:nth-child(3){text-align:right;vertical-align:middle}
     .ranking-table td:nth-child(4){padding-left:12px}
     .ranking-table tr:last-child td{border-bottom:none}
+    .ranking-table td{-webkit-tap-highlight-color:transparent}
+    .ranking-table tr{-webkit-tap-highlight-color:transparent}
     .pts-cell{text-align:right;font-size:18px;font-weight:800;color:#3a7bd5;white-space:nowrap}
     .stat-chips{font-size:11px;color:#7a90aa;display:flex;flex-wrap:nowrap;gap:4px;align-items:center;justify-content:flex-end;height:100%}
     .loading{text-align:center;padding:2.5rem;color:#7a90aa;font-size:14px}
@@ -1365,7 +1367,7 @@ async function renderRanking(){
       <thead><tr><th>#</th><th>Naam</th><th>Stats</th><th style="text-align:right">Ptn</th></tr></thead>
       <tbody>${ranking.map((r,i)=>`<tr>
         <td style="font-size:${i<3?'20':'14'}px;width:36px;text-align:center">${i<3?medals[i]:`<span style="color:#445566;font-weight:700">${i+1}</span>`}</td>
-        <td style="font-weight:${i===0?'700':'500'};cursor:pointer" onclick="openStatsModal(this.dataset.name)" data-name="${esc(r.name)}">
+        <td style="font-weight:${i===0?'700':'500'};cursor:pointer;-webkit-tap-highlight-color:transparent;user-select:none;outline:none" onclick="openStatsModal(this.dataset.name)" data-name="${esc(r.name)}">
           <span class="rank-flag">${r.avatar||'🏳️'}</span><span style="color:#3a7bd5;text-decoration:underline;text-underline-offset:3px">${esc(r.name)}</span> <span style="font-size:10px;color:#445566">↗</span>
         </td>
         <td class="stat-chips">
