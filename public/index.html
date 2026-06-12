@@ -769,6 +769,7 @@ function showApp(){
   }
   loadAll();
   initPush();
+  setTimeout(updateStickyPositions, 100);
   // Vraag push toestemming automatisch na login
   setTimeout(()=>{
     OneSignalDeferred.push(async function(OneSignal){
@@ -899,10 +900,14 @@ function updateStickyPositions(){
   const headerH=document.querySelector('header').offsetHeight;
   const tickerEl=document.getElementById('ticker-wrap');
   const navEl=document.querySelector('nav');
-  const tickerVisible=tickerEl.style.display!=='none'&&tickerEl.offsetHeight>0;
   tickerEl.style.top=headerH+'px';
-  navEl.style.top=(tickerVisible?headerH+tickerEl.offsetHeight:headerH)+'px';
+  // Use getBoundingClientRect after render to get actual visible height
+  requestAnimationFrame(()=>{
+    const tickerH=tickerEl.offsetParent!==null&&tickerEl.style.display!=='none'?tickerEl.offsetHeight:0;
+    navEl.style.top=(headerH+tickerH)+'px';
+  });
 }
+window.addEventListener('resize',updateStickyPositions);
 
 function renderTicker(){
   // Toon laatste 4 wedstrijden met resultaat (ongeacht datum)
