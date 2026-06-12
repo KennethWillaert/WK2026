@@ -1366,16 +1366,23 @@ async function renderNieuws(){
     if(!news.length&&!currentUser?.isAdmin){
       wrap.innerHTML='<div style="text-align:center;color:#445566;padding:40px 0;font-size:13px">Nog geen artikels beschikbaar.</div>';
     } else {
-      wrap.innerHTML=news.map(n=>`
-        <div style="background:#0d1929;border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:16px;margin-bottom:12px">
-          <div style="font-size:13px;font-weight:700;color:#e4eaf4;margin-bottom:10px">${esc(n.title)}</div>
-          <a href="${esc(n.url)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;background:#1d4ed8;color:#fff;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:600;text-decoration:none">
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-            Lees artikel
-          </a>
-          <div style="font-size:10px;color:#2a3a4a;margin-top:10px">${new Date(n.generated_at).toLocaleString('nl-BE',{timeZone:'Europe/Brussels',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div>
-          ${currentUser?.isAdmin?`<button onclick="deleteNews('${n.match_id}')" style="margin-top:6px;background:rgba(240,128,144,0.1);border:1px solid rgba(240,128,144,0.2);color:#f08090;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer">Verwijderen</button>`:''}
-        </div>`).join('');
+      wrap.innerHTML=news.map(n=>{
+        let meta={image:'',description:''};
+        try{if(n.content)meta=JSON.parse(n.content);}catch{}
+        return `<a href="${esc(n.url)}" target="_blank" rel="noopener" style="display:block;background:#0d1929;border:1px solid rgba(255,255,255,0.07);border-radius:12px;margin-bottom:12px;overflow:hidden;text-decoration:none">
+          ${meta.image?`<img src="${esc(meta.image)}" style="width:100%;height:160px;object-fit:cover;display:block" onerror="this.style.display='none'">`:''}
+          <div style="padding:14px">
+            <div style="font-size:13px;font-weight:700;color:#e4eaf4;margin-bottom:6px;line-height:1.4">${esc(n.title)}</div>
+            ${meta.description?`<div style="font-size:12px;color:#7a90aa;line-height:1.5;margin-bottom:8px">${esc(meta.description.slice(0,120))}${meta.description.length>120?'…':''}</div>`:''}
+            <div style="display:inline-flex;align-items:center;gap:5px;color:#3a7bd5;font-size:11px;font-weight:600">
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+              Lees artikel
+            </div>
+            <div style="font-size:10px;color:#2a3a4a;margin-top:6px">${new Date(n.generated_at).toLocaleString('nl-BE',{timeZone:'Europe/Brussels',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div>
+          </div>
+        </a>
+        ${currentUser?.isAdmin?`<button onclick="event.preventDefault();deleteNews('${n.match_id}')" style="margin-top:-8px;margin-bottom:8px;background:rgba(240,128,144,0.1);border:1px solid rgba(240,128,144,0.2);color:#f08090;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;display:block">Verwijderen</button>`:''}`;
+      }).join('');
     }
     if(currentUser?.isAdmin){
       wrap.insertAdjacentHTML('beforeend',`
@@ -1385,7 +1392,8 @@ async function renderNieuws(){
             <option value="">Kies een wedstrijd...</option>
             ${MATCHES.filter(m=>results[m.id]&&results[m.id].h!=null).map(m=>`<option value="${m.id}">${resolveTeam(m.h)} ${results[m.id].h}-${results[m.id].a} ${resolveTeam(m.a)}</option>`).join('')}
           </select>
-          <input type="url" id="news-url-input" placeholder="https://sporza.be/..." style="width:100%;background:#0a1220;border:1px solid rgba(255,255,255,0.15);color:#e4eaf4;border-radius:6px;padding:7px 10px;font-size:13px;margin-bottom:8px;box-sizing:border-box">
+          <input type="url" id="news-url-input" placeholder="https://sporza.be/..." oninput="clearTimeout(window._ogTimer);window._ogTimer=setTimeout(fetchOgPreview,800)" style="width:100%;background:#0a1220;border:1px solid rgba(255,255,255,0.15);color:#e4eaf4;border-radius:6px;padding:7px 10px;font-size:13px;margin-bottom:8px;box-sizing:border-box">
+          <div id="og-preview" style="margin-bottom:8px"></div>
           <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap" id="search-links"></div>
           <button id="gen-news-btn" onclick="saveNewsLink()" style="background:#1d4ed8;color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:13px;cursor:pointer;font-weight:600">Opslaan</button>
           <div id="gen-news-status" style="margin-top:8px;font-size:12px;color:#7a90aa"></div>
@@ -1418,6 +1426,22 @@ window.updateSearchLinks=function(){
   `;
 };
 
+let _ogData={};
+window.fetchOgPreview=async function(){
+  const url=document.getElementById('news-url-input')?.value.trim();
+  const preview=document.getElementById('og-preview');
+  if(!preview)return;
+  if(!url||!url.startsWith('http')){preview.innerHTML='';_ogData={};return;}
+  preview.innerHTML='<span style="font-size:11px;color:#445566">Preview laden...</span>';
+  try{
+    const data=await apiFetch(`/og-preview?url=${encodeURIComponent(url)}`);
+    _ogData=data;
+    preview.innerHTML=data.image
+      ?`<img src="${esc(data.image)}" style="width:100%;height:120px;object-fit:cover;border-radius:6px" onerror="this.style.display='none'"><div style="font-size:11px;color:#7a90aa;margin-top:4px">${esc((data.description||'').slice(0,100))}</div>`
+      :'<span style="font-size:11px;color:#445566">Geen preview beschikbaar</span>';
+  }catch{preview.innerHTML='';_ogData={};}
+};
+
 window.saveNewsLink=async function(){
   const matchId=document.getElementById('news-match-select').value;
   const url=document.getElementById('news-url-input').value.trim();
@@ -1430,7 +1454,8 @@ window.saveNewsLink=async function(){
   const res=results[matchId];
   const title=`${resolveTeam(match.h)} ${res.h}-${res.a} ${resolveTeam(match.a)}`;
   try{
-    await apiFetch('/news',{method:'POST',body:JSON.stringify({matchId,title,url})});
+    await apiFetch('/news',{method:'POST',body:JSON.stringify({matchId,title,url,image:_ogData?.image||'',description:_ogData?.description||''})});
+    _ogData={};
     status.textContent='';
     renderNieuws();
   }catch(e){

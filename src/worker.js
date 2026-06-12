@@ -408,20 +408,44 @@ export default {
     // ── MATCH PRONOS (pronos van anderen, enkel na kickoff) ──
 
     // ── MATCH NEWS ──────────────────────────
+    if(path==='/api/og-preview'&&request.method==='GET'){
+      const user=await getUser(request,env);
+      if(!user||!user.is_admin)return err('Geen toegang',403);
+      const articleUrl=url.searchParams.get('url');
+      if(!articleUrl)return err('url parameter vereist');
+      try{
+        const resp=await fetch(articleUrl,{headers:{'User-Agent':'Mozilla/5.0'}});
+        if(!resp.ok)return json({title:'',description:'',image:''});
+        const html=await resp.text();
+        const getMeta=(prop)=>{
+          const m=html.match(new RegExp(`<meta[^>]+(?:property|name)=["']${prop}["'][^>]+content=["']([^"']+)["']`,'i'))
+            ||html.match(new RegExp(`<meta[^>]+content=["']([^"']+)["'][^>]+(?:property|name)=["']${prop}["']`,'i'));
+          return m?m[1]:'';
+        };
+        return json({
+          title:getMeta('og:title')||getMeta('twitter:title')||'',
+          description:getMeta('og:description')||getMeta('description')||'',
+          image:getMeta('og:image')||getMeta('twitter:image')||''
+        });
+      }catch(e){
+        return json({title:'',description:'',image:''});
+      }
+    }
+
     if(path==='/api/news'&&request.method==='GET'){
-      const rows=await env.DB.prepare('SELECT match_id,title,url,generated_at FROM match_news ORDER BY generated_at DESC').all();
+      const rows=await env.DB.prepare('SELECT match_id,title,content,url,generated_at FROM match_news ORDER BY generated_at DESC').all();
       return json(rows.results);
     }
 
     if(path==='/api/news'&&request.method==='POST'){
       const user=await getUser(request,env);
       if(!user||!user.is_admin)return err('Geen toegang',403);
-      const{matchId,title,url}=await request.json();
+      const{matchId,title,url,image,description}=await request.json();
       if(!matchId||!url)return err('Ontbrekende velden');
       await env.DB.prepare(
         `INSERT INTO match_news(match_id,title,content,url,generated_at)VALUES(?,?,?,?,?)
-         ON CONFLICT(match_id)DO UPDATE SET title=excluded.title,url=excluded.url,generated_at=excluded.generated_at`
-      ).bind(matchId,title||matchId,'',url,Date.now()).run();
+         ON CONFLICT(match_id)DO UPDATE SET title=excluded.title,content=excluded.content,url=excluded.url,generated_at=excluded.generated_at`
+      ).bind(matchId,title||matchId,JSON.stringify({image:image||'',description:description||''}),url,Date.now()).run();
       return json({ok:true});
     }
 
