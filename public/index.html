@@ -1519,7 +1519,6 @@ async function renderTopscorers(){
       // Haal bonus prono op van deze speler
       const allResults = results;
       const totalMatches = 104;
-      const hitRate = player.filled>0?Math.round(((player.exact+player.win)/player.filled)*100):0;
       const exactRate = player.filled>0?Math.round((player.exact/player.filled)*100):0;
 
       document.getElementById('stats-body').innerHTML=`
@@ -1540,15 +1539,6 @@ async function renderTopscorers(){
           <div class="stats-row">
             <span class="stats-label">Juiste winnaar/gelijkspel</span>
             <span class="stats-value">${player.win}</span>
-          </div>
-          <div class="stats-row">
-            <span class="stats-label">Hit rate</span>
-            <span class="stats-value ${hitRate>=50?'green':''}">
-              ${hitRate}%
-              <div class="stats-bar-wrap" style="width:100px;display:inline-block;margin-left:8px;vertical-align:middle">
-                <div class="stats-bar" style="width:${hitRate}%"></div>
-              </div>
-            </span>
           </div>
           ${player.bonusPts>0?`<div class="stats-row">
             <span class="stats-label">Bonus punten</span>
