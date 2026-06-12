@@ -943,7 +943,23 @@ async function renderPredPage(){
   }
   wrap.innerHTML='<div class="loading"><span class="spinner"></span>Laden...</div>';
   try{curPreds=await apiFetch('/predictions'); renderMatchList(wrap);
-  renderTicker();}
+  renderTicker();
+  // Scroll naar vandaag of dichtstbijzijnde datum
+  setTimeout(()=>{
+    const today=new Date().toISOString().slice(0,10);
+    let el=document.getElementById(`date-${today}`);
+    if(!el){
+      // Zoek dichtstbijzijnde toekomstige datum
+      const allDates=[...document.querySelectorAll('[id^="date-"]')].map(e=>e.id.replace('date-',''));
+      const future=allDates.filter(d=>d>=today).sort();
+      if(future.length)el=document.getElementById(`date-${future[0]}`);
+    }
+    if(el){
+      const stickyH=document.getElementById('sticky-top')?.offsetHeight||0;
+      const top=el.getBoundingClientRect().top+window.scrollY-stickyH-8;
+      window.scrollTo({top,behavior:'smooth'});
+    }
+  },100);}
   catch(e){wrap.innerHTML=`<div class="error-msg">${e.message}</div>`;}
 }
 
@@ -1002,7 +1018,7 @@ function renderMatchList(wrap){
   wrap.innerHTML=Object.entries(byDate).sort(([a],[b])=>a<b?-1:1).map(([date,ms])=>{
     const d=new Date(date+'T12:00:00');
     const lbl=`${DAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}`;
-    return`<div class="date-hdr">${lbl}</div>`+ms.map(m=>{
+    return`<div class="date-hdr" id="date-${date}">${lbl}</div>`+ms.map(m=>{
       const pred=curPreds[m.id]||{};
       const res=results[m.id];
       const UNLOCK_BEFORE=12*60*60*1000;
@@ -1268,7 +1284,7 @@ function renderScoresPage(){
   document.getElementById('scores-wrap').innerHTML=Object.entries(byDate).sort(([a],[b])=>a<b?-1:1).map(([date,ms])=>{
     const d=new Date(date+'T12:00:00');
     const lbl=`${DAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}`;
-    return`<div class="date-hdr">${lbl}</div>`+ms.map(m=>{
+    return`<div class="date-hdr" id="date-${date}">${lbl}</div>`+ms.map(m=>{
       const res=results[m.id]||{};
       const timeStr=`${String(new Date(m.ko).getHours()).padStart(2,'0')}:${String(new Date(m.ko).getMinutes()).padStart(2,'0')}`;
       return`<div class="card">
