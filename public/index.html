@@ -896,10 +896,11 @@ function showError(msg){
 
 
 function renderTicker(){
-  const today=new Date().toISOString().slice(0,10);
-  const todayMatches=MATCHES.filter(m=>m.date===today&&results[m.id]&&results[m.id].h!=null);
-  if(!todayMatches.length){document.getElementById('ticker-wrap').style.display='none';return;}
-  const items=todayMatches.map(m=>{
+  // Toon laatste 4 wedstrijden met resultaat (ongeacht datum)
+  const playedMatches=MATCHES.filter(m=>results[m.id]&&results[m.id].h!=null);
+  const recentMatches=playedMatches.slice(-4);
+  if(!recentMatches.length){document.getElementById('ticker-wrap').style.display='none';return;}
+  const items=recentMatches.map(m=>{
     const r=results[m.id];
     const st=r.status||'FINISHED';
     let label='';
