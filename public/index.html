@@ -418,7 +418,7 @@
     <button onclick="nav('standen')">Standen</button>
     <button onclick="nav('topscorers')">Scorers</button>
     <button onclick="nav('ranking')">Ranking</button>
-    <button onclick="nav('nieuws')">Nieuws</button>
+    <button onclick="nav('artikels')">Artikels</button>
   </nav>
   <div id="ticker-wrap" class="ticker-wrap"><div class="ticker-track" id="ticker-track"></div></div>
   </div>
@@ -501,7 +501,7 @@
     </div>
     <div id="page-topscorers" class="page"><div id="topscorers-wrap"></div></div>
     <div id="page-ranking" class="page"><div id="ranking-wrap"></div></div>
-    <div id="page-nieuws" class="page"><div id="nieuws-wrap" style="padding:12px;max-width:600px;margin:0 auto"></div></div>
+    <div id="page-artikels" class="page"><div id="artikels-wrap" style="padding:12px;max-width:600px;margin:0 auto"></div></div>
   </main>
 </div>
 
@@ -885,7 +885,7 @@ function renderCurrent(){
   if(curPage==='scores'){renderScoresPage(); loadAdminUsers(); loadTitlesStatus();}
   if(curPage==='ranking') renderRanking();
   if(curPage==='topscorers') renderTopscorers();
-  if(curPage==='nieuws') renderNieuws();
+  if(curPage==='artikels') renderArtikels();
 }
 
 // ── DATA LOADING ────────────────────────────────
@@ -1358,8 +1358,8 @@ window.qSaveResult=function(mid){
 };
 
 // ── RANKING ─────────────────────────────────────
-async function renderNieuws(){
-  const wrap=document.getElementById('nieuws-wrap');
+async function renderArtikels(){
+  const wrap=document.getElementById('artikels-wrap');
   wrap.innerHTML='<div class="loading"><span class="spinner"></span>Laden...</div>';
   try{
     const news=await apiFetch('/news');
@@ -1385,7 +1385,7 @@ async function renderNieuws(){
       }).join('');
     }
     if(currentUser?.isAdmin){
-      wrap.insertAdjacentHTML('beforeend',`
+      wrap.insertAdjacentHTML('afterbegin',`
         <div style="background:#0d1929;border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:16px;margin-bottom:12px">
           <div style="font-size:12px;font-weight:700;color:#7a90aa;margin-bottom:10px;text-transform:uppercase;letter-spacing:.06em">Artikel toevoegen</div>
           <select id="news-match-select" onchange="updateSearchLinks()" style="width:100%;background:#0a1220;border:1px solid rgba(255,255,255,0.15);color:#e4eaf4;border-radius:6px;padding:7px 10px;font-size:13px;margin-bottom:8px">
@@ -1405,7 +1405,7 @@ async function renderNieuws(){
 window.deleteNews=async function(matchId){
   if(!confirm('Nabeschouwing verwijderen?'))return;
   await apiFetch('/news',{method:'DELETE',body:JSON.stringify({matchId})});
-  renderNieuws();
+  renderArtikels();
 };
 
 window.updateSearchLinks=function(){
@@ -1457,7 +1457,7 @@ window.saveNewsLink=async function(){
     await apiFetch('/news',{method:'POST',body:JSON.stringify({matchId,title,url,image:_ogData?.image||'',description:_ogData?.description||''})});
     _ogData={};
     status.textContent='';
-    renderNieuws();
+    renderArtikels();
   }catch(e){
     status.textContent='Fout: '+e.message;
     btn.disabled=false;
