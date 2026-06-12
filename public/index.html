@@ -1437,7 +1437,7 @@ window.fetchOgPreview=async function(){
     const data=await apiFetch(`/og-preview?url=${encodeURIComponent(url)}`);
     _ogData=data;
     preview.innerHTML=data.image
-      ?`<img src="${esc(data.image)}" style="width:100%;height:120px;object-fit:cover;border-radius:6px" onerror="this.style.display='none'"><div style="font-size:11px;color:#7a90aa;margin-top:4px">${esc((data.description||'').slice(0,100))}</div>`
+      ?`<img src="${esc(data.image)}" style="width:100%;height:120px;object-fit:cover;border-radius:6px" onerror="this.style.display='none'"><div style="font-size:11px;color:#7a90aa;margin-top:4px">${esc((data.description||'').slice(0,1000))}</div>`
       :'<span style="font-size:11px;color:#445566">Geen preview beschikbaar</span>';
   }catch{preview.innerHTML='';_ogData={};}
 };
