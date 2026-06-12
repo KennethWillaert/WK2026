@@ -956,10 +956,10 @@ async function renderPredPage(){
     }
     if(el){
       const stickyH=document.getElementById('sticky-top')?.offsetHeight||0;
-      const top=el.getBoundingClientRect().top+window.scrollY-stickyH-8;
+      const top=el.getBoundingClientRect().top+window.scrollY-stickyH-16;
       window.scrollTo({top,behavior:'smooth'});
     }
-  },100);}
+  },300);}
   catch(e){wrap.innerHTML=`<div class="error-msg">${e.message}</div>`;}
 }
 
