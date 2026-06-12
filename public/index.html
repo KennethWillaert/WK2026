@@ -269,6 +269,9 @@
     .pos-badge{display:inline-block;width:16px;height:16px;border-radius:50%;font-size:10px;font-weight:700;line-height:16px;text-align:center;margin-right:4px}
     .pos-1{background:#063320;color:#50d080}
     .pos-2{background:#0d2040;color:#7ab0f0}
+  .feature-popup-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)}
+    .feature-popup{background:#0d1929;border:1px solid rgba(255,255,255,0.12);border-radius:16px;padding:24px;max-width:320px;width:100%;text-align:center;animation:popup-in .25s ease}
+    @keyframes popup-in{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
   </style>
 </head>
 <body>
@@ -780,6 +783,7 @@ function showApp(){
   }
   loadAll();
   initPush();
+  showFeaturePopup();
   // Vraag push toestemming automatisch na login
   setTimeout(()=>{
     OneSignalDeferred.push(async function(OneSignal){
@@ -878,6 +882,18 @@ function navTo(page){
   renderCurrent();
 }
 window.nav=navTo;
+
+function showFeaturePopup(){
+  const key='wk26_seen_artikels_v1';
+  if(!localStorage.getItem(key)){
+    document.getElementById('feature-popup-overlay').style.display='flex';
+  }
+}
+function closeFeaturePopup(){
+  localStorage.setItem('wk26_seen_artikels_v1','1');
+  document.getElementById('feature-popup-overlay').style.display='none';
+}
+window.closeFeaturePopup=closeFeaturePopup;
 
 function renderCurrent(){
   if(curPage==='pronostiek') renderPredPage();
@@ -1751,5 +1767,13 @@ function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').repl
 if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(()=>{});
 init();
 </script>
+  <div id="feature-popup-overlay" class="feature-popup-overlay" style="display:none" onclick="closeFeaturePopup()">
+    <div class="feature-popup" onclick="event.stopPropagation()">
+      <div style="font-size:32px;margin-bottom:12px">📰</div>
+      <div style="font-size:16px;font-weight:700;color:#e4eaf4;margin-bottom:8px">Nieuwe tab: Artikels</div>
+      <div style="font-size:13px;color:#7a90aa;line-height:1.6;margin-bottom:20px">Vind hier voorbeschouwingen en nieuws over de WK-wedstrijden — toegevoegd door de admin.</div>
+      <button onclick="closeFeaturePopup()" style="background:#1d4ed8;color:#fff;border:none;border-radius:10px;padding:10px 24px;font-size:14px;font-weight:600;cursor:pointer;width:100%">Begrepen!</button>
+    </div>
+  </div>
 </body>
 </html>
