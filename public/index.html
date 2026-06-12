@@ -1390,7 +1390,7 @@ async function renderArtikels(){
           <div style="font-size:12px;font-weight:700;color:#7a90aa;margin-bottom:10px;text-transform:uppercase;letter-spacing:.06em">Artikel toevoegen</div>
           <select id="news-match-select" onchange="updateSearchLinks()" style="width:100%;background:#0a1220;border:1px solid rgba(255,255,255,0.15);color:#e4eaf4;border-radius:6px;padding:7px 10px;font-size:13px;margin-bottom:8px">
             <option value="">Kies een wedstrijd...</option>
-            ${MATCHES.filter(m=>results[m.id]&&results[m.id].h!=null).map(m=>`<option value="${m.id}">${resolveTeam(m.h)} ${results[m.id].h}-${results[m.id].a} ${resolveTeam(m.a)}</option>`).join('')}
+            ${[...MATCHES].reverse().map(m=>`<option value="${m.id}">${resolveTeam(m.h)}${results[m.id]&&results[m.id].h!=null?' '+results[m.id].h+'-'+results[m.id].a:''} ${resolveTeam(m.a)}</option>`).join('')}
           </select>
           <input type="url" id="news-url-input" placeholder="https://sporza.be/..." oninput="clearTimeout(window._ogTimer);window._ogTimer=setTimeout(fetchOgPreview,800)" style="width:100%;background:#0a1220;border:1px solid rgba(255,255,255,0.15);color:#e4eaf4;border-radius:6px;padding:7px 10px;font-size:13px;margin-bottom:8px;box-sizing:border-box">
           <div id="og-preview" style="margin-bottom:8px"></div>
