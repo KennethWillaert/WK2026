@@ -403,6 +403,7 @@
     <button class="profile-menu-item" onclick="openFlagModal()"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg> Wijzig vlag</button>
     <button class="profile-menu-item" id="push-btn" onclick="togglePushSubscription()"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg> Meldingen aan</button>
 
+    <button class="profile-menu-item" id="admin-menu-btn" style="display:none" onclick="navTo('scores');toggleMenu()"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> Admin</button>
     <button class="profile-menu-item danger" onclick="doLogout()"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg> Uitloggen</button>
   </div>
   <div class="avatar-modal" id="flag-modal" onclick="closeFlagModalOutside(event)">
@@ -417,6 +418,7 @@
     <button onclick="nav('standen')">Standen</button>
     <button onclick="nav('topscorers')">Scorers</button>
     <button onclick="nav('ranking')">Ranking</button>
+    <button onclick="nav('nieuws')">Nieuws</button>
   </nav>
   <div id="ticker-wrap" class="ticker-wrap"><div class="ticker-track" id="ticker-track"></div></div>
   </div>
@@ -499,6 +501,7 @@
     </div>
     <div id="page-topscorers" class="page"><div id="topscorers-wrap"></div></div>
     <div id="page-ranking" class="page"><div id="ranking-wrap"></div></div>
+    <div id="page-nieuws" class="page"><div id="nieuws-wrap" style="padding:12px;max-width:600px;margin:0 auto"></div></div>
   </main>
 </div>
 
@@ -771,11 +774,9 @@ function showApp(){
     twemoji.parse(document.getElementById('hdr-flag'),{folder:'svg',ext:'.svg'});
   }
   // Admin scores tab
-  if(currentUser.isAdmin && !document.getElementById('nav-scores')){
-    const btn=document.createElement('button');
-    btn.id='nav-scores'; btn.textContent='Admin';
-    btn.onclick=()=>navTo('scores');
-    document.getElementById('main-nav').appendChild(btn);
+  if(currentUser.isAdmin){
+    const adminBtn=document.getElementById('admin-menu-btn');
+    if(adminBtn)adminBtn.style.display='flex';
   }
   loadAll();
   initPush();
@@ -884,6 +885,7 @@ function renderCurrent(){
   if(curPage==='scores'){renderScoresPage(); loadAdminUsers(); loadTitlesStatus();}
   if(curPage==='ranking') renderRanking();
   if(curPage==='topscorers') renderTopscorers();
+  if(curPage==='nieuws') renderNieuws();
 }
 
 // ── DATA LOADING ────────────────────────────────
@@ -1356,6 +1358,84 @@ window.qSaveResult=function(mid){
 };
 
 // ── RANKING ─────────────────────────────────────
+async function renderNieuws(){
+  const wrap=document.getElementById('nieuws-wrap');
+  wrap.innerHTML='<div class="loading"><span class="spinner"></span>Laden...</div>';
+  try{
+    const news=await apiFetch('/news');
+    if(!news.length){
+      wrap.innerHTML='<div style="text-align:center;color:#445566;padding:40px 0;font-size:13px">Nog geen nabeschouwingen beschikbaar.</div>';
+    } else {
+      wrap.innerHTML=news.map(n=>`
+        <div style="background:#0d1929;border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:16px;margin-bottom:12px">
+          <div style="font-size:13px;font-weight:700;color:#e4eaf4;margin-bottom:8px">${esc(n.title)}</div>
+          <div style="font-size:12px;color:#7a90aa;line-height:1.6;white-space:pre-wrap">${esc(n.content)}</div>
+          <div style="font-size:10px;color:#2a3a4a;margin-top:8px">${new Date(n.generated_at).toLocaleString('nl-BE',{timeZone:'Europe/Brussels',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div>
+          ${currentUser?.isAdmin?`<button onclick="deleteNews('${n.match_id}')" style="margin-top:8px;background:rgba(240,128,144,0.1);border:1px solid rgba(240,128,144,0.2);color:#f08090;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer">Verwijderen</button>`:''}
+        </div>`).join('');
+    }
+    if(currentUser?.isAdmin){
+      wrap.insertAdjacentHTML('beforeend',`
+        <div style="background:#0d1929;border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:16px;margin-bottom:12px">
+          <div style="font-size:12px;font-weight:700;color:#7a90aa;margin-bottom:10px;text-transform:uppercase;letter-spacing:.06em">Nieuwe nabeschouwing genereren</div>
+          <select id="news-match-select" style="width:100%;background:#0a1220;border:1px solid rgba(255,255,255,0.15);color:#e4eaf4;border-radius:6px;padding:7px 10px;font-size:13px;margin-bottom:8px">
+            <option value="">Kies een wedstrijd...</option>
+            ${MATCHES.filter(m=>results[m.id]&&results[m.id].h!=null).map(m=>`<option value="${m.id}">${resolveTeam(m.h)} ${results[m.id].h}-${results[m.id].a} ${resolveTeam(m.a)}</option>`).join('')}
+          </select>
+          <button id="gen-news-btn" onclick="generateNews()" style="background:#1d4ed8;color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:13px;cursor:pointer;font-weight:600">Genereer nabeschouwing</button>
+          <div id="gen-news-status" style="margin-top:8px;font-size:12px;color:#7a90aa"></div>
+        </div>`);
+    }
+  }catch(e){wrap.innerHTML=`<div style="color:#f08090;padding:20px;font-size:13px">${esc(e.message)}</div>`;}
+}
+
+window.deleteNews=async function(matchId){
+  if(!confirm('Nabeschouwing verwijderen?'))return;
+  await apiFetch('/news',{method:'DELETE',body:JSON.stringify({matchId})});
+  renderNieuws();
+};
+
+window.generateNews=async function(){
+  const matchId=document.getElementById('news-match-select').value;
+  if(!matchId)return;
+  const btn=document.getElementById('gen-news-btn');
+  const status=document.getElementById('gen-news-status');
+  btn.disabled=true;
+  status.textContent='Bezig met genereren...';
+  
+  const match=MATCHES.find(m=>m.id===matchId);
+  const res=results[matchId];
+  const home=resolveTeam(match.h);
+  const away=resolveTeam(match.a);
+  const score=`${res.h}-${res.a}`;
+  
+  try{
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-6',
+        max_tokens:1000,
+        tools:[{type:'web_search_20250305',name:'web_search'}],
+        messages:[{role:'user',content:`Schrijf een korte nabeschouwing (max 200 woorden) in het Nederlands voor de WK 2026 wedstrijd: ${home} ${score} ${away}. Zoek even op wat de hoogtepunten waren. Gebruik een sportieve, enthousiaste toon. Geef geen titel, enkel de tekst.`}]
+      })
+    });
+    const data=await resp.json();
+    const text=data.content.filter(b=>b.type==='text').map(b=>b.text).join('').trim();
+    if(!text)throw new Error('Geen tekst gegenereerd');
+    await apiFetch('/news',{method:'POST',body:JSON.stringify({
+      matchId,
+      title:`${home} ${score} ${away}`,
+      content:text
+    })});
+    status.textContent='';
+    renderNieuws();
+  }catch(e){
+    status.textContent='Fout: '+e.message;
+    btn.disabled=false;
+  }
+};
+
 async function renderRanking(){
   const wrap=document.getElementById('ranking-wrap');
   wrap.innerHTML='<div class="loading"><span class="spinner"></span>Berekenen...</div>';
