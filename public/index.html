@@ -1410,24 +1410,7 @@ window.generateNews=async function(){
   const score=`${res.h}-${res.a}`;
   
   try{
-    const resp=await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        model:'claude-sonnet-4-6',
-        max_tokens:1000,
-        tools:[{type:'web_search_20250305',name:'web_search'}],
-        messages:[{role:'user',content:`Schrijf een korte nabeschouwing (max 200 woorden) in het Nederlands voor de WK 2026 wedstrijd: ${home} ${score} ${away}. Zoek even op wat de hoogtepunten waren. Gebruik een sportieve, enthousiaste toon. Geef geen titel, enkel de tekst.`}]
-      })
-    });
-    const data=await resp.json();
-    const text=data.content.filter(b=>b.type==='text').map(b=>b.text).join('').trim();
-    if(!text)throw new Error('Geen tekst gegenereerd');
-    await apiFetch('/news',{method:'POST',body:JSON.stringify({
-      matchId,
-      title:`${home} ${score} ${away}`,
-      content:text
-    })});
+    await apiFetch('/news/generate',{method:'POST',body:JSON.stringify({matchId,home,away,score})});
     status.textContent='';
     renderNieuws();
   }catch(e){
