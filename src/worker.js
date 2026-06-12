@@ -408,53 +408,20 @@ export default {
     // ── MATCH PRONOS (pronos van anderen, enkel na kickoff) ──
 
     // ── MATCH NEWS ──────────────────────────
-    if(path==='/api/news/generate'&&request.method==='POST'){
-      const user=await getUser(request,env);
-      if(!user||!user.is_admin)return err('Geen toegang',403);
-      const{matchId,home,away,score}=await request.json();
-      if(!matchId||!home||!away||!score)return err('Ontbrekende velden');
-      if(!env.ANTHROPIC_API_KEY)return err('ANTHROPIC_API_KEY niet geconfigureerd');
-      const prompt=`Schrijf een korte nabeschouwing (max 200 woorden) in het Nederlands voor de WK 2026 wedstrijd: ${home} ${score} ${away}. Zoek even op wat de hoogtepunten waren. Gebruik een sportieve, enthousiaste toon. Geef geen titel, enkel de tekst.`;
-      const aiResp=await fetch('https://api.anthropic.com/v1/messages',{
-        method:'POST',
-        headers:{
-          'Content-Type':'application/json',
-          'x-api-key':env.ANTHROPIC_API_KEY,
-          'anthropic-version':'2023-06-01'
-        },
-        body:JSON.stringify({
-          model:'claude-sonnet-4-6',
-          max_tokens:1000,
-          tools:[{type:'web_search_20250305',name:'web_search'}],
-          messages:[{role:'user',content:prompt}]
-        })
-      });
-      if(!aiResp.ok)return err(`AI fout: ${aiResp.status}`);
-      const aiData=await aiResp.json();
-      const text=(aiData.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('').trim();
-      if(!text)return err('Geen tekst gegenereerd');
-      const title=`${home} ${score} ${away}`;
-      await env.DB.prepare(
-        `INSERT INTO match_news(match_id,title,content,generated_at)VALUES(?,?,?,?)
-         ON CONFLICT(match_id)DO UPDATE SET title=excluded.title,content=excluded.content,generated_at=excluded.generated_at`
-      ).bind(matchId,title,text,Date.now()).run();
-      return json({ok:true,title,content:text});
-    }
-
     if(path==='/api/news'&&request.method==='GET'){
-      const rows=await env.DB.prepare('SELECT match_id,title,content,generated_at FROM match_news ORDER BY generated_at DESC').all();
+      const rows=await env.DB.prepare('SELECT match_id,title,url,generated_at FROM match_news ORDER BY generated_at DESC').all();
       return json(rows.results);
     }
 
     if(path==='/api/news'&&request.method==='POST'){
       const user=await getUser(request,env);
       if(!user||!user.is_admin)return err('Geen toegang',403);
-      const{matchId,title,content}=await request.json();
-      if(!matchId||!content)return err('Ontbrekende velden');
+      const{matchId,title,url}=await request.json();
+      if(!matchId||!url)return err('Ontbrekende velden');
       await env.DB.prepare(
-        `INSERT INTO match_news(match_id,title,content,generated_at)VALUES(?,?,?,?)
-         ON CONFLICT(match_id)DO UPDATE SET title=excluded.title,content=excluded.content,generated_at=excluded.generated_at`
-      ).bind(matchId,title||matchId,content,Date.now()).run();
+        `INSERT INTO match_news(match_id,title,content,url,generated_at)VALUES(?,?,?,?,?)
+         ON CONFLICT(match_id)DO UPDATE SET title=excluded.title,url=excluded.url,generated_at=excluded.generated_at`
+      ).bind(matchId,title||matchId,'',url,Date.now()).run();
       return json({ok:true});
     }
 
