@@ -1452,7 +1452,7 @@ window.saveNewsLink=async function(){
   status.textContent='Opslaan...';
   const match=MATCHES.find(m=>m.id===matchId);
   const res=results[matchId];
-  const title=`${resolveTeam(match.h)} ${res.h}-${res.a} ${resolveTeam(match.a)}`;
+  const title=res&&res.h!=null?`${resolveTeam(match.h)} ${res.h}-${res.a} ${resolveTeam(match.a)}`:`${resolveTeam(match.h)} vs ${resolveTeam(match.a)}`;
   try{
     await apiFetch('/news',{method:'POST',body:JSON.stringify({matchId,title,url,image:_ogData?.image||'',description:_ogData?.description||''})});
     _ogData={};
