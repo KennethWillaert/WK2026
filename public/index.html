@@ -861,6 +861,7 @@ async function saveFlagChange(){
 let curPage='pronostiek';
 function navTo(page){
   curPage=page;
+  window.scrollTo({top:0,behavior:'instant'});
   // Zet alle knoppen inactief
   document.querySelectorAll('#main-nav button').forEach(b=>b.classList.remove('active'));
   // Activeer de juiste knop op basis van tekst/id
