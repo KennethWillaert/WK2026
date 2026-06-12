@@ -1025,6 +1025,7 @@ function renderMatchList(wrap){
           <div class="card-meta-left"><span>${m.ph==='group'?'Groep '+m.g:''}</span></div>
           <span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;color:#445566"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Beschikbaar vanaf ${new Date(unlockTime).toLocaleDateString('nl-BE',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</span>
         </div>
+        ${res&&res.h!=null?'<div style="text-align:center;font-size:10px;font-weight:700;color:#445566;letter-spacing:.08em;text-transform:uppercase;margin-bottom:2px">Eindstand</div>':''}
         <div class="match-grid">
           <div class="team">${teamWithFlag(resolveTeam(m.h))}</div>
           <div class="score-inputs">
