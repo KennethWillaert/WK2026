@@ -72,7 +72,7 @@
     .avatar-opt.selected{border-color:#0A2240;background:#e6ecf5}
     .avatar-opt img,.avatar-display img,.user-flag img{width:22px;height:22px;vertical-align:middle}
 
-    .ticker-wrap{overflow:hidden;background:#0d1520;border-bottom:1px solid rgba(255,255,255,0.06);height:26px;display:flex;align-items:center;position:sticky;top:0;z-index:9}
+    .ticker-wrap{overflow:hidden;background:#0d1520;border-bottom:1px solid rgba(255,255,255,0.06);height:26px;display:flex;align-items:center;}
     .ticker-track{display:flex;gap:0;white-space:nowrap;animation:ticker 30s linear infinite}
     .ticker-track:hover{animation-play-state:paused}
     .ticker-item{font-size:11px;color:#7a90aa;padding:0 20px;display:inline-flex;align-items:center;gap:6px}
@@ -127,7 +127,7 @@
     .help-pts span{display:flex;align-items:center;gap:5px;font-size:12px;color:#4a5a70}
 
     /* APP */
-    header{background:#0A2240;padding:10px 14px;display:flex;align-items:flex-start;gap:10px;position:sticky;top:0;z-index:10}
+    header{background:#0A2240;padding:10px 14px;display:flex;align-items:flex-start;gap:10px;}
     .logo-img{width:42px;height:42px;object-fit:contain;flex-shrink:0}
     .header-text{flex:1;min-width:0}
     .header-text h1{font-size:16px;font-weight:700;color:#fff}
@@ -156,7 +156,7 @@
     .avatar-modal.open{display:flex}
     .avatar-modal-card{background:#1e2a3a;border-radius:10px;padding:20px;width:100%;max-width:360px}
     .avatar-modal-card h3{font-size:15px;font-weight:700;color:#e4eaf4;margin-bottom:12px}
-    nav{display:flex;background:#0A2240;overflow-x:auto;border-bottom:1px solid rgba(255,255,255,0.1);padding:0 8px;position:sticky;top:0;z-index:9}
+    nav{display:flex;background:#0A2240;overflow-x:auto;border-bottom:1px solid rgba(255,255,255,0.1);padding:0 8px;}
     nav button{display:inline-flex;align-items:center;justify-content:center;gap:5px;flex:1;min-width:0;padding:9px 0;border:none;background:none;color:rgba(255,255,255,0.45);font-size:10px;font-weight:600;cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap;font-family:inherit;letter-spacing:.03em;text-transform:uppercase;text-align:center}
     nav button.active{color:#fff;border-bottom-color:#C9A84C}
     nav button:hover:not(.active){color:rgba(255,255,255,0.75)}
@@ -376,6 +376,7 @@
 </div>
 
 <div id="app-screen" style="display:none">
+  <div id="sticky-top" style="position:sticky;top:0;z-index:10">
   <header>
     <img src="/logo.png" class="logo-img" alt="WK 2026">
     <div class="header-text">
@@ -410,6 +411,7 @@
     <button onclick="nav('ranking')">Ranking</button>
   </nav>
   <div id="ticker-wrap" class="ticker-wrap"><div class="ticker-track" id="ticker-track"></div></div>
+  </div>
   <main>
   <div id="page-pronostiek" class="page active">
       <div class="info-box" style="cursor:pointer;user-select:none;outline:none;-webkit-tap-highlight-color:transparent" onclick="this.querySelector('.spelregels-body').style.display=this.querySelector('.spelregels-body').style.display==='none'?'block':'none';this.querySelector('.spelregels-chevron').style.transform=this.querySelector('.spelregels-body').style.display==='none'?'rotate(0deg)':'rotate(180deg)'">
@@ -769,7 +771,6 @@ function showApp(){
   }
   loadAll();
   initPush();
-  setTimeout(updateStickyPositions, 100);
   // Vraag push toestemming automatisch na login
   setTimeout(()=>{
     OneSignalDeferred.push(async function(OneSignal){
@@ -896,24 +897,11 @@ function showError(msg){
 // ── PHASE BUTTONS ───────────────────────────────
 
 
-function updateStickyPositions(){
-  const headerH=document.querySelector('header').offsetHeight;
-  const tickerEl=document.getElementById('ticker-wrap');
-  const navEl=document.querySelector('nav');
-  tickerEl.style.top=headerH+'px';
-  // Use getBoundingClientRect after render to get actual visible height
-  requestAnimationFrame(()=>{
-    const tickerH=tickerEl.offsetParent!==null&&tickerEl.style.display!=='none'?tickerEl.offsetHeight:0;
-    navEl.style.top=(headerH+tickerH)+'px';
-  });
-}
-window.addEventListener('resize',updateStickyPositions);
-
 function renderTicker(){
   // Toon laatste 4 wedstrijden met resultaat (ongeacht datum)
   const playedMatches=MATCHES.filter(m=>results[m.id]&&results[m.id].h!=null);
   const recentMatches=playedMatches.slice(-4);
-  if(!recentMatches.length){document.getElementById('ticker-wrap').style.display='none';updateStickyPositions();return;}
+  if(!recentMatches.length){document.getElementById('ticker-wrap').style.display='none';return;}
   const items=recentMatches.map(m=>{
     const r=results[m.id];
     const st=r.status||'FINISHED';
@@ -925,7 +913,7 @@ function renderTicker(){
   // Duplicate for seamless loop
   document.getElementById('ticker-track').innerHTML=items+items;
   document.getElementById('ticker-wrap').style.display='flex';
-  updateStickyPositions();
+  
 }
 
 
