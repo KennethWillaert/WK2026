@@ -1030,13 +1030,7 @@ function renderMatchList(wrap){
       const unlockTime=m.ko-UNLOCK_BEFORE;
       const unlocked=Date.now()>=unlockTime;
       const isLive=Date.now()>=m.ko&&Date.now()<=m.ko+105*60*1000&&!res;
-      let badge='';
-      if(isLive){
-        badge='<span class="badge-live"><span class="live-dot"></span>LIVE</span>';
-      } else if(res&&pred.h!=null){
-        const p=calcPts(pred,res);
-        badge=p===3?'<span class="badge badge-exact">3 pt</span>':p===1?'<span class="badge badge-win">1 pt</span>':'<span class="badge badge-zero">0 pt</span>';
-      }
+
       const phLbl=m.ph==='group'?`Groep ${m.g}`:PHASES.find(p=>p.id===m.ph)?.label||'';
       const timeStr=`${String(new Date(m.ko).getHours()).padStart(2,'0')}:${String(new Date(m.ko).getMinutes()).padStart(2,'0')}`;
       if(locked){setTimeout(()=>autoLoadPronos(m.id,res),50);}
@@ -1060,9 +1054,9 @@ function renderMatchList(wrap){
         <div class="card-meta">
           <div class="card-meta-left">
             <span>${phLbl}</span>
-            ${res&&res.h!=null?'<span class="pill-done">Afgelopen</span>':locked?'<span class="pill-closed">Gesloten</span>':`<span style="display:inline-flex;align-items:center;gap:5px"><span class="pill-open">Open</span><span class="kickoff-time" style="color:#445566">${timeStr}</span></span>`}
+            ${!locked?`<span class="kickoff-time" style="color:#445566">${timeStr}</span>`:''}
           </div>
-          ${badge}
+          ${isLive?'<span class="badge-live"><span class="live-dot"></span>LIVE</span>':res&&res.h!=null?'<span class="pill-done">Afgelopen</span>':locked?'<span class="pill-closed">Gesloten</span>':`<span class="pill-open">Open</span>`}
         </div>
         <div class="match-grid">
           <div class="team">${teamWithFlag(resolveTeam(m.h))}</div>
