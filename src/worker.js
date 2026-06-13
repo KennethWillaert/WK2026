@@ -291,7 +291,7 @@ export default {
         const ko1=new Date(m.kickoff);
         const time1=ko1.toLocaleString('nl-BE',{timeZone:'Europe/Brussels',hour:'2-digit',minute:'2-digit'});
         await sendPush(env,{
-          title:'⏰ 1u voor aftrap!',
+          title:'1u voor aftrap!',
           body:`${h} vs ${a} — vandaag om ${time1}`,
           url:'/'
         });
@@ -310,13 +310,13 @@ export default {
         const ko2=new Date(m.kickoff);
         const time2=ko2.toLocaleString('nl-BE',{timeZone:'Europe/Brussels',hour:'2-digit',minute:'2-digit',day:'numeric',month:'short'});
         await sendPush(env,{
-          title:'🔓 Prono open!',
+          title:'Prono open!',
           body:`${h} vs ${a} — aftrap ${time2}`,
           url:'/'
         });
         await env.DB.prepare('UPDATE match_kickoffs SET notified_unlock=1 WHERE match_id=?').bind(m.match_id).run();
       }
-      }catch(e){console.error('Push error:',e);}
+      }catch(e){console.error('Push error:',e.message,e.stack);}
     })());
   },
 
