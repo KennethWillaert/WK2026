@@ -987,7 +987,7 @@ async function renderPredPage(){
     }
     if(el){
       const stickyH=document.getElementById('sticky-top')?.offsetHeight||0;
-      const top=el.getBoundingClientRect().top+window.scrollY-stickyH-8;
+      const top=el.getBoundingClientRect().top+window.scrollY-stickyH;
       window.scrollTo({top,behavior:'smooth'});
     }
   },300);}
