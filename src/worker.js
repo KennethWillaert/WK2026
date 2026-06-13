@@ -465,7 +465,10 @@ export default {
       const matchId=url.searchParams.get('match_id');
       if(!matchId)return err('match_id vereist');
       const kickoffRow=await env.DB.prepare('SELECT kickoff FROM match_kickoffs WHERE match_id=?').bind(matchId).first();
-      if(!kickoffRow||Date.now()<kickoffRow.kickoff)return json([]);
+      const resultRow=await env.DB.prepare('SELECT status,home_score FROM results WHERE match_id=?').bind(matchId).first();
+      const hasStarted=resultRow&&(resultRow.status==='FINISHED'||resultRow.status==='IN_PLAY'||resultRow.status==='PAUSED'||resultRow.status==='HALFTIME'||(resultRow.status==null&&resultRow.home_score!=null));
+      const kickoffPassed=kickoffRow&&Date.now()>=kickoffRow.kickoff;
+      if(!hasStarted&&!kickoffPassed)return json([]);
       const rows=await env.DB.prepare(
         'SELECT player,home_score,away_score FROM predictions WHERE match_id=? ORDER BY player'
       ).bind(matchId).all();
