@@ -971,7 +971,7 @@ async function renderPredPage(){
   try{curPreds=await apiFetch('/predictions'); renderMatchList(wrap);
   renderTicker();
   // Scroll naar eerste open match
-  setTimeout(()=>{
+  function scrollToFirstOpen(){
     const now=Date.now();
     const firstOpen=MATCHES.find(m=>{
       const ko=m.ko;
@@ -981,16 +981,17 @@ async function renderPredPage(){
     });
     let el=firstOpen?document.getElementById(`card-${firstOpen.id}`):null;
     if(!el){
-      // Fallback: eerste kaart zonder resultaat
       const firstNoResult=MATCHES.find(m=>!(results[m.id]&&results[m.id].h!=null));
       if(firstNoResult)el=document.getElementById(`card-${firstNoResult.id}`);
     }
     if(el){
       const stickyH=document.getElementById('sticky-top')?.offsetHeight||0;
       const top=el.getBoundingClientRect().top+window.scrollY-stickyH;
-      window.scrollTo({top,behavior:'smooth'});
+      window.scrollTo({top,behavior:'instant'});
     }
-  },300);}
+  }
+  setTimeout(scrollToFirstOpen,100);
+  setTimeout(scrollToFirstOpen,600);}
   catch(e){wrap.innerHTML=`<div class="error-msg">${e.message}</div>`;}
 }
 
