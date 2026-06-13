@@ -970,19 +970,24 @@ async function renderPredPage(){
   wrap.innerHTML='<div class="loading"><span class="spinner"></span>Laden...</div>';
   try{curPreds=await apiFetch('/predictions'); renderMatchList(wrap);
   renderTicker();
-  // Scroll naar vandaag of dichtstbijzijnde datum
+  // Scroll naar eerste open match
   setTimeout(()=>{
-    const today=new Date().toISOString().slice(0,10);
-    let el=document.getElementById(`date-${today}`);
+    const now=Date.now();
+    const firstOpen=MATCHES.find(m=>{
+      const ko=m.ko;
+      const unlocked=ko&&(now>=ko-24*60*60*1000);
+      const locked=ko&&now>=ko;
+      return unlocked&&!locked&&!(results[m.id]&&results[m.id].h!=null);
+    });
+    let el=firstOpen?document.getElementById(`card-${firstOpen.id}`):null;
     if(!el){
-      // Zoek dichtstbijzijnde toekomstige datum
-      const allDates=[...document.querySelectorAll('[id^="date-"]')].map(e=>e.id.replace('date-',''));
-      const future=allDates.filter(d=>d>=today).sort();
-      if(future.length)el=document.getElementById(`date-${future[0]}`);
+      // Fallback: eerste kaart zonder resultaat
+      const firstNoResult=MATCHES.find(m=>!(results[m.id]&&results[m.id].h!=null));
+      if(firstNoResult)el=document.getElementById(`card-${firstNoResult.id}`);
     }
     if(el){
       const stickyH=document.getElementById('sticky-top')?.offsetHeight||0;
-      const top=el.getBoundingClientRect().top+window.scrollY-stickyH-16;
+      const top=el.getBoundingClientRect().top+window.scrollY-stickyH-8;
       window.scrollTo({top,behavior:'smooth'});
     }
   },300);}
@@ -1072,7 +1077,7 @@ function renderMatchList(wrap){
           <div class="team right">${teamWithFlagRight(resolveTeam(m.a))}</div>
         </div>
       </div>`;
-      return`<div class="card${locked?' locked':''}">
+      return`<div class="card${locked?' locked':''}" id="card-${m.id}">
         <div class="card-meta">
           <div class="card-meta-left">
             <span>${phLbl}</span>
