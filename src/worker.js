@@ -239,7 +239,7 @@ async function syncFromFootballData(env){
 
 async function sendPush(env,payload){
   const apiKey=env.ONESIGNAL_API_KEY;
-  if(!apiKey)return {error:'no api key'};
+  if(!apiKey)throw new Error('no api key');
   const res=await fetch('https://onesignal.com/api/v1/notifications',{
     method:'POST',
     headers:{'Content-Type':'application/json','Authorization':`Basic ${apiKey}`},
@@ -251,7 +251,9 @@ async function sendPush(env,payload){
       web_url:'https://wk2026-413.pages.dev'
     })
   });
+  if(!res.ok)throw new Error(`OneSignal HTTP ${res.status}`);
   const data=await res.json();
+  if(data.errors&&data.errors.length)throw new Error(`OneSignal error: ${JSON.stringify(data.errors)}`);
   return data;
 }
 
@@ -289,7 +291,7 @@ export default {
         const ko1=new Date(m.kickoff);
         const time1=ko1.toLocaleString('nl-BE',{timeZone:'Europe/Brussels',hour:'2-digit',minute:'2-digit'});
         await sendPush(env,{
-          title:'Vergeet je prono niet!',
+          title:'⏰ 1u voor aftrap!',
           body:`${h} vs ${a} — vandaag om ${time1}`,
           url:'/'
         });
@@ -308,7 +310,7 @@ export default {
         const ko2=new Date(m.kickoff);
         const time2=ko2.toLocaleString('nl-BE',{timeZone:'Europe/Brussels',hour:'2-digit',minute:'2-digit',day:'numeric',month:'short'});
         await sendPush(env,{
-          title:'Prono beschikbaar!',
+          title:'🔓 Prono open!',
           body:`${h} vs ${a} — aftrap ${time2}`,
           url:'/'
         });
