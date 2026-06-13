@@ -278,8 +278,8 @@ export default {
       }
 
       // Push 1: wedstrijden die over ~60 min beginnen (prono reminder)
-      const soon=now+65*60*1000;
-      const recent=now+55*60*1000;
+      const soon=now+75*60*1000;
+      const recent=now+60*60*1000;
       const matchesSoon=await env.DB.prepare(
         'SELECT match_id,home_team,away_team,kickoff FROM match_kickoffs WHERE kickoff>? AND kickoff<? AND notified_soon=0'
       ).bind(recent,soon).all();
@@ -298,7 +298,7 @@ export default {
 
       // Push 2: wedstrijden die net unlocked zijn (net ná 12u voor aftrap, nooit ervoor)
       const unlockSoon=now+12*60*60*1000;
-      const unlockRecent=now+12*60*60*1000-10*60*1000;
+      const unlockRecent=now+12*60*60*1000-60*60*1000;
       const matchesUnlocked=await env.DB.prepare(
         'SELECT match_id,home_team,away_team,kickoff FROM match_kickoffs WHERE kickoff>? AND kickoff<? AND notified_unlock=0'
       ).bind(unlockRecent,unlockSoon).all();
