@@ -90,6 +90,7 @@
     .pronos-list{margin-top:8px;display:flex;flex-direction:column;gap:4px}
     .prono-row{display:flex;align-items:center;justify-content:space-between;padding:5px 8px;background:rgba(255,255,255,0.04);border-radius:6px;font-size:12px}
     .prono-row .prono-name{display:flex;align-items:center;gap:6px;color:#c0cde0}
+    .prono-row .prono-time{font-size:9px;font-weight:400;color:#445566}
     .prono-row .prono-score{font-weight:700;letter-spacing:.05em;color:#7a90aa}
     .prono-row .prono-pts{font-size:11px;font-weight:700;padding:2px 6px;border-radius:10px;min-width:36px;text-align:center}
     .pts-3{background:rgba(29,158,117,0.2);color:#1d9e75}
@@ -1151,8 +1152,9 @@ window.autoLoadPronos=async function(mid,res){
         const pts=calcMatchPts({h:p.h,a:p.a},res);
         const ptsClass=pts===3?'pts-3':pts===1?'pts-1':'pts-0';
         const ptsLabel=pts===null?'':pts===3?'3 pt':pts===1?'1 pt':'0 pt';
+        const timeStr=p.t?new Date(p.t).toLocaleString('nl-BE',{timeZone:'Europe/Brussels',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'';
         return `<div class="prono-row">
-          <span class="prono-name">${esc(p.name)}</span>
+          <span class="prono-name">${esc(p.name)}${timeStr?`<span class="prono-time">${timeStr}</span>`:''}</span>
           <span style="display:flex;align-items:center;gap:8px">
             <span class="prono-score">${p.h} – ${p.a}</span>
             ${ptsLabel?`<span class="prono-pts ${ptsClass}">${ptsLabel}</span>`:''}

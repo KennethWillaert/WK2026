@@ -470,9 +470,9 @@ export default {
       const kickoffPassed=kickoffRow&&Date.now()>=kickoffRow.kickoff;
       if(!hasStarted&&!kickoffPassed)return json([]);
       const rows=await env.DB.prepare(
-        'SELECT player,home_score,away_score FROM predictions WHERE match_id=? ORDER BY player'
+        'SELECT player,home_score,away_score,created_at FROM predictions WHERE match_id=? ORDER BY created_at IS NULL, created_at ASC, player ASC'
       ).bind(matchId).all();
-      return json(rows.results.map(r=>({name:r.player,h:r.home_score,a:r.away_score})));
+      return json(rows.results.map(r=>({name:r.player,h:r.home_score,a:r.away_score,t:r.created_at})));
     }
 
     if(path==='/api/predictions'&&request.method==='PUT'){
@@ -482,9 +482,9 @@ export default {
       if(!matchId||h==null||a==null)return err('Ontbrekende velden');
       if(kickoff&&Date.now()>=kickoff)return err('Wedstrijd is al begonnen — prono vergrendeld');
       await env.DB.prepare(
-        `INSERT INTO predictions(player,match_id,home_score,away_score)VALUES(?,?,?,?)
+        `INSERT INTO predictions(player,match_id,home_score,away_score,created_at)VALUES(?,?,?,?,?)
          ON CONFLICT(player,match_id)DO UPDATE SET home_score=excluded.home_score,away_score=excluded.away_score`
-      ).bind(user.name,matchId,parseInt(h),parseInt(a)).run();
+      ).bind(user.name,matchId,parseInt(h),parseInt(a),Date.now()).run();
       return json({ok:true});
     }
 
