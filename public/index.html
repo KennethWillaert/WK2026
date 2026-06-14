@@ -34,6 +34,13 @@
           }
         }
       });
+
+      // Toon meldingen ook als de app open/actief is (anders houdt OneSignal ze stil
+      // wanneer het tabblad in focus is, en mis je bv. "Prono open!" terwijl je inzit)
+      OneSignal.Notifications.addEventListener('foregroundWillDisplay', (event) => {
+        event.preventDefault();
+        event.notification.display();
+      });
     });
   </script>
   <script src="https://cdn.jsdelivr.net/npm/@twemoji/api@latest/dist/twemoji.min.js" crossorigin="anonymous"></script>

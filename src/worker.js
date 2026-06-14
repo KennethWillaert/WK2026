@@ -285,17 +285,20 @@ export default {
       const matchesSoon=await env.DB.prepare(
         'SELECT match_id,home_team,away_team,kickoff FROM match_kickoffs WHERE kickoff>? AND kickoff<? AND notified_soon=0'
       ).bind(recent,soon).all();
+      console.log(`[cron] reminder-venster (${new Date(recent).toISOString()} - ${new Date(soon).toISOString()}): ${matchesSoon.results.length} match(es)`);
       for(const m of matchesSoon.results){
-        const h=resolveTeam(m.home_team);
-        const a=resolveTeam(m.away_team);
-        const ko1=new Date(m.kickoff);
-        const time1=ko1.toLocaleString('nl-BE',{timeZone:'Europe/Brussels',hour:'2-digit',minute:'2-digit'});
-        await sendPush(env,{
-          title:'1u voor aftrap!',
-          body:`${h} vs ${a} — vandaag om ${time1}`,
-          url:'/'
-        });
-        await env.DB.prepare('UPDATE match_kickoffs SET notified_soon=1 WHERE match_id=?').bind(m.match_id).run();
+        try{
+          const h=resolveTeam(m.home_team);
+          const a=resolveTeam(m.away_team);
+          const ko1=new Date(m.kickoff);
+          const time1=ko1.toLocaleString('nl-BE',{timeZone:'Europe/Brussels',hour:'2-digit',minute:'2-digit'});
+          await sendPush(env,{
+            title:'1u voor aftrap!',
+            body:`${h} vs ${a} — vandaag om ${time1}`,
+            url:'/'
+          });
+          await env.DB.prepare('UPDATE match_kickoffs SET notified_soon=1 WHERE match_id=?').bind(m.match_id).run();
+        }catch(e){console.error(`[cron] reminder-push mislukt voor ${m.match_id}:`,e.message);}
       }
 
       // Push 2: wedstrijden die net unlocked zijn (net ná 12u voor aftrap, nooit ervoor)
@@ -304,17 +307,20 @@ export default {
       const matchesUnlocked=await env.DB.prepare(
         'SELECT match_id,home_team,away_team,kickoff FROM match_kickoffs WHERE kickoff>? AND kickoff<? AND notified_unlock=0'
       ).bind(unlockRecent,unlockSoon).all();
+      console.log(`[cron] unlock-venster (${new Date(unlockRecent).toISOString()} - ${new Date(unlockSoon).toISOString()}): ${matchesUnlocked.results.length} match(es)`);
       for(const m of matchesUnlocked.results){
-        const h=resolveTeam(m.home_team);
-        const a=resolveTeam(m.away_team);
-        const ko2=new Date(m.kickoff);
-        const time2=ko2.toLocaleString('nl-BE',{timeZone:'Europe/Brussels',hour:'2-digit',minute:'2-digit',day:'numeric',month:'short'});
-        await sendPush(env,{
-          title:'Prono open!',
-          body:`${h} vs ${a} — aftrap ${time2}`,
-          url:'/'
-        });
-        await env.DB.prepare('UPDATE match_kickoffs SET notified_unlock=1 WHERE match_id=?').bind(m.match_id).run();
+        try{
+          const h=resolveTeam(m.home_team);
+          const a=resolveTeam(m.away_team);
+          const ko2=new Date(m.kickoff);
+          const time2=ko2.toLocaleString('nl-BE',{timeZone:'Europe/Brussels',hour:'2-digit',minute:'2-digit',day:'numeric',month:'short'});
+          await sendPush(env,{
+            title:'Prono open!',
+            body:`${h} vs ${a} — aftrap ${time2}`,
+            url:'/'
+          });
+          await env.DB.prepare('UPDATE match_kickoffs SET notified_unlock=1 WHERE match_id=?').bind(m.match_id).run();
+        }catch(e){console.error(`[cron] unlock-push mislukt voor ${m.match_id}:`,e.message);}
       }
       }catch(e){console.error('Push error:',e.message,e.stack);}
     })());
@@ -401,9 +407,9 @@ export default {
     if(path==='/api/predictions'&&request.method==='GET'){
       const user=await getUser(request,env);
       if(!user)return err('Niet ingelogd',401);
-      const rows=await env.DB.prepare('SELECT match_id,home_score,away_score FROM predictions WHERE player=?').bind(user.name).all();
+      const rows=await env.DB.prepare('SELECT match_id,home_score,away_score,winner FROM predictions WHERE player=?').bind(user.name).all();
       const result={};
-      rows.results.forEach(r=>{result[r.match_id]={h:r.home_score,a:r.away_score};});
+      rows.results.forEach(r=>{result[r.match_id]={h:r.home_score,a:r.away_score,winner:r.winner};});
       return json(result);
     }
 
@@ -482,9 +488,9 @@ export default {
       if(!matchId||h==null||a==null)return err('Ontbrekende velden');
       if(kickoff&&Date.now()>=kickoff)return err('Wedstrijd is al begonnen — prono vergrendeld');
       await env.DB.prepare(
-        `INSERT INTO predictions(player,match_id,home_score,away_score,created_at)VALUES(?,?,?,?,?)
-         ON CONFLICT(player,match_id)DO UPDATE SET home_score=excluded.home_score,away_score=excluded.away_score`
-      ).bind(user.name,matchId,parseInt(h),parseInt(a),Date.now()).run();
+        `INSERT INTO predictions(player,match_id,home_score,away_score,winner,created_at)VALUES(?,?,?,?,?,?)
+         ON CONFLICT(player,match_id)DO UPDATE SET home_score=excluded.home_score,away_score=excluded.away_score,winner=excluded.winner`
+      ).bind(user.name,matchId,parseInt(h),parseInt(a),winner||null,Date.now()).run();
       return json({ok:true});
     }
 
@@ -616,8 +622,12 @@ export default {
       const user=await getUser(request,env);
       if(!user)return err('Niet ingelogd',401);
       const{title,body,url}=await request.json();
-      const result=await sendPush(env,{title,body,url});
-      return json({sent:1,onesignal:result});
+      try{
+        const result=await sendPush(env,{title,body,url});
+        return json({sent:1,onesignal:result});
+      }catch(e){
+        return err(`Push mislukt: ${e.message}`,500);
+      }
     }
 
 
@@ -675,13 +685,13 @@ export default {
     // ── RANKING ───────────────────────────────────────────
     if(path==='/api/ranking'&&request.method==='GET'){
       const users=await env.DB.prepare('SELECT name,avatar FROM users ORDER BY created_at').all();
-      const allPreds=await env.DB.prepare('SELECT player,match_id,home_score,away_score FROM predictions').all();
+      const allPreds=await env.DB.prepare('SELECT player,match_id,home_score,away_score,winner FROM predictions').all();
       const allResults=await env.DB.prepare('SELECT match_id,home_score,away_score,winner FROM results').all();
       const allBonus=await env.DB.prepare('SELECT * FROM bonus_predictions').all();
       const predsMap={};
       allPreds.results.forEach(r=>{
         if(!predsMap[r.player])predsMap[r.player]={};
-        predsMap[r.player][r.match_id]={h:r.home_score,a:r.away_score};
+        predsMap[r.player][r.match_id]={h:r.home_score,a:r.away_score,winner:r.winner};
       });
       const resMap={};let bonusResult={};
       allResults.results.forEach(r=>{
