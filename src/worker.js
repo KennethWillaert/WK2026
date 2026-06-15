@@ -397,6 +397,24 @@ export default {
       return json(result);
     }
 
+    if(path==='/api/sync-debug'&&request.method==='GET'){
+      const user=await getUser(request,env);
+      if(!user||!user.is_admin)return err('Geen toegang',403);
+      const headers={'X-Auth-Token':env.FOOTBALL_API_KEY};
+      const resp=await fetch(`${FD_BASE}/competitions/WC/matches?status=FINISHED`,{headers});
+      if(!resp.ok)return json({error:`API fout: ${resp.status}`,body:await resp.text()});
+      const data=await resp.json();
+      const matches=(data.matches||[]).map(m=>({
+        status:m.status,
+        home:m.homeTeam?.name,
+        away:m.awayTeam?.name,
+        homeMapped:mapTeam(m.homeTeam?.name||''),
+        awayMapped:mapTeam(m.awayTeam?.name||''),
+        score:m.score
+      }));
+      return json({total:matches.length,matches});
+    }
+
     // ── PLAYERS ───────────────────────────────────────────
     if(path==='/api/players'&&request.method==='GET'){
       const rows=await env.DB.prepare('SELECT name FROM users ORDER BY created_at').all();
