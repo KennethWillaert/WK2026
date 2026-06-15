@@ -279,13 +279,14 @@ export default {
         return t;
       }
 
-      // Push 1: wedstrijden die over ~60 min beginnen (prono reminder)
-      const soon=now+75*60*1000;
-      const recent=now+60*60*1000;
+      // Push 1: wedstrijden die binnen ~75 min beginnen (prono reminder)
+      // Open venster: alles wat nog moet starten en binnen 75 min valt, en nog niet gemeld is.
+      // Zo vangt de volgende cron-run het alsnog op als een eerdere run mislukte.
+      const reminderCutoff=now+75*60*1000;
       const matchesSoon=await env.DB.prepare(
-        'SELECT match_id,home_team,away_team,kickoff FROM match_kickoffs WHERE kickoff>? AND kickoff<? AND notified_soon=0'
-      ).bind(recent,soon).all();
-      console.log(`[cron] reminder-venster (${new Date(recent).toISOString()} - ${new Date(soon).toISOString()}): ${matchesSoon.results.length} match(es)`);
+        'SELECT match_id,home_team,away_team,kickoff FROM match_kickoffs WHERE kickoff>? AND kickoff<=? AND notified_soon=0'
+      ).bind(now,reminderCutoff).all();
+      console.log(`[cron] reminder-venster (tot ${new Date(reminderCutoff).toISOString()}): ${matchesSoon.results.length} match(es)`);
       for(const m of matchesSoon.results){
         try{
           const h=resolveTeam(m.home_team);
@@ -301,13 +302,13 @@ export default {
         }catch(e){console.error(`[cron] reminder-push mislukt voor ${m.match_id}:`,e.message);}
       }
 
-      // Push 2: wedstrijden die net unlocked zijn (net ná 12u voor aftrap, nooit ervoor)
-      const unlockSoon=now+12*60*60*1000;
-      const unlockRecent=now+12*60*60*1000-60*60*1000;
+      // Push 2: wedstrijden die binnen ~12u beginnen (prono unlock)
+      // Idem: open venster, geen smal tijdslot — vangt gemiste cron-runs alsnog op.
+      const unlockCutoff=now+12*60*60*1000;
       const matchesUnlocked=await env.DB.prepare(
-        'SELECT match_id,home_team,away_team,kickoff FROM match_kickoffs WHERE kickoff>? AND kickoff<? AND notified_unlock=0'
-      ).bind(unlockRecent,unlockSoon).all();
-      console.log(`[cron] unlock-venster (${new Date(unlockRecent).toISOString()} - ${new Date(unlockSoon).toISOString()}): ${matchesUnlocked.results.length} match(es)`);
+        'SELECT match_id,home_team,away_team,kickoff FROM match_kickoffs WHERE kickoff>? AND kickoff<=? AND notified_unlock=0'
+      ).bind(now,unlockCutoff).all();
+      console.log(`[cron] unlock-venster (tot ${new Date(unlockCutoff).toISOString()}): ${matchesUnlocked.results.length} match(es)`);
       for(const m of matchesUnlocked.results){
         try{
           const h=resolveTeam(m.home_team);
@@ -395,6 +396,24 @@ export default {
       if(!user||!user.is_admin)return err('Geen toegang',403);
       const result=await syncFromFootballData(env);
       return json(result);
+    }
+
+    if(path==='/api/sync-debug'&&request.method==='GET'){
+      const user=await getUser(request,env);
+      if(!user||!user.is_admin)return err('Geen toegang',403);
+      const headers={'X-Auth-Token':env.FOOTBALL_API_KEY};
+      const resp=await fetch(`${FD_BASE}/competitions/WC/matches?status=FINISHED`,{headers});
+      if(!resp.ok)return json({error:`API fout: ${resp.status}`,body:await resp.text()});
+      const data=await resp.json();
+      const matches=(data.matches||[]).map(m=>({
+        status:m.status,
+        home:m.homeTeam?.name,
+        away:m.awayTeam?.name,
+        homeMapped:mapTeam(m.homeTeam?.name||''),
+        awayMapped:mapTeam(m.awayTeam?.name||''),
+        score:m.score
+      }));
+      return json({total:matches.length,matches});
     }
 
     // ── PLAYERS ───────────────────────────────────────────
