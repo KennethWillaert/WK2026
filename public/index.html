@@ -876,7 +876,7 @@ async function saveFlagChange(){
 let curPage='pronostiek';
 function navTo(page){
   curPage=page;
-  window.scrollTo({top:0,behavior:'instant'});
+  window.scrollTo({top:0,behavior:'auto'});
   // Zet alle knoppen inactief
   document.querySelectorAll('#main-nav button').forEach(b=>b.classList.remove('active'));
   // Activeer de juiste knop op basis van tekst/id
@@ -979,6 +979,9 @@ async function renderPredPage(){
   try{curPreds=await apiFetch('/predictions'); renderMatchList(wrap);
   renderTicker();
   // Scroll naar eerste open match
+  let userScrolledAway=false;
+  const scrollGuard=()=>{userScrolledAway=true;};
+  window.addEventListener('scroll',scrollGuard,{once:true,passive:true});
   function scrollToFirstOpen(){
     const now=Date.now();
     const firstOpen=MATCHES.find(m=>{
@@ -995,10 +998,14 @@ async function renderPredPage(){
     if(el){
       const stickyH=document.getElementById('sticky-top')?.offsetHeight||0;
       const top=el.getBoundingClientRect().top+window.scrollY-stickyH;
-      window.scrollTo({top,behavior:'instant'});
+      window.scrollTo({top,behavior:'auto'});
     }
   }
-  setTimeout(scrollToFirstOpen,600);}
+  // iOS Safari (incl. PWA standalone) heeft soms een trage(re) eerste layout-pass dan Android/Chrome,
+  // waardoor getBoundingClientRect() bij 600ms nog niet klopt. Extra herberekening na load lost dit op,
+  // maar enkel als de gebruiker intussen niet zelf al aan het scrollen is (anders onderbreken we die).
+  setTimeout(scrollToFirstOpen,600);
+  setTimeout(()=>{if(!userScrolledAway)scrollToFirstOpen();},1200);}
   catch(e){wrap.innerHTML=`<div class="error-msg">${e.message}</div>`;}
 }
 
