@@ -794,14 +794,23 @@ function showApp(){
   // Popup pas tonen na de auto-scroll-poging (anders overschaduwt het de scroll naar de open match,
   // vooral op iOS waar de eerste render/scroll-pass trager is dan op Android)
   setTimeout(showFeaturePopup,1500);
-  // Vraag push toestemming automatisch na login
+  // Vraag push toestemming automatisch na login.
+  // Ruim later dan de auto-scroll: op iOS reset de native permissie-prompt (Web Push) de webview-scroll
+  // hard naar boven zodra hij opent/sluit. Door dit pas na 4s te tonen heeft de gebruiker dan al
+  // de tijd gehad om de open-match-kaart te zien en zelf te beginnen invullen.
   setTimeout(()=>{
     OneSignalDeferred.push(async function(OneSignal){
+      const scrollBefore=window.scrollY;
       await OneSignal.Notifications.requestPermission();
       const toggle=document.getElementById('push-toggle');
       if(toggle)toggle.checked=!!(await OneSignal.Notifications.permission);
+      // iOS kan de webview-scroll hard naar boven resetten zodra de native permissie-dialoog
+      // opent/sluit. Positie expliciet herstellen als die intussen veranderd is.
+      if(scrollBefore>0&&window.scrollY!==scrollBefore){
+        window.scrollTo({top:scrollBefore,behavior:'auto'});
+      }
     });
-  }, 2000);
+  }, 4000);
 }
 
 async function init(){
