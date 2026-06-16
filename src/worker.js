@@ -494,10 +494,14 @@ export default {
       const resultRow=await env.DB.prepare('SELECT status,home_score FROM results WHERE match_id=?').bind(matchId).first();
       const hasStarted=resultRow&&(resultRow.status==='FINISHED'||resultRow.status==='IN_PLAY'||resultRow.status==='PAUSED'||resultRow.status==='HALFTIME'||(resultRow.status==null&&resultRow.home_score!=null));
       const kickoffPassed=kickoffRow&&Date.now()>=kickoffRow.kickoff;
-      if(!hasStarted&&!kickoffPassed)return json([]);
+      const locked=hasStarted||kickoffPassed;
       const rows=await env.DB.prepare(
         'SELECT player,home_score,away_score,created_at FROM predictions WHERE match_id=? ORDER BY created_at IS NULL, created_at ASC, player ASC'
       ).bind(matchId).all();
+      if(!locked){
+        // Match nog open: enkel tonen WIE al ingevuld heeft + wanneer, nooit de score zelf.
+        return json(rows.results.map(r=>({name:r.player,t:r.created_at})));
+      }
       return json(rows.results.map(r=>({name:r.player,h:r.home_score,a:r.away_score,t:r.created_at})));
     }
 
