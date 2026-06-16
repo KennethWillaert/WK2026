@@ -791,7 +791,9 @@ function showApp(){
   }
   loadAll();
   initPush();
-  showFeaturePopup();
+  // Popup pas tonen na de auto-scroll-poging (anders overschaduwt het de scroll naar de open match,
+  // vooral op iOS waar de eerste render/scroll-pass trager is dan op Android)
+  setTimeout(showFeaturePopup,1500);
   // Vraag push toestemming automatisch na login
   setTimeout(()=>{
     OneSignalDeferred.push(async function(OneSignal){
@@ -980,9 +982,17 @@ async function renderPredPage(){
   renderTicker();
   // Scroll naar eerste open match
   let userScrolledAway=false;
-  const scrollGuard=()=>{userScrolledAway=true;};
-  window.addEventListener('scroll',scrollGuard,{once:true,passive:true});
-  function scrollToFirstOpen(){
+  let programmaticScroll=false;
+  const scrollGuard=()=>{ if(!programmaticScroll) userScrolledAway=true; };
+  window.addEventListener('scroll',scrollGuard,{passive:true});
+  setTimeout(()=>window.removeEventListener('scroll',scrollGuard),3500);
+  // Wacht tot het doel-element écht gerenderd + gelayout is (offsetHeight>0) ipv te gokken met een vaste timeout.
+  // Dit is robuuster dan setTimeout-getallen, vooral op iOS Safari waar de eerste layout-pass
+  // soms langer duurt dan op Android/Chrome.
+  let scrollAttempts=0;
+  function waitAndScroll(){
+    scrollAttempts++;
+    if(userScrolledAway||scrollAttempts>30){return;} // max ~3s pollen, dan stoppen
     const now=Date.now();
     const firstOpen=MATCHES.find(m=>{
       const ko=m.ko;
@@ -995,17 +1005,17 @@ async function renderPredPage(){
       const firstNoResult=MATCHES.find(m=>!(results[m.id]&&results[m.id].h!=null));
       if(firstNoResult)el=document.getElementById(`card-${firstNoResult.id}`);
     }
-    if(el){
-      const stickyH=document.getElementById('sticky-top')?.offsetHeight||0;
-      const top=el.getBoundingClientRect().top+window.scrollY-stickyH;
-      window.scrollTo({top,behavior:'auto'});
+    if(!el||el.offsetHeight===0){
+      setTimeout(waitAndScroll,100);
+      return;
     }
+    const stickyH=document.getElementById('sticky-top')?.offsetHeight||0;
+    const top=el.getBoundingClientRect().top+window.scrollY-stickyH;
+    programmaticScroll=true;
+    window.scrollTo({top,behavior:'auto'});
+    setTimeout(()=>{programmaticScroll=false;},150);
   }
-  // iOS Safari (incl. PWA standalone) heeft soms een trage(re) eerste layout-pass dan Android/Chrome,
-  // waardoor getBoundingClientRect() bij 600ms nog niet klopt. Extra herberekening na load lost dit op,
-  // maar enkel als de gebruiker intussen niet zelf al aan het scrollen is (anders onderbreken we die).
-  setTimeout(scrollToFirstOpen,600);
-  setTimeout(()=>{if(!userScrolledAway)scrollToFirstOpen();},1200);}
+  setTimeout(waitAndScroll,50);}
   catch(e){wrap.innerHTML=`<div class="error-msg">${e.message}</div>`;}
 }
 
