@@ -987,7 +987,15 @@ async function renderPredPage(){
     return;
   }
   wrap.innerHTML='<div class="loading"><span class="spinner"></span>Laden...</div>';
-  try{curPreds=await apiFetch('/predictions'); renderMatchList(wrap);
+  try{curPreds=await apiFetch('/predictions');
+  const _now0=Date.now();
+  const _firstOpenMatch=MATCHES.find(m=>{
+    const ko=m.ko;
+    const unlocked=ko&&(_now0>=ko-24*60*60*1000);
+    const locked=ko&&_now0>=ko;
+    return unlocked&&!locked&&!(results[m.id]&&results[m.id].h!=null);
+  });
+  renderMatchList(wrap,_firstOpenMatch?_firstOpenMatch.id:null);
   renderTicker();
   // Scroll naar eerste open match
   let userScrolledAway=false;
@@ -1002,14 +1010,7 @@ async function renderPredPage(){
   function waitAndScroll(){
     scrollAttempts++;
     if(userScrolledAway||scrollAttempts>30){return;} // max ~3s pollen, dan stoppen
-    const now=Date.now();
-    const firstOpen=MATCHES.find(m=>{
-      const ko=m.ko;
-      const unlocked=ko&&(now>=ko-24*60*60*1000);
-      const locked=ko&&now>=ko;
-      return unlocked&&!locked&&!(results[m.id]&&results[m.id].h!=null);
-    });
-    let el=firstOpen?document.getElementById(`card-${firstOpen.id}`):null;
+    let el=_firstOpenMatch?document.getElementById(`card-${_firstOpenMatch.id}`):null;
     if(!el){
       const firstNoResult=MATCHES.find(m=>!(results[m.id]&&results[m.id].h!=null));
       if(firstNoResult)el=document.getElementById(`card-${firstNoResult.id}`);
@@ -1076,7 +1077,8 @@ window.saveBonus=async function(){
   },600);
 };
 
-function renderMatchList(wrap){
+function renderMatchList(wrap,priorityMatchId){
+  let pronosLoadIndex=0;
   const filtered=MATCHES.filter(m=>m.ph===curPhaseV);
   const byDate={};
   filtered.forEach(m=>(byDate[m.date]=byDate[m.date]||[]).push(m));
@@ -1094,8 +1096,9 @@ function renderMatchList(wrap){
 
       const phLbl=m.ph==='group'?`Groep ${m.g}`:PHASES.find(p=>p.id===m.ph)?.label||'';
       const timeStr=`${String(new Date(m.ko).getHours()).padStart(2,'0')}:${String(new Date(m.ko).getMinutes()).padStart(2,'0')}`;
-      if(locked){setTimeout(()=>autoLoadPronos(m.id,res,true),50);}
-      else if(unlocked){setTimeout(()=>autoLoadPronos(m.id,res,false),50);}
+      const _pronoDelay=m.id===priorityMatchId?10:50+(pronosLoadIndex++)*40;
+      if(locked){setTimeout(()=>autoLoadPronos(m.id,res,true),_pronoDelay);}
+      else if(unlocked){setTimeout(()=>autoLoadPronos(m.id,res,false),_pronoDelay);}
       if(!unlocked) return`<div class="card locked" style="opacity:0.4">
         <div class="card-meta">
           <div class="card-meta-left"><span>${m.ph==='group'?'Groep '+m.g:''}</span></div>
@@ -1168,6 +1171,16 @@ function calcMatchPts(pred,res){
 }
 
 
+let _rankingCache=null, _rankingCacheTs=0;
+async function getRankingCached(){
+  // Wordt door elke open/locked kaart aangeroepen tijdens één render-cyclus — zonder cache
+  // zou dat N identieke /ranking-fetches geven. 5s hergebruik is ruim genoeg voor één render.
+  if(_rankingCache&&Date.now()-_rankingCacheTs<5000)return _rankingCache;
+  _rankingCache=await apiFetch('/ranking');
+  _rankingCacheTs=Date.now();
+  return _rankingCache;
+}
+
 window.autoLoadPronos=async function(mid,res,isLocked){
   const list=document.getElementById(`pronos_${mid}`);
   if(!list||list.dataset.loaded)return;
@@ -1175,7 +1188,7 @@ window.autoLoadPronos=async function(mid,res,isLocked){
   try{
     const [pronos,ranking]=await Promise.all([
       apiFetch(`/match-pronos?match_id=${mid}`),
-      apiFetch('/ranking')
+      getRankingCached()
     ]);
     const filledNames=new Set(pronos.map(p=>p.name));
     const missing=ranking.map(r=>r.name).filter(n=>!filledNames.has(n));
@@ -1244,6 +1257,10 @@ window.qSavePred=function(mid,koTime){
       curPreds[mid]={h:+h,a:+a,winner:w};
       const sv=document.getElementById(`sv_${mid}`);
       if(sv){sv.innerHTML='<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#50d080" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><polyline points="20 6 9 11 4 18"/></svg> Opgeslagen';setTimeout(()=>{if(sv)sv.innerHTML='';},2000);}
+      // Open-pronos-lijst ('wie heeft ingevuld') van deze match direct herladen,
+      // zodat je eigen 'Ingevuld'-status + tijdstip meteen zichtbaar wordt, niet pas na herladen.
+      const list=document.getElementById(`pronos_${mid}`);
+      if(list){delete list.dataset.loaded; const isLocked=Date.now()>=koTime; autoLoadPronos(mid,results[mid],isLocked);}
     }catch(e){showError(e.message);}
   },600);
 };
