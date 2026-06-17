@@ -168,6 +168,23 @@
     .avatar-modal.open{display:flex}
     .avatar-modal-card{background:#1e2a3a;border-radius:10px;padding:20px;width:100%;max-width:360px}
     .avatar-modal-card h3{font-size:15px;font-weight:700;color:#e4eaf4;margin-bottom:12px}
+    .form-modal-header{display:flex;align-items:center;gap:8px;margin-bottom:14px}
+    .form-modal-header .flag-big{font-size:22px}
+    .form-modal-header h3{margin:0;font-size:16px}
+    .form-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06)}
+    .form-row:last-child{border-bottom:none}
+    .form-badge{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;color:#fff}
+    .form-badge.w{background:#2dd4a0;color:#0A2240}
+    .form-badge.g{background:#7a90aa;color:#0A2240}
+    .form-badge.v{background:#e05555}
+    .form-row-mid{flex:1;min-width:0}
+    .form-row-opp{font-size:13px;color:#e4eaf4;font-weight:600}
+    .form-row-cat{font-size:10px;color:#7a90aa;margin-top:1px;text-transform:uppercase;letter-spacing:.03em}
+    .form-row-score{font-size:14px;font-weight:700;color:#c0cde0;flex-shrink:0}
+    .form-empty{font-size:13px;color:#7a90aa;text-align:center;padding:16px 0}
+    .form-sample-note{font-size:10px;color:#C9A84C;text-align:center;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.08)}
+    .team-clickable{cursor:pointer}
+    .team-clickable:hover{opacity:0.8}
     nav{display:flex;background:#0A2240;overflow-x:auto;border-bottom:1px solid rgba(255,255,255,0.1);padding:0 8px;}
     nav button{display:inline-flex;align-items:center;justify-content:center;gap:5px;flex:1;min-width:0;padding:9px 2px;border:none;background:none;color:rgba(255,255,255,0.45);font-size:9px;font-weight:600;cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap;font-family:inherit;letter-spacing:.02em;text-transform:uppercase;text-align:center}
     nav button.active{color:#fff;border-bottom-color:#C9A84C}
@@ -431,6 +448,9 @@
       <button class="primary" style="width:100%;margin-top:12px" onclick="saveFlagChange()">Opslaan</button>
     </div>
   </div>
+  <div class="avatar-modal" id="form-modal" onclick="closeFormModalOutside(event)">
+    <div class="avatar-modal-card" id="form-modal-card"></div>
+  </div>
   <nav id="main-nav">
     <button class="active" onclick="nav('pronostiek')">Prono</button>
     <button onclick="nav('standen')">Standen</button>
@@ -575,11 +595,11 @@ const TEAMS=FLAGS.map(f=>f[1]);
   }
   function teamWithFlag(name){
     const flag=flagFor(name);
-    return flag?`<span style="margin-right:4px">${flag}</span>${esc(shortName(name))}`:esc(shortName(name));
+    return `<span class="team-clickable" onclick="event.stopPropagation();showTeamForm('${esc(name)}')">${flag?`<span style="margin-right:4px">${flag}</span>`:''}${esc(shortName(name))}</span>`;
   }
   function teamWithFlagRight(name){
     const flag=flagFor(name);
-    return flag?`${esc(shortName(name))}<span style="margin-left:4px">${flag}</span>`:esc(shortName(name));
+    return `<span class="team-clickable" onclick="event.stopPropagation();showTeamForm('${esc(name)}')">${esc(shortName(name))}${flag?`<span style="margin-left:4px">${flag}</span>`:''}</span>`;
   }
 const PHASES=[
   {id:'bonus',label:'<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><path d="M6 9H4a2 2 0 0 1-2-2V5h4"/><path d="M18 9h2a2 2 0 0 0 2-2V5h-4"/><path d="M12 17v4"/><path d="M8 21h8"/><path d="M6 5h12v6a6 6 0 0 1-12 0z"/></svg> Bonus',unlock:0,lock:ko('2026-06-11','21:00')},
@@ -896,6 +916,64 @@ async function saveFlagChange(){
     if(window.twemoji) twemoji.parse(document.getElementById('hdr-flag'),{folder:'svg',ext:'.svg'});
     document.getElementById('flag-modal').classList.remove('open');
   }catch(e){showError(e.message);}
+}
+
+// ── TEAM VORM (laatste 5 resultaten) ───────────────────
+// Voorbeelddata zodat de kaart al iets toont zolang /api/team-form nog leeg is
+// (backend nog niet gedeployed/geseed). Wordt overschreven zodra de echte fetch iets teruggeeft.
+const TEAM_FORM_SAMPLE=[
+  {opponent:'Ghana',gf:2,ga:0,result:'W',category:'vriendschappelijk',date:'2026-05-23'},
+  {opponent:'Portugal',gf:0,ga:0,result:'G',category:'vriendschappelijk',date:'2026-03-29'},
+  {opponent:'België',gf:1,ga:1,result:'G',category:'vriendschappelijk',date:'2026-04-01'},
+  {opponent:'Ivoorkust',gf:0,ga:4,result:'V',category:'vriendschappelijk',date:'2026-03-28'},
+  {opponent:'Australië',gf:1,ga:0,result:'W',category:'vriendschappelijk',date:'2026-05-31'},
+];
+let teamFormCache=null;
+
+function catLabel(cat){
+  return {vriendschappelijk:'Vriendschappelijk',competitief:'Competitief',wk_groep:'WK groepsfase',wk_knockout:'WK knockout'}[cat]||cat;
+}
+
+async function showTeamForm(name){
+  const modal=document.getElementById('form-modal');
+  const card=document.getElementById('form-modal-card');
+  const flag=flagFor(name);
+  card.innerHTML=`
+    <div class="form-modal-header">${flag?`<span class="flag-big">${flag}</span>`:''}<h3>${esc(name)}</h3></div>
+    <div class="form-empty">Vorm laden…</div>
+  `;
+  if(window.twemoji)twemoji.parse(card,{folder:'svg',ext:'.svg'});
+  modal.classList.add('open');
+
+  let entries=null, isSample=false;
+  try{
+    if(!teamFormCache) teamFormCache=await apiFetch('/team-form');
+    entries=teamFormCache[name]||null;
+  }catch(e){ entries=null; }
+  if(!entries||entries.length===0){ entries=TEAM_FORM_SAMPLE; isSample=true; }
+
+  const rows=entries.map(e=>`
+    <div class="form-row">
+      <span class="form-badge ${e.result.toLowerCase()}">${e.result}</span>
+      <div class="form-row-mid">
+        <div class="form-row-opp">${flagFor(e.opponent)?flagFor(e.opponent)+' ':''}${esc(e.opponent)}</div>
+        <div class="form-row-cat">${catLabel(e.category)}</div>
+      </div>
+      <div class="form-row-score">${e.gf} – ${e.ga}</div>
+    </div>
+  `).join('');
+
+  card.innerHTML=`
+    <div class="form-modal-header">${flag?`<span class="flag-big">${flag}</span>`:''}<h3>${esc(name)}</h3></div>
+    ${rows}
+    ${isSample?'<div class="form-sample-note">Voorbeelddata — live cijfers volgen zodra de vorm-tabel gevuld is</div>':''}
+  `;
+  if(window.twemoji)twemoji.parse(card,{folder:'svg',ext:'.svg'});
+}
+
+function closeFormModalOutside(e){
+  if(e.target===document.getElementById('form-modal'))
+    document.getElementById('form-modal').classList.remove('open');
 }
 
 // ── NAVIGATION ──────────────────────────────────

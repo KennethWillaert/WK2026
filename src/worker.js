@@ -215,6 +215,25 @@ async function syncFromFootballData(env){
        ON CONFLICT(match_id)DO UPDATE SET home_score=excluded.home_score,away_score=excluded.away_score,winner=excluded.winner`
     ).bind(mid,homeScore,awayScore,winnerName).run();
     synced++;
+
+    // Team-vorm bijhouden (laatste resultaten voor de vorm-stats in de prono tab)
+    // LET OP: MATCH_ID_MAP bevat enkel groepswedstrijden (m1-m72), dus dit vult
+    // automatisch enkel 'wk_groep'. Knockoutwedstrijden (m73+) staan hier niet in
+    // omdat de teams pas bekend zijn na de groepsfase — die categorie ('wk_knockout')
+    // moet er pas bij zodra de knockout-sync zelf gebouwd is.
+    const matchDate=(match.utcDate||'').slice(0,10)||new Date().toISOString().slice(0,10);
+    const homeResult=homeScore>awayScore?'W':homeScore<awayScore?'V':'G';
+    const awayResult=awayScore>homeScore?'W':awayScore<homeScore?'V':'G';
+    await env.DB.prepare(
+      `INSERT INTO team_form(team,opponent,goals_for,goals_against,result,category,match_date,match_id)
+       VALUES(?,?,?,?,?,'wk_groep',?,?)
+       ON CONFLICT(team,match_id)DO UPDATE SET goals_for=excluded.goals_for,goals_against=excluded.goals_against,result=excluded.result,match_date=excluded.match_date`
+    ).bind(th,ta,homeScore,awayScore,homeResult,matchDate,mid).run();
+    await env.DB.prepare(
+      `INSERT INTO team_form(team,opponent,goals_for,goals_against,result,category,match_date,match_id)
+       VALUES(?,?,?,?,?,'wk_groep',?,?)
+       ON CONFLICT(team,match_id)DO UPDATE SET goals_for=excluded.goals_for,goals_against=excluded.goals_against,result=excluded.result,match_date=excluded.match_date`
+    ).bind(ta,th,awayScore,homeScore,awayResult,matchDate,mid).run();
   }
 
   // Sync topscorers — elke cron run
@@ -577,6 +596,21 @@ export default {
          ON CONFLICT(match_id)DO UPDATE SET home_score=excluded.home_score,away_score=excluded.away_score`
       ).bind(matchId,parseInt(h),parseInt(a)).run();
       return json({ok:true});
+    }
+
+    // ── TEAM FORM (laatste 5 resultaten per team) ──────────
+    if(path==='/api/team-form'&&request.method==='GET'){
+      const rows=await env.DB.prepare(
+        'SELECT team,opponent,goals_for,goals_against,result,category,match_date FROM team_form ORDER BY match_date DESC,id DESC'
+      ).all();
+      const form={};
+      rows.results.forEach(r=>{
+        if(!form[r.team])form[r.team]=[];
+        if(form[r.team].length<5){
+          form[r.team].push({opponent:r.opponent,gf:r.goals_for,ga:r.goals_against,result:r.result,category:r.category,date:r.match_date});
+        }
+      });
+      return json(form);
     }
 
     // ── TOPSCORERS ────────────────────────────────────────
