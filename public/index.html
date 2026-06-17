@@ -140,15 +140,14 @@
     .header-text{flex:1;min-width:0}
     .header-text h1{font-size:16px;font-weight:700;color:#fff}
     .header-text p{font-size:11px;color:rgba(255,255,255,0.5)}
-    .header-right{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
-    .profile-btn{background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:20px;padding:4px 10px;cursor:pointer;color:#fff;font-size:12px;font-family:inherit;display:flex;align-items:center;gap:5px;white-space:nowrap}
+    .profile-btn{background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:20px;padding:4px 6px 4px 10px;cursor:pointer;color:#fff;font-size:12px;font-family:inherit;display:flex;align-items:center;gap:5px;white-space:nowrap}
     #hdr-flag{display:inline-flex;align-items:center;width:20px;height:16px;overflow:hidden}
     #hdr-flag img{width:20px!important;height:16px!important;display:block}
     .profile-btn:hover{background:rgba(255,255,255,0.2)}
-    .refresh-btn{background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:20px;padding:3px 9px;cursor:pointer;color:#fff;font-size:11px;font-family:inherit;display:flex;align-items:center;gap:4px;flex-shrink:0}
-    .refresh-btn:hover{background:rgba(255,255,255,0.2)}
-    .refresh-btn svg{transition:transform 0.6s ease;flex-shrink:0}
-    .refresh-btn.spinning svg{transform:rotate(360deg)}
+    .refresh-icon-btn{background:none;border:none;border-left:1px solid rgba(255,255,255,0.2);padding:0 0 0 7px;margin-left:2px;color:rgba(255,255,255,0.7);cursor:pointer;display:flex;align-items:center}
+    .refresh-icon-btn:hover{color:#fff}
+    .refresh-icon-btn svg{transition:transform 0.6s ease}
+    .refresh-icon-btn.spinning svg{transform:rotate(360deg)}
     .profile-menu{position:fixed;top:56px;right:12px;background:#1e2a3a;border:1px solid rgba(255,255,255,0.15);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,0.4);z-index:100;min-width:180px;overflow:hidden;display:none}
     .profile-menu.open{display:block}
     .profile-menu-header{padding:12px 14px;border-bottom:1px solid rgba(255,255,255,0.1)}
@@ -406,14 +405,11 @@
     <div class="header-text">
       <h1>Baas van het Voetbal</h1><p style="font-size:13px;color:#7a90aa;margin-top:2px">WK '26 Edition · by DUUUB</p>
     </div>
-    <div class="header-right">
-      <button class="profile-btn" id="profile-btn" onclick="toggleMenu()">
-        <span id="hdr-flag"></span>
-        <span id="hdr-name"></span>
-      </button>
-      <button class="refresh-btn" id="refresh-btn" onclick="refreshApp()" title="Vernieuwen" aria-label="Vernieuwen">
-        <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-        Refresh
+    <div class="profile-btn" id="profile-btn" onclick="toggleMenu()">
+      <span id="hdr-flag"></span>
+      <span id="hdr-name"></span>
+      <button class="refresh-icon-btn" id="refresh-btn" onclick="event.stopPropagation();refreshApp()" title="Vernieuwen" aria-label="Vernieuwen">
+        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
       </button>
     </div>
   </header>
