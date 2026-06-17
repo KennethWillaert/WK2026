@@ -563,6 +563,11 @@ function toggleHelp(){
   btn.innerHTML=open?'<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Sluit instructies':'<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Hoe werkt het?';
 }
 const API='https://wk2026-api.djduuub.workers.dev/api';
+// Beta-toegang team-vorm kaart: enkel deze accounts zien de klikbare vorm-stats per land
+const TEAM_FORM_BETA_EMAILS=['djduuub@gmail.com','sabrina.boussehaba@hotmail.com'];
+function hasTeamFormAccess(){
+  return !!currentUser && TEAM_FORM_BETA_EMAILS.includes((currentUser.email||'').toLowerCase());
+}
 const FLAGS=[
   ['🇧🇪','België'],['🇳🇱','Nederland'],['🇫🇷','Frankrijk'],['🇩🇪','Duitsland'],
   ['🇪🇸','Spanje'],['🇵🇹','Portugal'],['🇧🇷','Brazilië'],['🇦🇷','Argentinië'],
@@ -595,11 +600,15 @@ const TEAMS=FLAGS.map(f=>f[1]);
   }
   function teamWithFlag(name){
     const flag=flagFor(name);
-    return `<span class="team-clickable" onclick="event.stopPropagation();showTeamForm('${esc(name)}')">${flag?`<span style="margin-right:4px">${flag}</span>`:''}${esc(shortName(name))}</span>`;
+    const flagHtml=flag?`<span style="margin-right:4px">${flag}</span>`:'';
+    if(!hasTeamFormAccess()) return `${flagHtml}${esc(shortName(name))}`;
+    return `<span class="team-clickable" style="-webkit-tap-highlight-color:transparent;user-select:none;outline:none" onclick="event.stopPropagation();showTeamForm('${esc(name)}')">${flagHtml}<span style="color:#3a7bd5;text-decoration:underline;text-underline-offset:3px">${esc(shortName(name))}</span> <span style="font-size:9px;color:#445566">↗</span></span>`;
   }
   function teamWithFlagRight(name){
     const flag=flagFor(name);
-    return `<span class="team-clickable" onclick="event.stopPropagation();showTeamForm('${esc(name)}')">${esc(shortName(name))}${flag?`<span style="margin-left:4px">${flag}</span>`:''}</span>`;
+    const flagHtml=flag?`<span style="margin-left:4px">${flag}</span>`:'';
+    if(!hasTeamFormAccess()) return `${esc(shortName(name))}${flagHtml}`;
+    return `<span class="team-clickable" style="-webkit-tap-highlight-color:transparent;user-select:none;outline:none" onclick="event.stopPropagation();showTeamForm('${esc(name)}')"><span style="font-size:9px;color:#445566">↗</span> <span style="color:#3a7bd5;text-decoration:underline;text-underline-offset:3px">${esc(shortName(name))}</span>${flagHtml}</span>`;
   }
 const PHASES=[
   {id:'bonus',label:'<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><path d="M6 9H4a2 2 0 0 1-2-2V5h4"/><path d="M18 9h2a2 2 0 0 0 2-2V5h-4"/><path d="M12 17v4"/><path d="M8 21h8"/><path d="M6 5h12v6a6 6 0 0 1-12 0z"/></svg> Bonus',unlock:0,lock:ko('2026-06-11','21:00')},
@@ -935,6 +944,7 @@ function catLabel(cat){
 }
 
 async function showTeamForm(name){
+  if(!hasTeamFormAccess()) return;
   const modal=document.getElementById('form-modal');
   const card=document.getElementById('form-modal-card');
   const flag=flagFor(name);
