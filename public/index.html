@@ -145,9 +145,9 @@
     #hdr-flag{display:inline-flex;align-items:center;width:20px;height:16px;overflow:hidden}
     #hdr-flag img{width:20px!important;height:16px!important;display:block}
     .profile-btn:hover{background:rgba(255,255,255,0.2)}
-    .refresh-btn{background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:50%;width:26px;height:26px;cursor:pointer;color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:0}
+    .refresh-btn{background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:20px;padding:3px 9px;cursor:pointer;color:#fff;font-size:11px;font-family:inherit;display:flex;align-items:center;gap:4px;flex-shrink:0}
     .refresh-btn:hover{background:rgba(255,255,255,0.2)}
-    .refresh-btn svg{transition:transform 0.6s ease}
+    .refresh-btn svg{transition:transform 0.6s ease;flex-shrink:0}
     .refresh-btn.spinning svg{transform:rotate(360deg)}
     .profile-menu{position:fixed;top:56px;right:12px;background:#1e2a3a;border:1px solid rgba(255,255,255,0.15);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,0.4);z-index:100;min-width:180px;overflow:hidden;display:none}
     .profile-menu.open{display:block}
@@ -412,7 +412,8 @@
         <span id="hdr-name"></span>
       </button>
       <button class="refresh-btn" id="refresh-btn" onclick="refreshApp()" title="Vernieuwen" aria-label="Vernieuwen">
-        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        Refresh
       </button>
     </div>
   </header>
