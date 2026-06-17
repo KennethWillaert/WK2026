@@ -485,6 +485,47 @@ export default {
       return json({ok:true});
     }
 
+    if(path==='/api/all-pronos-status'&&request.method==='GET'){
+      const user=await getUser(request,env);
+      if(!user)return err('Niet ingelogd',401);
+      // Eén query voor alle predictions (wie/wanneer, geen scores van anderen tenzij match locked is)
+      // ipv N losse /match-pronos-calls — voorkomt de late content-injectie die de scrollpositie
+      // na de auto-scroll-naar-open-match nog liet verschuiven.
+      const [usersRows,predRows,kickoffRows,resultRows]=await Promise.all([
+        env.DB.prepare('SELECT name FROM users ORDER BY created_at').all(),
+        env.DB.prepare('SELECT match_id,player,home_score,away_score,created_at FROM predictions').all(),
+        env.DB.prepare('SELECT match_id,kickoff FROM match_kickoffs').all(),
+        env.DB.prepare('SELECT match_id,status,home_score FROM results').all()
+      ]);
+      const allNames=usersRows.results.map(r=>r.name);
+      const kickoffMap={};
+      kickoffRows.results.forEach(r=>{kickoffMap[r.match_id]=r.kickoff;});
+      const resultMap={};
+      resultRows.results.forEach(r=>{resultMap[r.match_id]=r;});
+      const predsByMatch={};
+      predRows.results.forEach(r=>{
+        (predsByMatch[r.match_id]=predsByMatch[r.match_id]||[]).push(r);
+      });
+      const now=Date.now();
+      const out={};
+      Object.keys(predsByMatch).forEach(matchId=>{
+        const resultRow=resultMap[matchId];
+        const hasStarted=resultRow&&(resultRow.status==='FINISHED'||resultRow.status==='IN_PLAY'||resultRow.status==='PAUSED'||resultRow.status==='HALFTIME'||(resultRow.status==null&&resultRow.home_score!=null));
+        const kickoffPassed=kickoffMap[matchId]&&now>=kickoffMap[matchId];
+        const locked=hasStarted||kickoffPassed;
+        const rows=predsByMatch[matchId].slice().sort((a,b)=>{
+          if(a.created_at==null&&b.created_at==null)return a.player<b.player?-1:1;
+          if(a.created_at==null)return 1;
+          if(b.created_at==null)return -1;
+          return a.created_at-b.created_at;
+        });
+        out[matchId]=locked
+          ?rows.map(r=>({name:r.player,h:r.home_score,a:r.away_score,t:r.created_at}))
+          :rows.map(r=>({name:r.player,t:r.created_at}));
+      });
+      return json({names:allNames,pronos:out});
+    }
+
     if(path==='/api/match-pronos'&&request.method==='GET'){
       const user=await getUser(request,env);
       if(!user)return err('Niet ingelogd',401);
