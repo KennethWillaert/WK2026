@@ -1,6 +1,6 @@
 importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDKWorker.js');
 
-const CACHE = 'wk2026-v' + '20260615g';
+const CACHE = 'wk2026-v' + '20260615h';
 const STATIC = ['/', '/index.html', '/manifest.json', '/logo.png'];
 
 self.addEventListener('install', e => {

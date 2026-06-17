@@ -1006,24 +1006,33 @@ async function renderPredPage(){
   // Wacht tot het doel-element écht gerenderd + gelayout is (offsetHeight>0) ipv te gokken met een vaste timeout.
   // Dit is robuuster dan setTimeout-getallen, vooral op iOS Safari waar de eerste layout-pass
   // soms langer duurt dan op Android/Chrome.
+  // Belangrijk: we scrollen NIET maar één keer. De pronos-lijsten van kaarten BOVEN de target
+  // laden gestaggerd in (zie renderMatchList) en kunnen de layout daarna nog laten verschuiven —
+  // dus we blijven herscrollen tot die hele golf voorbij is (ruim boven de max stagger-tijd).
   let scrollAttempts=0;
+  const SCROLL_CORRECT_UNTIL=Date.now()+2200; // ruim boven de pronos-stagger-burst + netwerk-latency
   function waitAndScroll(){
     scrollAttempts++;
-    if(userScrolledAway||scrollAttempts>30){return;} // max ~3s pollen, dan stoppen
+    if(userScrolledAway||scrollAttempts>40){return;}
     let el=_firstOpenMatch?document.getElementById(`card-${_firstOpenMatch.id}`):null;
     if(!el){
       const firstNoResult=MATCHES.find(m=>!(results[m.id]&&results[m.id].h!=null));
       if(firstNoResult)el=document.getElementById(`card-${firstNoResult.id}`);
     }
     if(!el||el.offsetHeight===0){
-      setTimeout(waitAndScroll,100);
+      setTimeout(waitAndScroll,80);
       return;
     }
     const stickyH=document.getElementById('sticky-top')?.offsetHeight||0;
     const top=el.getBoundingClientRect().top+window.scrollY-stickyH;
-    programmaticScroll=true;
-    window.scrollTo({top,behavior:'auto'});
-    setTimeout(()=>{programmaticScroll=false;},150);
+    if(Math.abs(window.scrollY-top)>2){
+      programmaticScroll=true;
+      window.scrollTo({top,behavior:'auto'});
+      setTimeout(()=>{programmaticScroll=false;},80);
+    }
+    if(Date.now()<SCROLL_CORRECT_UNTIL){
+      setTimeout(waitAndScroll,80);
+    }
   }
   setTimeout(waitAndScroll,50);}
   catch(e){wrap.innerHTML=`<div class="error-msg">${e.message}</div>`;}
@@ -1096,7 +1105,7 @@ function renderMatchList(wrap,priorityMatchId){
 
       const phLbl=m.ph==='group'?`Groep ${m.g}`:PHASES.find(p=>p.id===m.ph)?.label||'';
       const timeStr=`${String(new Date(m.ko).getHours()).padStart(2,'0')}:${String(new Date(m.ko).getMinutes()).padStart(2,'0')}`;
-      const _pronoDelay=m.id===priorityMatchId?10:50+(pronosLoadIndex++)*40;
+      const _pronoDelay=m.id===priorityMatchId?10:50+Math.min(pronosLoadIndex++,18)*40;
       if(locked){setTimeout(()=>autoLoadPronos(m.id,res,true),_pronoDelay);}
       else if(unlocked){setTimeout(()=>autoLoadPronos(m.id,res,false),_pronoDelay);}
       if(!unlocked) return`<div class="card locked" style="opacity:0.4">
