@@ -995,7 +995,7 @@ async function renderPredPage(){
     const locked=ko&&_now0>=ko;
     return unlocked&&!locked&&!(results[m.id]&&results[m.id].h!=null);
   });
-  renderMatchList(wrap,_firstOpenMatch?_firstOpenMatch.id:null);
+  const abovePromises=renderMatchList(wrap,_firstOpenMatch?_firstOpenMatch.id:null);
   renderTicker();
   // Scroll naar eerste open match
   let userScrolledAway=false;
@@ -1003,26 +1003,19 @@ async function renderPredPage(){
   const scrollGuard=()=>{ if(!programmaticScroll) userScrolledAway=true; };
   window.addEventListener('scroll',scrollGuard,{passive:true});
   setTimeout(()=>window.removeEventListener('scroll',scrollGuard),3500);
-  // Wacht tot het doel-element écht gerenderd + gelayout is (offsetHeight>0) ipv te gokken met een vaste timeout.
-  // Dit is robuuster dan setTimeout-getallen, vooral op iOS Safari waar de eerste layout-pass
-  // soms langer duurt dan op Android/Chrome.
-  // Belangrijk: we scrollen NIET maar één keer. De pronos-lijsten van kaarten BOVEN de target
-  // laden gestaggerd in (zie renderMatchList) en kunnen de layout daarna nog laten verschuiven —
-  // dus we blijven herscrollen tot die hele golf voorbij is (ruim boven de max stagger-tijd).
-  let scrollAttempts=0;
-  const SCROLL_CORRECT_UNTIL=Date.now()+2200; // ruim boven de pronos-stagger-burst + netwerk-latency
-  function waitAndScroll(){
-    scrollAttempts++;
-    if(userScrolledAway||scrollAttempts>40){return;}
+
+  function getScrollTarget(){
     let el=_firstOpenMatch?document.getElementById(`card-${_firstOpenMatch.id}`):null;
     if(!el){
       const firstNoResult=MATCHES.find(m=>!(results[m.id]&&results[m.id].h!=null));
       if(firstNoResult)el=document.getElementById(`card-${firstNoResult.id}`);
     }
-    if(!el||el.offsetHeight===0){
-      setTimeout(waitAndScroll,80);
-      return;
-    }
+    return el;
+  }
+  function doScroll(){
+    if(userScrolledAway)return;
+    const el=getScrollTarget();
+    if(!el||el.offsetHeight===0)return;
     const stickyH=document.getElementById('sticky-top')?.offsetHeight||0;
     const top=el.getBoundingClientRect().top+window.scrollY-stickyH;
     if(Math.abs(window.scrollY-top)>2){
@@ -1030,11 +1023,25 @@ async function renderPredPage(){
       window.scrollTo({top,behavior:'auto'});
       setTimeout(()=>{programmaticScroll=false;},80);
     }
-    if(Date.now()<SCROLL_CORRECT_UNTIL){
-      setTimeout(waitAndScroll,80);
-    }
   }
-  setTimeout(waitAndScroll,50);}
+  // Geen gok-timer meer: we wachten op de échte pronos-fetches van de kaarten BOVEN/t.e.m. de
+  // target (die kunnen de layout nog laten verschuiven door hun hoogteverandering), en scrollen
+  // pas daarna. Een korte na-correctieperiode blijft als vangnet voor onverwachte late renders
+  // (bv. trage twemoji-icon-vervanging, late image-load).
+  (async()=>{
+    doScroll(); // meteen al een eerste poging zodra de kaart zelf bestaat
+    try{ await Promise.all(abovePromises); }catch{}
+    if(window.twemoji){ try{ await new Promise(r=>setTimeout(r,30)); }catch{} } // korte marge voor icon-swap reflow
+    doScroll();
+    // vangnet: nog enkele correctiepogingen verspreid over de volgende 1200ms
+    let n=0;
+    const iv=setInterval(()=>{
+      n++;
+      if(userScrolledAway||n>8){clearInterval(iv);return;}
+      doScroll();
+    },150);
+  })();
+  }
   catch(e){wrap.innerHTML=`<div class="error-msg">${e.message}</div>`;}
 }
 
@@ -1087,11 +1094,11 @@ window.saveBonus=async function(){
 };
 
 function renderMatchList(wrap,priorityMatchId){
-  let pronosLoadIndex=0;
+  const pronoTargets=[]; // {id, res, isLocked} in DOM-volgorde, voor de tweede pass na innerHTML-toewijzing
   const filtered=MATCHES.filter(m=>m.ph===curPhaseV);
   const byDate={};
   filtered.forEach(m=>(byDate[m.date]=byDate[m.date]||[]).push(m));
-  wrap.innerHTML=Object.entries(byDate).sort(([a],[b])=>a<b?-1:1).map(([date,ms])=>{
+  const html=Object.entries(byDate).sort(([a],[b])=>a<b?-1:1).map(([date,ms])=>{
     const d=new Date(date+'T12:00:00');
     const lbl=`${DAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}`;
     return`<div class="date-hdr" id="date-${date}">${lbl}</div>`+ms.map(m=>{
@@ -1105,9 +1112,8 @@ function renderMatchList(wrap,priorityMatchId){
 
       const phLbl=m.ph==='group'?`Groep ${m.g}`:PHASES.find(p=>p.id===m.ph)?.label||'';
       const timeStr=`${String(new Date(m.ko).getHours()).padStart(2,'0')}:${String(new Date(m.ko).getMinutes()).padStart(2,'0')}`;
-      const _pronoDelay=m.id===priorityMatchId?10:50+Math.min(pronosLoadIndex++,18)*40;
-      if(locked){setTimeout(()=>autoLoadPronos(m.id,res,true),_pronoDelay);}
-      else if(unlocked){setTimeout(()=>autoLoadPronos(m.id,res,false),_pronoDelay);}
+      if(locked)pronoTargets.push({id:m.id,res,isLocked:true});
+      else if(unlocked)pronoTargets.push({id:m.id,res,isLocked:false});
       if(!unlocked) return`<div class="card locked" style="opacity:0.4">
         <div class="card-meta">
           <div class="card-meta-left"><span>${m.ph==='group'?'Groep '+m.g:''}</span></div>
@@ -1169,6 +1175,19 @@ function renderMatchList(wrap,priorityMatchId){
       </div>`;
     }).join('');
   }).join('');
+  wrap.innerHTML=html;
+  // Tweede pass: nu de DOM-elementen bestaan, de pronos-loads starten in DOM-volgorde.
+  // Promises t/m de priority-match (waar de auto-scroll naar gaat) worden verzameld zodat
+  // renderPredPage erop kan wachten vóór scrollen — dit voorkomt dat hoogteveranderingen van
+  // kaarten BOVEN de target de scrollpositie nog laten verschuiven na een 'gok-timer'.
+  const abovePromises=[];
+  let priorityReached=!priorityMatchId;
+  for(const t of pronoTargets){
+    const p=autoLoadPronos(t.id,t.res,t.isLocked);
+    if(!priorityReached)abovePromises.push(p);
+    if(t.id===priorityMatchId)priorityReached=true;
+  }
+  return abovePromises;
 }
 
 function calcMatchPts(pred,res){
