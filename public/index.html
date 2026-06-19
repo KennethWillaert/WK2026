@@ -1098,7 +1098,8 @@ async function renderPredPage(){
   curPreds=preds;
   allPronosStatus=statusData; // {names:[...], pronos:{matchId:[{name,t,h?,a?}]}}
   const _now0=Date.now();
-  const _firstOpenMatch=MATCHES.find(m=>{
+  const _sortedMatches=[...MATCHES].sort((a,b)=>a.ko-b.ko);
+  const _firstOpenMatch=_sortedMatches.find(m=>{
     const ko=m.ko;
     const unlocked=ko&&(_now0>=ko-24*60*60*1000);
     const locked=ko&&_now0>=ko;
@@ -1111,7 +1112,7 @@ async function renderPredPage(){
   // alsnog kan laten verschuiven — vandaar dat één scroll-poging hier voldoende is.
   let el=_firstOpenMatch?document.getElementById(`card-${_firstOpenMatch.id}`):null;
   if(!el){
-    const firstNoResult=MATCHES.find(m=>!(results[m.id]&&results[m.id].h!=null));
+    const firstNoResult=_sortedMatches.find(m=>!(results[m.id]&&results[m.id].h!=null));
     if(firstNoResult)el=document.getElementById(`card-${firstNoResult.id}`);
   }
   if(el){
