@@ -1272,6 +1272,7 @@ function renderPronosListHtml(mid,isLocked,res){
   const pronos=allPronosStatus.pronos[mid]||[];
   const filledNames=new Set(pronos.map(p=>p.name));
   const missing=allPronosStatus.names.filter(n=>!filledNames.has(n));
+  const isKnockout=(MATCHES.find(m=>m.id===mid)||{}).ph!=='group';
 
   if(!isLocked){
     // Open match: enkel WIE al ingevuld heeft + wanneer. Nooit scores tonen.
@@ -1296,10 +1297,15 @@ function renderPronosListHtml(mid,isLocked,res){
     const ptsClass=pts===3?'pts-3':pts===1?'pts-1':'pts-0';
     const ptsLabel=pts===null?'':pts===3?'3 pt':pts===1?'1 pt':'0 pt';
     const timeStr=p.t?new Date(p.t).toLocaleString('nl-BE',{timeZone:'Europe/Brussels',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'';
+    const winnerHtml=isKnockout&&p.winner
+      ?`<span style="font-size:11px;color:#7a90aa;margin-left:4px">→ ${esc(p.winner)}</span>`
+      :'';
     return `<div class="prono-row">
       <span class="prono-name">${esc(p.name)}${timeStr?`<span class="prono-time">${timeStr}</span>`:''}</span>
-      <span style="display:flex;align-items:center;gap:8px">
-        <span class="prono-score">${p.h} – ${p.a}</span>
+      <span style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end">
+        <span style="display:flex;align-items:center;gap:4px">
+          <span class="prono-score">${p.h} – ${p.a}</span>${winnerHtml}
+        </span>
         ${ptsLabel?`<span class="prono-pts ${ptsClass}">${ptsLabel}</span>`:''}
       </span>
     </div>`;

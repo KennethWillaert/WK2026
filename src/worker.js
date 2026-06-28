@@ -512,7 +512,7 @@ export default {
       // na de auto-scroll-naar-open-match nog liet verschuiven.
       const [usersRows,predRows,kickoffRows,resultRows]=await Promise.all([
         env.DB.prepare('SELECT name FROM users ORDER BY created_at').all(),
-        env.DB.prepare('SELECT match_id,player,home_score,away_score,created_at FROM predictions').all(),
+        env.DB.prepare('SELECT match_id,player,home_score,away_score,winner,created_at FROM predictions').all(),
         env.DB.prepare('SELECT match_id,kickoff FROM match_kickoffs').all(),
         env.DB.prepare('SELECT match_id,status,home_score FROM results').all()
       ]);
@@ -539,7 +539,7 @@ export default {
           return a.created_at-b.created_at;
         });
         out[matchId]=locked
-          ?rows.map(r=>({name:r.player,h:r.home_score,a:r.away_score,t:r.created_at}))
+          ?rows.map(r=>({name:r.player,h:r.home_score,a:r.away_score,winner:r.winner||null,t:r.created_at}))
           :rows.map(r=>({name:r.player,t:r.created_at}));
       });
       return json({names:allNames,pronos:out});
