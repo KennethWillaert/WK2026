@@ -337,6 +337,21 @@
     .ts-shared{background:rgba(0,0,0,0.3);border-radius:10px;padding:10px;margin-bottom:12px}
     .ts-shared-title{font-size:11px;font-weight:700;color:#7a90aa;text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px}
     .ts-shared-text{font-size:11px;color:#445566;line-height:1.6}
+    .phase-stand{background:#0d1929;border:1px solid rgba(255,255,255,0.1);border-radius:12px;margin-bottom:14px;overflow:hidden}
+    .phase-stand-header{display:flex;align-items:center;gap:8px;padding:11px 14px;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent}
+    .phase-stand-header:hover{background:rgba(255,255,255,0.03)}
+    .phase-stand-title{flex:1;font-size:13px;font-weight:700;color:#e4eaf4}
+    .phase-stand-preview{font-size:11px;color:#7a90aa;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px}
+    .phase-stand-chevron{color:#445566;transition:transform .2s;flex-shrink:0}
+    .phase-stand-chevron.open{transform:rotate(180deg)}
+    .phase-stand-body{border-top:1px solid rgba(255,255,255,0.07);padding:10px 14px;display:none}
+    .phase-stand-body.open{display:block}
+    .phase-stand-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04)}
+    .phase-stand-row:last-child{border-bottom:none}
+    .phase-stand-rank{font-size:14px;width:22px;text-align:center;flex-shrink:0}
+    .phase-stand-name{flex:1;font-size:13px;color:#c0cde0;font-weight:600}
+    .phase-stand-detail{font-size:11px;color:#445566}
+    .phase-stand-pts{font-size:14px;font-weight:700}
   </style>
 </head>
 <body>
@@ -1264,7 +1279,7 @@ async function renderPredPage(){
   catch(e){wrap.innerHTML=`<div class="error-msg">${e.message}</div>`;}
 }
 
-function setPhaseV(ph){curPhaseV=ph; renderPredPage();}
+function setPhaseV(ph){curPhaseV=ph; phaseStandOpen=false; renderPredPage();}
 window.setPhaseV=setPhaseV;
 
 function renderBonusForm(wrap){
@@ -1311,6 +1326,75 @@ window.saveBonus=async function(){
     }catch(e){showError(e.message);}
   },600);
 };
+
+let phaseStandOpen=false;
+
+function phaseStandToggle(){
+  phaseStandOpen=!phaseStandOpen;
+  const body=document.getElementById('phase-stand-body');
+  const chev=document.getElementById('phase-stand-chev');
+  if(body)body.classList.toggle('open',phaseStandOpen);
+  if(chev)chev.classList.toggle('open',phaseStandOpen);
+}
+window.phaseStandToggle=phaseStandToggle;
+
+function renderPhaseStandingBlock(phase){
+  // Wedstrijden van deze fase met een resultaat
+  const doneMatches=MATCHES.filter(m=>m.ph===phase&&results[m.id]&&results[m.id].h!=null);
+  if(!doneMatches.length)return'';
+
+  // Punten per speler voor DEZE fase
+  const byPlayer={};
+  let exact=0,correct=0;
+  for(const m of doneMatches){
+    const res=results[m.id];
+    const pronos=allPronosStatus.pronos[m.id]||[];
+    for(const p of pronos){
+      if(!byPlayer[p.name])byPlayer[p.name]={pts:0,exact:0,correct:0};
+      const pt=calcMatchPts({h:p.h,a:p.a},res);
+      if(pt===null)continue;
+      byPlayer[p.name].pts+=pt;
+      if(pt===3)byPlayer[p.name].exact++;
+      else if(pt===1)byPlayer[p.name].correct++;
+    }
+  }
+
+  const sorted=Object.entries(byPlayer).sort((a,b)=>b[1].pts-a[1].pts);
+  if(!sorted.length)return'';
+
+  const phaseLabels={group:'Groepsfase',r32:'Ronde van 32',qf:'Kwartfinale',sf:'Halve finale',final:'Finale'};
+  const label=phaseLabels[phase]||phase;
+  const total=doneMatches.length;
+  const totalPhase=MATCHES.filter(m=>m.ph===phase).length;
+  const done=total===totalPhase;
+  const subtitle=done?`Afgerond · ${total} wedstrijden`:`${total}/${totalPhase} wedstrijden gespeeld`;
+
+  const medals=['🥇','🥈','🥈','4','5','6'];
+  const ptColors=['#e8c06a','#5b9bff','#5b9bff','#c0cde0','#c0cde0','#c0cde0'];
+
+  const preview=sorted.slice(0,3).map((e,i)=>`${medals[i]}${e[0]} ${e[1].pts}pt`).join(' · ');
+
+  const rows=sorted.map(([name,s],i)=>`
+    <div class="phase-stand-row">
+      <span class="phase-stand-rank">${medals[i]||i+1}</span>
+      <span class="phase-stand-name">${esc(name)}</span>
+      <span class="phase-stand-detail">${s.exact}×3 · ${s.correct}×1</span>
+      <span class="phase-stand-pts" style="color:${ptColors[i]||'#c0cde0'}">${s.pts}pt</span>
+    </div>`).join('');
+
+  return`<div class="phase-stand">
+    <div class="phase-stand-header" onclick="phaseStandToggle()">
+      <span style="font-size:16px">📊</span>
+      <span class="phase-stand-title">Stand na de ${label}</span>
+      <span class="phase-stand-preview" id="phase-stand-preview">${preview}</span>
+      <svg id="phase-stand-chev" class="phase-stand-chevron" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+    <div class="phase-stand-body${phaseStandOpen?' open':''}" id="phase-stand-body">
+      <div style="font-size:11px;color:#445566;margin-bottom:8px">${subtitle} — punten enkel uit deze ronde</div>
+      ${rows}
+    </div>
+  </div>`;
+}
 
 function renderMatchList(wrap){
   const filtered=MATCHES.filter(m=>m.ph===curPhaseV);
@@ -1392,7 +1476,7 @@ function renderMatchList(wrap){
       </div>`;
     }).join('');
   }).join('');
-  wrap.innerHTML=html;
+  wrap.innerHTML=renderPhaseStandingBlock(curPhaseV)+html;
   if(window.twemoji)twemoji.parse(wrap,{folder:'svg',ext:'.svg'});
 }
 
