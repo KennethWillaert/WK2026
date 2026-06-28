@@ -1141,6 +1141,10 @@ function showTussenstand(){
     document.getElementById('ts-overlay').style.display='flex';
   }
 }
+// Ook tonen als de app al openstond bij deploy: check bij elke tab-wissel en app-focus
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='visible'&&currentUser)showTussenstand();
+});
 async function confirmTussenstand(){
   const btn=document.getElementById('ts-confirm-btn');
   if(btn){btn.textContent='⏳ Opslaan...';btn.disabled=true;}
