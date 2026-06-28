@@ -613,6 +613,27 @@ export default {
       return json(form);
     }
 
+    // ── POPUP CONFIRM ─────────────────────────────────────
+    if(path==='/api/popup-confirm'&&request.method==='POST'){
+      const user=await getUser(request,env);
+      if(!user)return err('Niet ingelogd',401);
+      const body=await request.json().catch(()=>({}));
+      const popup=body.popup||'unknown';
+      await env.DB.prepare(
+        `CREATE TABLE IF NOT EXISTS popup_confirmations(user TEXT NOT NULL,popup TEXT NOT NULL,confirmed_at INTEGER NOT NULL,PRIMARY KEY(user,popup))`
+      ).run();
+      await env.DB.prepare(
+        `INSERT INTO popup_confirmations(user,popup,confirmed_at)VALUES(?,?,?)ON CONFLICT(user,popup)DO UPDATE SET confirmed_at=excluded.confirmed_at`
+      ).bind(user.name,popup,Date.now()).run();
+      return json({ok:true});
+    }
+    if(path==='/api/popup-confirmations'&&request.method==='GET'){
+      const user=await getUser(request,env);
+      if(!user||!user.isAdmin)return err('Geen toegang',403);
+      const rows=await env.DB.prepare('SELECT user,popup,confirmed_at FROM popup_confirmations ORDER BY confirmed_at DESC').all().catch(()=>({results:[]}));
+      return json(rows.results);
+    }
+
     // ── TOPSCORERS ────────────────────────────────────────
     if(path==='/api/topscorers'&&request.method==='GET'){
       const row=await env.DB.prepare("SELECT home_score FROM results WHERE match_id='topscorers'").first();

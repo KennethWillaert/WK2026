@@ -301,6 +301,42 @@
   .feature-popup-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)}
     .feature-popup{background:#0d1929;border:1px solid rgba(255,255,255,0.12);border-radius:16px;padding:24px;max-width:320px;width:100%;text-align:center;animation:popup-in .25s ease}
     @keyframes popup-in{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
+    .ts-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:200;display:flex;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px)}
+    .ts-sheet{background:#0d1929;border:1px solid rgba(255,255,255,0.12);border-radius:20px 20px 0 0;width:100%;max-width:480px;max-height:88vh;display:flex;flex-direction:column;animation:sheet-in .3s cubic-bezier(0.34,1.56,0.64,1)}
+    @keyframes sheet-in{from{transform:translateY(100%)}to{transform:translateY(0)}}
+    .ts-header{padding:16px 20px 12px;border-bottom:1px solid rgba(255,255,255,0.08);flex-shrink:0}
+    .ts-header h2{font-size:17px;font-weight:700;color:#e4eaf4;margin:0 0 2px}
+    .ts-header p{font-size:12px;color:#7a90aa;margin:0}
+    .ts-body{overflow-y:auto;padding:12px 16px;flex:1}
+    .ts-ranking{display:flex;flex-direction:column;gap:4px;margin-bottom:14px}
+    .ts-row{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;cursor:pointer;border:1px solid rgba(255,255,255,0.06)}
+    .ts-row:hover,.ts-row.active{border-color:rgba(255,255,255,0.18);background:rgba(255,255,255,0.04)}
+    .ts-rank{font-size:16px;width:22px;text-align:center;flex-shrink:0}
+    .ts-name{flex:1;font-size:14px;font-weight:600;color:#e4eaf4}
+    .ts-mini{font-size:11px;color:#445566}
+    .ts-pts{font-size:17px;font-weight:700}
+    .ts-card{border-radius:12px;padding:14px;margin-bottom:10px;border:1px solid rgba(255,255,255,0.1)}
+    .ts-card-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+    .ts-avatar{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0}
+    .ts-card-name{font-size:15px;font-weight:700;color:#e4eaf4}
+    .ts-card-sub{font-size:11px;color:#7a90aa;margin-top:1px}
+    .ts-headline{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px}
+    .ts-analysis{font-size:13px;color:#c0cde0;line-height:1.65;margin-bottom:10px}
+    .ts-statrow{display:flex;gap:6px;margin-bottom:10px}
+    .ts-stat{flex:1;background:rgba(0,0,0,0.3);border-radius:8px;padding:7px 6px;text-align:center}
+    .ts-stat-val{font-size:18px;font-weight:700;color:#e4eaf4}
+    .ts-stat-lbl{font-size:10px;color:#445566;margin-top:1px}
+    .ts-badges{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px}
+    .ts-badge{font-size:11px;padding:3px 8px;border-radius:6px;font-weight:600}
+    .ts-b-gold{background:#2a1f00;color:#e8c06a;border:1px solid #3d2e00}
+    .ts-b-green{background:#0d2e1a;color:#2dd4a0;border:1px solid #1a4a2e}
+    .ts-b-blue{background:#0a1e3a;color:#5b9bff;border:1px solid #142d55}
+    .ts-b-red{background:#2e0d0d;color:#e05555;border:1px solid #4a1a1a}
+    .ts-b-purple{background:#1a0d3a;color:#b07cff;border:1px solid #2d1a55}
+    .ts-footer{padding:12px 16px;flex-shrink:0;border-top:1px solid rgba(255,255,255,0.08)}
+    .ts-shared{background:rgba(0,0,0,0.3);border-radius:10px;padding:10px;margin-bottom:12px}
+    .ts-shared-title{font-size:11px;font-weight:700;color:#7a90aa;text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px}
+    .ts-shared-text{font-size:11px;color:#445566;line-height:1.6}
   </style>
 </head>
 <body>
@@ -831,6 +867,7 @@ function showApp(){
   // Popup pas tonen na de auto-scroll-poging (anders overschaduwt het de scroll naar de open match,
   // vooral op iOS waar de eerste render/scroll-pass trager is dan op Android)
   setTimeout(showFeaturePopup,1500);
+  setTimeout(showTussenstand,2000);
   // Vraag push toestemming automatisch na login.
   // Ruim later dan de auto-scroll: op iOS reset de native permissie-prompt (Web Push) de webview-scroll
   // hard naar boven zodra hij opent/sluit. Door dit pas na 4s te tonen heeft de gebruiker dan al
@@ -1016,6 +1053,109 @@ function closeFeaturePopup(){
   document.getElementById('feature-popup-overlay').style.display='none';
 }
 window.closeFeaturePopup=closeFeaturePopup;
+
+// ── TUSSENSTAND POPUP ───────────────────────────────────
+const TS_PLAYERS=[
+  {name:'Sabrina',pts:56,exact:7,correct:35,ratio:'0.78',played:72,
+   color:'#0F6E56',bg:'#0d2e22',ptcolor:'#2dd4a0',
+   title:'De Profeet',
+   analysis:'Sabrina wist wat niemand wist. Ghana-Panama 1-0 — raak. Schotland-Marokko 0-1 — raak. Curaçao-Ivoorkust 0-2 — raak. Zes exacte scores die niemand anders had. Terwijl sommigen gokten op 6-1 voor Spanje, vulde zij rustig realistisch in. Laagste doelpuntengemiddelde (2.5/match) maar hoogste score. Spelen met het hoofd, niet met het hart.',
+   badges:[['🏆 Leider +9pt','ts-b-gold'],['🎯 6 uniek exacte scores','ts-b-gold'],['📋 72/72 ingevuld','ts-b-green'],['📊 Beste ratio 0.78pt/match','ts-b-blue']]},
+  {name:'Ibo',pts:47,exact:4,correct:35,ratio:'0.71',played:66,
+   color:'#0C447C',bg:'#091e3a',ptcolor:'#5b9bff',
+   title:'De Sleeping Giant',
+   analysis:'Nederland-Japan 2-2 — exact. Als enige. Iedereen dacht aan Nederlandse dominantie, Ibo zag het gelijkspel aankomen. Dan Schotland-Brazilië 0-3 — ook exact, ook alleen. Maar 6 gemiste wedstrijden knagen. Zijn ratio (0.71pt/match) is beter dan Alpha én Zidane10. De potentie is er — de discipline om alles in te vullen ook nog een tandje omhoog.',
+   badges:[['🥈 Gedeeld 2de','ts-b-blue'],['🎯 Ned-Japan & Sco-Bra solo exact','ts-b-gold'],['⚠️ 6 gemiste wedstrijden','ts-b-red']]},
+  {name:'Alpha',pts:47,exact:4,correct:35,ratio:'0.67',played:70,
+   color:'#3B6D11',bg:'#162810',ptcolor:'#7ccf3a',
+   title:'De Cowboy',
+   analysis:'De wildste scorer van het toernooi. Spanje-Kaapverdië 6-1 voorspeld — werd 0-0. Verschil: 7 goals. Toernooirecord. Maar diezelfde moed leverde ook de enige correcte voorspelling van de grootste upset op: Australië-Turkije 2-0, toen niemand anders Australië zag winnen. En Mexico-Z.Afrika 2-0 exact op de openingswedstrijd. Alpha is ongrijpbaar: even briljant als bizar.',
+   badges:[['🥈 Gedeeld 2de','ts-b-blue'],['💥 Wildste miss: Spa-KV 6-1 (werd 0-0)','ts-b-red'],['🎯 Enige die Aus-Tur upset zag','ts-b-gold'],['🔓 Mex-ZA opening exact','ts-b-gold']]},
+  {name:'Zidane10',pts:46,exact:2,correct:40,ratio:'0.69',played:67,
+   color:'#533AB7',bg:'#1a1040',ptcolor:'#b07cff',
+   title:'De Machine',
+   analysis:'Veertig. Correct. Richtingen. Niemand anders haalt zelfs de 40 — het record van het toernooi. Zidane10 kent de favorieten als zijn broekzak. Maar exact? Slechts 2 keer. Zijn hoofd zit vol met 3-1 overwinningen: gemiddeld 3.9 goals per match voorspeld, werkelijk was 3.0. Oezbekistan-Colombia 1-3 exact raak — dát is zijn hand. En Kroatië-Ghana 2-1. Twee kleine pareltjes in een zee van correcte maar-net-niet scores.',
+   badges:[['4de','ts-b-blue'],['📊 40 correcte richtingen (RECORD)','ts-b-gold'],['🎯 Oezbekistan-Colombia 1-3 exact','ts-b-purple'],['📈 Scoort te hoog: 3.9g/match','ts-b-red']]},
+  {name:'DUUUB',pts:45,exact:2,correct:39,ratio:'0.62',played:72,
+   color:'#853300',bg:'#2e1000',ptcolor:'#e8753a',
+   title:'De Bouwer die zichzelf verloor',
+   analysis:'72 op 72 ingevuld. Niemand anders. De maker van deze app heeft elke wedstrijd keurig ingevuld — en eindigde 5de. Maar het echte verhaal: 23 keer was de score exact 1 doelpunt naast de werkelijkheid. Als al die halve misses raak waren geweest: 68pt en een ruime 1ste plek. Duitsland-Curaçao 2-0 voorspeld (werd 7-1), Canada-Qatar 1-0 (werd 6-0). De app-bouwer onderschatte Duitsland met vijf goals.',
+   badges:[['5de','ts-b-blue'],['📋 Enige 72/72 ingevuld','ts-b-green'],['😬 23x exact 1 goal naast (record)','ts-b-red'],['💡 Als die 23 raak: 68pt = 1ste','ts-b-gold']]},
+  {name:'Jood',pts:40,exact:3,correct:31,ratio:'0.73',played:55,
+   color:'#5F5E5A',bg:'#1a1a18',ptcolor:'#c0cde0',
+   title:'De Ghost',
+   analysis:'Halverwege de groepsfase: verdwenen. 17 wedstrijden niet ingevuld — bijna een kwart. Maar de 55 die hij wél invulde? 0.73pt/match — beter dan Alpha, DUUUB én Zidane10. Extrapoleer dat over 72 wedstrijden: 53 punten, waarschijnlijk de 2de plek. En toch: Panama-Engeland 0-2 exact als enige. Jood heeft de neus ervoor. Hij mist alleen te veel wedstrijden om er iets mee te doen.',
+   badges:[['6de','ts-b-blue'],['⚠️ 17 wedstrijden niet ingevuld','ts-b-red'],['💡 0.73pt/match → 2de bij 72 gespeeld','ts-b-gold'],['🎯 Pan-Eng 0-2 solo exact','ts-b-purple']]}
+];
+
+let tsActive=null;
+
+function renderTsBody(){
+  const body=document.getElementById('ts-body');
+  if(!body)return;
+
+  const rankingHtml=TS_PLAYERS.map((p,i)=>{
+    const medal=i===0?'🥇':i===1||i===2?'🥈':'';
+    const rank=medal||`${i+1}`;
+    const open=tsActive===i;
+    return `<div class="ts-row${open?' active':''}" onclick="tsTap(${i})">
+      <span class="ts-rank">${rank}</span>
+      <span class="ts-name">${p.name}</span>
+      <span class="ts-mini">${p.exact}×3 · ${p.correct}×1</span>
+      <span class="ts-pts" style="color:${p.ptcolor}">${p.pts}pt</span>
+    </div>
+    ${open?`<div class="ts-card" style="background:${p.bg}">
+      <div class="ts-card-head">
+        <div class="ts-avatar" style="background:${p.color}22;color:${p.color};border:1px solid ${p.color}44">${p.name.slice(0,2).toUpperCase()}</div>
+        <div><div class="ts-card-name">${p.name}</div><div class="ts-card-sub">${p.pts}pt · ${p.played} wedstrijden · ${p.ratio}pt/match</div></div>
+      </div>
+      <div class="ts-headline" style="color:${p.ptcolor}">${p.title}</div>
+      <div class="ts-analysis">${p.analysis}</div>
+      <div class="ts-statrow">
+        <div class="ts-stat"><div class="ts-stat-val" style="color:#2dd4a0">${p.exact}</div><div class="ts-stat-lbl">Exact (3pt)</div></div>
+        <div class="ts-stat"><div class="ts-stat-val" style="color:#5b9bff">${p.correct}</div><div class="ts-stat-lbl">Correct (1pt)</div></div>
+        <div class="ts-stat"><div class="ts-stat-val" style="color:${p.ptcolor}">${p.pts}</div><div class="ts-stat-lbl">Totaal</div></div>
+      </div>
+      <div class="ts-badges">${p.badges.map(b=>`<span class="ts-badge ${b[1]}">${b[0]}</span>`).join('')}</div>
+    </div>`:''}`;
+  }).join('');
+
+  const sharedHtml=`<div class="ts-shared">
+    <div class="ts-shared-title">😅 Gedeeld leed — 14 matches waar iedereen 0pt pakte</div>
+    <div class="ts-shared-text">Qatar-Zwitserland · Spanje-Kaapverdië · S.Arabië-Uruguay · Portugal-DRC · Turkije-Paraguay · België-Iran · Uruguay-Kaapverdië · Engeland-Ghana · Z.Afrika-Z.Korea · Ecuador-Duitsland · Japan-Zweden · Turkije-VS · Kaapverdië-S.Arabië · Egypte-Iran</div>
+  </div>`;
+
+  body.innerHTML=`<div class="ts-ranking">${rankingHtml}</div>${sharedHtml}`;
+}
+
+function tsTap(i){
+  tsActive=tsActive===i?null:i;
+  renderTsBody();
+}
+window.tsTap=tsTap;
+
+function showTussenstand(){
+  const key='wk26_r32_tussenstand_v1';
+  if(!localStorage.getItem(key)&&getCurrentPhase()==='r32'){
+    renderTsBody();
+    document.getElementById('ts-overlay').style.display='flex';
+  }
+}
+async function confirmTussenstand(){
+  const btn=document.getElementById('ts-confirm-btn');
+  if(btn){btn.textContent='⏳ Opslaan...';btn.disabled=true;}
+  try{
+    await apiFetch('/popup-confirm',{method:'POST',body:JSON.stringify({popup:'r32_tussenstand'})});
+  }catch(e){}
+  localStorage.setItem('wk26_r32_tussenstand_v1','1');
+  document.getElementById('ts-overlay').style.display='none';
+}
+function closeTussenstand(){
+  localStorage.setItem('wk26_r32_tussenstand_v1','1');
+  document.getElementById('ts-overlay').style.display='none';
+}
+window.closeTussenstand=closeTussenstand;
+window.confirmTussenstand=confirmTussenstand;
 
 function renderCurrent(){
   if(curPage==='pronostiek') renderPredPage();
@@ -1946,6 +2086,19 @@ if('serviceWorker' in navigator){
 }
 init();
 </script>
+
+  <div id="ts-overlay" class="ts-overlay" style="display:none">
+    <div class="ts-sheet" onclick="event.stopPropagation()">
+      <div class="ts-header">
+        <h2>🏆 Tussenstand na de groepsfase</h2>
+        <p>Tik op een speler voor de diepte-analyse</p>
+      </div>
+      <div class="ts-body" id="ts-body"></div>
+      <div class="ts-footer">
+        <button id="ts-confirm-btn" onclick="confirmTussenstand()" style="width:100%;background:#1d4ed8;color:#fff;border:none;border-radius:10px;padding:11px;font-size:14px;font-weight:700;cursor:pointer">✓ Bevestig gelezen</button>
+      </div>
+    </div>
+  </div>
   <div id="feature-popup-overlay" class="feature-popup-overlay" style="display:none" onclick="closeFeaturePopup()">
     <div class="feature-popup" onclick="event.stopPropagation()">
       <div style="font-size:32px;margin-bottom:12px">📰</div>
