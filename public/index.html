@@ -1339,59 +1339,86 @@ function phaseStandToggle(){
 window.phaseStandToggle=phaseStandToggle;
 
 function renderPhaseStandingBlock(phase){
-  // Wedstrijden van deze fase met een resultaat
   const doneMatches=MATCHES.filter(m=>m.ph===phase&&results[m.id]&&results[m.id].h!=null);
   if(!doneMatches.length)return'';
 
-  // Punten per speler voor DEZE fase
-  const byPlayer={};
-  let exact=0,correct=0;
-  for(const m of doneMatches){
-    const res=results[m.id];
-    const pronos=allPronosStatus.pronos[m.id]||[];
-    for(const p of pronos){
-      if(!byPlayer[p.name])byPlayer[p.name]={pts:0,exact:0,correct:0};
-      const pt=calcMatchPts({h:p.h,a:p.a},res);
-      if(pt===null)continue;
-      byPlayer[p.name].pts+=pt;
-      if(pt===3)byPlayer[p.name].exact++;
-      else if(pt===1)byPlayer[p.name].correct++;
-    }
-  }
-
-  const sorted=Object.entries(byPlayer).sort((a,b)=>b[1].pts-a[1].pts);
-  if(!sorted.length)return'';
-
+  const totalPhase=MATCHES.filter(m=>m.ph===phase).length;
+  const done=doneMatches.length===totalPhase;
   const phaseLabels={group:'Groepsfase',r32:'Ronde van 32',qf:'Kwartfinale',sf:'Halve finale',final:'Finale'};
   const label=phaseLabels[phase]||phase;
-  const total=doneMatches.length;
-  const totalPhase=MATCHES.filter(m=>m.ph===phase).length;
-  const done=total===totalPhase;
-  const subtitle=done?`Afgerond · ${total} wedstrijden`:`${total}/${totalPhase} wedstrijden gespeeld`;
 
-  const medals=['🥇','🥈','🥈','4','5','6'];
-  const ptColors=['#e8c06a','#5b9bff','#5b9bff','#c0cde0','#c0cde0','#c0cde0'];
+  let bodyContent='';
 
-  const preview=sorted.slice(0,3).map((e,i)=>`${medals[i]}${e[0]} ${e[1].pts}pt`).join(' · ');
+  if(phase==='group'&&typeof TS_PLAYERS!=='undefined'){
+    const subtitle=done?`Afgerond · ${doneMatches.length} wedstrijden`:`${doneMatches.length}/${totalPhase} gespeeld`;
+    const cards=TS_PLAYERS.map((p,i)=>{
+      const medal=i===0?'🥇':i===1||i===2?'🥈':'';
+      return`<div class="ts-card" style="background:${p.bg};margin-bottom:8px">
+        <div class="ts-card-head">
+          <div class="ts-avatar" style="background:${p.color}22;color:${p.color};border:1px solid ${p.color}44">${medal||i+1}</div>
+          <div>
+            <div class="ts-card-name">${p.name} <span style="font-size:13px;color:${p.ptcolor};font-weight:700">${p.pts}pt</span></div>
+            <div class="ts-card-sub">${p.played} wedstrijden · ${p.ratio}pt/match</div>
+          </div>
+        </div>
+        <div class="ts-headline" style="color:${p.ptcolor}">${p.title}</div>
+        <div class="ts-analysis">${p.analysis}</div>
+        <div class="ts-statrow">
+          <div class="ts-stat"><div class="ts-stat-val" style="color:#2dd4a0">${p.exact}</div><div class="ts-stat-lbl">Exact (3pt)</div></div>
+          <div class="ts-stat"><div class="ts-stat-val" style="color:#5b9bff">${p.correct}</div><div class="ts-stat-lbl">Correct (1pt)</div></div>
+          <div class="ts-stat"><div class="ts-stat-val" style="color:${p.ptcolor}">${p.pts}</div><div class="ts-stat-lbl">Totaal</div></div>
+        </div>
+        <div class="ts-badges">${p.badges.map(b=>`<span class="ts-badge ${b[1]}">${b[0]}</span>`).join('')}</div>
+      </div>`;
+    }).join('');
+    const shared=`<div class="ts-shared">
+      <div class="ts-shared-title">😅 14 matches waar iedereen 0pt pakte</div>
+      <div class="ts-shared-text">Qatar-Zwitserland · Spanje-Kaapverdië · S.Arabië-Uruguay · Portugal-DRC · Turkije-Paraguay · België-Iran · Uruguay-Kaapverdië · Engeland-Ghana · Z.Afrika-Z.Korea · Ecuador-Duitsland · Japan-Zweden · Turkije-VS · Kaapverdië-S.Arabië · Egypte-Iran</div>
+    </div>`;
+    bodyContent=`<div style="font-size:11px;color:#445566;margin-bottom:10px">${subtitle}</div>${cards}${shared}`;
 
-  const rows=sorted.map(([name,s],i)=>`
-    <div class="phase-stand-row">
-      <span class="phase-stand-rank">${medals[i]||i+1}</span>
-      <span class="phase-stand-name">${esc(name)}</span>
-      <span class="phase-stand-detail">${s.exact}×3 · ${s.correct}×1</span>
-      <span class="phase-stand-pts" style="color:${ptColors[i]||'#c0cde0'}">${s.pts}pt</span>
-    </div>`).join('');
+  } else {
+    const byPlayer={};
+    for(const m of doneMatches){
+      const res=results[m.id];
+      const pronos=allPronosStatus.pronos[m.id]||[];
+      for(const p of pronos){
+        if(!byPlayer[p.name])byPlayer[p.name]={pts:0,exact:0,correct:0};
+        const pt=calcMatchPts({h:p.h,a:p.a},res);
+        if(pt===null)continue;
+        byPlayer[p.name].pts+=pt;
+        if(pt===3)byPlayer[p.name].exact++;
+        else if(pt===1)byPlayer[p.name].correct++;
+      }
+    }
+    const sorted=Object.entries(byPlayer).sort((a,b)=>b[1].pts-a[1].pts);
+    if(!sorted.length)return'';
+    const medals=['🥇','🥈','🥈','4','5','6'];
+    const ptColors=['#e8c06a','#5b9bff','#5b9bff','#c0cde0','#c0cde0','#c0cde0'];
+    const subtitle=done?`Afgerond · ${doneMatches.length} wedstrijden`:`${doneMatches.length}/${totalPhase} gespeeld — punten uit deze ronde`;
+    const rows=sorted.map(([name,s],i)=>`
+      <div class="phase-stand-row">
+        <span class="phase-stand-rank">${medals[i]||i+1}</span>
+        <span class="phase-stand-name">${esc(name)}</span>
+        <span class="phase-stand-detail">${s.exact}×3 · ${s.correct}×1</span>
+        <span class="phase-stand-pts" style="color:${ptColors[i]||'#c0cde0'}">${s.pts}pt</span>
+      </div>`).join('');
+    bodyContent=`<div style="font-size:11px;color:#445566;margin-bottom:8px">${subtitle}</div>${rows}`;
+  }
+
+  const preview=phase==='group'&&typeof TS_PLAYERS!=='undefined'
+    ?TS_PLAYERS.slice(0,3).map((p,i)=>(['🥇','🥈','🥈'][i])+p.name+' '+p.pts+'pt').join(' · ')
+    :'Tik om te lezen';
 
   return`<div class="phase-stand">
     <div class="phase-stand-header" onclick="phaseStandToggle()">
       <span style="font-size:16px">📊</span>
       <span class="phase-stand-title">Stand na de ${label}</span>
-      <span class="phase-stand-preview" id="phase-stand-preview">${preview}</span>
-      <svg id="phase-stand-chev" class="phase-stand-chevron" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      <span class="phase-stand-preview">${preview}</span>
+      <svg id="phase-stand-chev" class="phase-stand-chevron${phaseStandOpen?' open':''}" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
     </div>
     <div class="phase-stand-body${phaseStandOpen?' open':''}" id="phase-stand-body">
-      <div style="font-size:11px;color:#445566;margin-bottom:8px">${subtitle} — punten enkel uit deze ronde</div>
-      ${rows}
+      ${bodyContent}
     </div>
   </div>`;
 }
