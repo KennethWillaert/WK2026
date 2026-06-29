@@ -1382,13 +1382,14 @@ function renderPhaseStandingBlock(phase){
     for(const m of doneMatches){
       const res=results[m.id];
       const pronos=allPronosStatus.pronos[m.id]||[];
+      const isKO=m.ph!=='group';
       for(const p of pronos){
         if(!byPlayer[p.name])byPlayer[p.name]={pts:0,exact:0,correct:0};
-        const pt=calcMatchPts({h:p.h,a:p.a},res);
+        const pt=calcMatchPts({h:p.h,a:p.a,winner:p.winner||null},res,isKO);
         if(pt===null)continue;
         byPlayer[p.name].pts+=pt;
-        if(pt===3)byPlayer[p.name].exact++;
-        else if(pt===1)byPlayer[p.name].correct++;
+        if(pt>=3)byPlayer[p.name].exact++;
+        else if(pt>=1)byPlayer[p.name].correct++;
       }
     }
     const sorted=Object.entries(byPlayer).sort((a,b)=>b[1].pts-a[1].pts);
@@ -1484,8 +1485,8 @@ function renderMatchList(wrap){
         ${res&&res.h!=null&&(pred.h!=null||pred.a!=null)?`
         <div style="display:flex;justify-content:center;align-items:center;gap:8px;margin:4px 0 2px;font-size:11px;color:#445566">
           <span>Jouw prono:</span>
-          <span style="font-weight:700;color:#c0cde0">${pred.h} – ${pred.a}</span>
-          ${calcMatchPts({h:pred.h,a:pred.a},res)!=null?`<span class="prono-pts ${calcMatchPts({h:pred.h,a:pred.a},res)===3?'pts-3':calcMatchPts({h:pred.h,a:pred.a},res)===1?'pts-1':'pts-0'}">${calcMatchPts({h:pred.h,a:pred.a},res)===3?'3 pt':calcMatchPts({h:pred.h,a:pred.a},res)===1?'1 pt':'0 pt'}</span>`:''}
+          <span style="font-weight:700;color:#c0cde0">${pred.h} – ${pred.a}${pred.winner?` → ${pred.winner}`:''}</span>
+          ${(()=>{const isKO=['r32','r16','qf','sf','final'].includes(m.ph);const p=calcMatchPts({h:pred.h,a:pred.a,winner:pred.winner||null},res,isKO);return p!=null?`<span class="prono-pts ${p>=3?'pts-3':p>=1?'pts-1':'pts-0'}">${p} pt</span>`:'';})()}
         </div>`:''}
         ${['r32','r16','qf','sf','final'].includes(m.ph)&&!locked?`
         <div class="winner-select-wrap">
@@ -1507,12 +1508,15 @@ function renderMatchList(wrap){
   if(window.twemoji)twemoji.parse(wrap,{folder:'svg',ext:'.svg'});
 }
 
-function calcMatchPts(pred,res){
+function calcMatchPts(pred,res,isKnockout){
   if(!res||res.h==null)return null;
-  if(pred.h===res.h&&pred.a===res.a)return 3;
+  const exact=pred.h===res.h&&pred.a===res.a;
   const pw=pred.h>pred.a?1:pred.h<pred.a?-1:0;
   const rw=res.h>res.a?1:res.h<res.a?-1:0;
-  return pw===rw?1:0;
+  const winnerBonus=isKnockout&&pred.winner&&res.winner&&pred.winner===res.winner?1:0;
+  if(exact)return 3+winnerBonus;
+  if(pw===rw)return 1+winnerBonus;
+  return 0;
 }
 
 
@@ -1544,9 +1548,9 @@ function renderPronosListHtml(mid,isLocked,res){
 
   if(!pronos.length&&!missing.length)return'<span style="font-size:11px;color:#445566;padding:4px 8px">Nog geen pronos ingevuld</span>';
   const filledRows=pronos.map(p=>{
-    const pts=calcMatchPts({h:p.h,a:p.a},res);
-    const ptsClass=pts===3?'pts-3':pts===1?'pts-1':'pts-0';
-    const ptsLabel=pts===null?'':pts===3?'3 pt':pts===1?'1 pt':'0 pt';
+    const pts=calcMatchPts({h:p.h,a:p.a,winner:p.winner||null},res,isKnockout);
+    const ptsClass=pts>=3?'pts-3':pts>=1?'pts-1':'pts-0';
+    const ptsLabel=pts===null?'':pts===0?'0 pt':`${pts} pt`;
     const timeStr=p.t?new Date(p.t).toLocaleString('nl-BE',{timeZone:'Europe/Brussels',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'';
     const winnerHtml=isKnockout&&p.winner
       ?`<span style="font-size:11px;color:#7a90aa;margin-left:4px">→ ${esc(p.winner)}</span>`

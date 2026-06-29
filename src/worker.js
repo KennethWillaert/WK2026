@@ -582,7 +582,7 @@ export default {
     if(path==='/api/results'&&request.method==='GET'){
       const rows=await env.DB.prepare('SELECT match_id,home_score,away_score,winner FROM results').all();
       const result={};
-      rows.results.forEach(r=>{result[r.match_id]={h:r.home_score,a:r.away_score};});
+      rows.results.forEach(r=>{result[r.match_id]={h:r.home_score,a:r.away_score,winner:r.winner||null};});
       return json(result);
     }
 
