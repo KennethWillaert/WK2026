@@ -589,12 +589,12 @@ export default {
     if(path==='/api/results'&&request.method==='PUT'){
       const user=await getUser(request,env);
       if(!user||!user.is_admin)return err('Geen toegang',403);
-      const{matchId,h,a}=await request.json();
+      const{matchId,h,a,winner}=await request.json();
       if(!matchId||h==null||a==null)return err('Ontbrekende velden');
       await env.DB.prepare(
-        `INSERT INTO results(match_id,home_score,away_score)VALUES(?,?,?)
-         ON CONFLICT(match_id)DO UPDATE SET home_score=excluded.home_score,away_score=excluded.away_score`
-      ).bind(matchId,parseInt(h),parseInt(a)).run();
+        `INSERT INTO results(match_id,home_score,away_score,winner)VALUES(?,?,?,?)
+         ON CONFLICT(match_id)DO UPDATE SET home_score=excluded.home_score,away_score=excluded.away_score,winner=excluded.winner`
+      ).bind(matchId,parseInt(h),parseInt(a),winner||null).run();
       return json({ok:true});
     }
 

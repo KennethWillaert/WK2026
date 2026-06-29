@@ -1744,6 +1744,14 @@ function renderScoresPage(){
           </div>
           <div class="team right">${teamWithFlagRight(resolveTeam(m.a))}</div>
         </div>
+        ${m.ph!=='group'?`<div style="padding:4px 0 2px;display:flex;align-items:center;gap:8px;font-size:12px;color:#7a90aa">
+          <span>Doorstomer:</span>
+          <select id="r_${m.id}_w" onchange="qSaveResult('${m.id}')" style="background:#0a1220;border:1px solid rgba(255,255,255,0.15);border-radius:6px;color:#e4eaf4;padding:3px 6px;font-size:12px;flex:1">
+            <option value="">— Kies —</option>
+            <option value="${resolveTeam(m.h)}" ${res.winner===resolveTeam(m.h)?'selected':''}>${resolveTeam(m.h)}</option>
+            <option value="${resolveTeam(m.a)}" ${res.winner===resolveTeam(m.a)?'selected':''}>${resolveTeam(m.a)}</option>
+          </select>
+        </div>`:''}
         <div class="saved-msg" id="sr_${m.id}"></div>
       </div>`;
     }).join('');
@@ -1789,10 +1797,11 @@ window.qSaveResult=function(mid){
   savingTimer['r_'+mid]=setTimeout(async()=>{
     const h=document.getElementById(`r_${mid}_h`)?.value;
     const a=document.getElementById(`r_${mid}_a`)?.value;
+    const w=document.getElementById(`r_${mid}_w`)?.value||null;
     if(h===''||a==='')return;
     try{
-      await apiFetch('/results',{method:'PUT',body:JSON.stringify({matchId:mid,h:+h,a:+a})});
-      results[mid]={h:+h,a:+a};
+      await apiFetch('/results',{method:'PUT',body:JSON.stringify({matchId:mid,h:+h,a:+a,winner:w})});
+      results[mid]={h:+h,a:+a,winner:w};
       const sv=document.getElementById(`sr_${mid}`);
       if(sv){sv.innerHTML='<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#50d080" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><polyline points="20 6 9 11 4 18"/></svg> Opgeslagen';setTimeout(()=>{if(sv)sv.innerHTML='';},2000);}
     }catch(e){showError(e.message);}
