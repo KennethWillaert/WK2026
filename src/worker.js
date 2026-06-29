@@ -817,7 +817,7 @@ export default {
       allResults.results.forEach(r=>{
         if(r.match_id==='bonus'){try{bonusResult=JSON.parse(r.home_score);}catch{}}
         else if(!r.match_id.startsWith('override_')&&r.match_id!=='topscorers'&&r.match_id!=='titles_unlocked'){
-          resMap[r.match_id]={h:r.home_score,a:r.away_score};
+          resMap[r.match_id]={h:r.home_score,a:r.away_score,winner:r.winner||null};
         }
       });
       const bonusMap={};

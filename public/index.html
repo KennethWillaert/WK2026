@@ -1516,7 +1516,7 @@ function calcMatchPts(pred,res,isKnockout){
   const winnerBonus=isKnockout&&pred.winner&&res.winner&&pred.winner===res.winner?1:0;
   if(exact)return 3+winnerBonus;
   if(pw===rw)return 1+winnerBonus;
-  return 0;
+  return winnerBonus;
 }
 
 
