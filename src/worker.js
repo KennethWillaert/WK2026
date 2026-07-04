@@ -37,6 +37,7 @@ function mapTeam(name){return TEAM_MAP[name]||name;}
 
 // Mapping onze match IDs → football-data wedstrijd zoeksleutel (thuis+uit teams)
 const MATCH_ID_MAP={
+  // ── GROEPSFASE ─────────────────────────────────────────────────────────────
   'm1':['Mexico','Zuid-Afrika'],'m2':['Zuid-Korea','Tsjechië'],
   'm3':['Canada','Bosnië'],'m4':['VS','Paraguay'],
   'm5':['Qatar','Zwitserland'],'m6':['Brazilië','Marokko'],
@@ -73,6 +74,37 @@ const MATCH_ID_MAP={
   'm67':['Panama','Engeland'],'m68':['Kroatië','Ghana'],
   'm69':['Colombia','Portugal'],'m70':['DRC','Oezbekistan'],
   'm71':['Algerije','Oostenrijk'],'m72':['Jordanië','Argentinië'],
+  // ── RONDE VAN 32 ───────────────────────────────────────────────────────────
+  'm73':['Zuid-Afrika','Canada'],'m74':['Brazilië','Japan'],
+  'm75':['Duitsland','Paraguay'],'m76':['Nederland','Marokko'],
+  'm77':['Ivoorkust','Noorwegen'],'m78':['Frankrijk','Zweden'],
+  'm79':['Mexico','Ecuador'],'m80':['Engeland','DR Congo'],
+  'm81':['België','Senegal'],'m82':['VS','Bosnië'],
+  'm83':['Spanje','Oostenrijk'],'m84':['Portugal','Kroatië'],
+  'm85':['Zwitserland','Algerije'],'m86':['Australië','Egypte'],
+  'm87':['Argentinië','Kaapverdië'],'m88':['Colombia','Ghana'],
+  // ── R16/QF/SF/FINAL: worden automatisch toegevoegd via syncKnockoutMap ─────
+};
+
+// Bracket mapping: winner van match X → volgende match (slot home/away)
+const KNOCKOUT_NEXT={
+  m73:{next:'m89',slot:'home'}, m83:{next:'m89',slot:'away'},
+  m74:{next:'m90',slot:'home'}, m80:{next:'m90',slot:'away'},
+  m76:{next:'m91',slot:'home'}, m86:{next:'m91',slot:'away'},
+  m79:{next:'m92',slot:'home'}, m85:{next:'m92',slot:'away'},
+  m77:{next:'m93',slot:'home'}, m82:{next:'m93',slot:'away'},
+  m75:{next:'m94',slot:'home'}, m81:{next:'m94',slot:'away'},
+  m87:{next:'m95',slot:'home'}, m88:{next:'m95',slot:'away'},
+  m78:{next:'m96',slot:'home'}, m84:{next:'m96',slot:'away'},
+  m89:{next:'m97',slot:'home'}, m90:{next:'m97',slot:'away'},
+  m91:{next:'m98',slot:'home'}, m92:{next:'m98',slot:'away'},
+  m93:{next:'m99',slot:'home'}, m94:{next:'m99',slot:'away'},
+  m95:{next:'m100',slot:'home'},m96:{next:'m100',slot:'away'},
+  m97:{next:'m101',slot:'home',loserNext:'m103',loserSlot:'home'},
+  m98:{next:'m101',slot:'away',loserNext:'m103',loserSlot:'away'},
+  m99:{next:'m102',slot:'home',loserNext:'m103',loserSlot:'home'},
+  m100:{next:'m102',slot:'away',loserNext:'m103',loserSlot:'away'},
+  m101:{next:'m104',slot:'home'},m102:{next:'m104',slot:'away'},
 };
 
 const GROUPS={
@@ -216,24 +248,35 @@ async function syncFromFootballData(env){
     ).bind(mid,homeScore,awayScore,winnerName).run();
     synced++;
 
-    // Team-vorm bijhouden (laatste resultaten voor de vorm-stats in de prono tab)
-    // LET OP: MATCH_ID_MAP bevat enkel groepswedstrijden (m1-m72), dus dit vult
-    // automatisch enkel 'wk_groep'. Knockoutwedstrijden (m73+) staan hier niet in
-    // omdat de teams pas bekend zijn na de groepsfase — die categorie ('wk_knockout')
-    // moet er pas bij zodra de knockout-sync zelf gebouwd is.
+    // Team-vorm bijhouden
     const matchDate=(match.utcDate||'').slice(0,10)||new Date().toISOString().slice(0,10);
     const homeResult=homeScore>awayScore?'W':homeScore<awayScore?'V':'G';
     const awayResult=awayScore>homeScore?'W':awayScore<homeScore?'V':'G';
+    const isKnockout=parseInt(mid.replace('m',''))>72;
+    const formCategory=isKnockout?'wk_knockout':'wk_groep';
     await env.DB.prepare(
       `INSERT INTO team_form(team,opponent,goals_for,goals_against,result,category,match_date,match_id)
-       VALUES(?,?,?,?,?,'wk_groep',?,?)
+       VALUES(?,?,?,?,?,?,?,?)
        ON CONFLICT(team,match_id)DO UPDATE SET goals_for=excluded.goals_for,goals_against=excluded.goals_against,result=excluded.result,match_date=excluded.match_date`
-    ).bind(th,ta,homeScore,awayScore,homeResult,matchDate,mid).run();
+    ).bind(th,ta,homeScore,awayScore,homeResult,formCategory,matchDate,mid).run();
     await env.DB.prepare(
       `INSERT INTO team_form(team,opponent,goals_for,goals_against,result,category,match_date,match_id)
-       VALUES(?,?,?,?,?,'wk_groep',?,?)
+       VALUES(?,?,?,?,?,?,?,?)
        ON CONFLICT(team,match_id)DO UPDATE SET goals_for=excluded.goals_for,goals_against=excluded.goals_against,result=excluded.result,match_date=excluded.match_date`
-    ).bind(ta,th,awayScore,homeScore,awayResult,matchDate,mid).run();
+    ).bind(ta,th,awayScore,homeScore,awayResult,formCategory,matchDate,mid).run();
+
+    // Knockout: update match_kickoffs volgende ronde + voeg dynamisch toe aan MATCH_ID_MAP
+    if(isKnockout&&winnerName){
+      const nextMap=KNOCKOUT_NEXT[mid];
+      if(nextMap){
+        const col=nextMap.slot==='home'?'home_team':'away_team';
+        await env.DB.prepare(`UPDATE match_kickoffs SET ${col}=? WHERE match_id=?`).bind(winnerName,nextMap.next).run();
+        // Voeg toe aan MATCH_ID_MAP voor toekomstige sync-runs (in-memory voor deze run)
+        if(!MATCH_ID_MAP[nextMap.next])MATCH_ID_MAP[nextMap.next]=[null,null];
+        if(nextMap.slot==='home')MATCH_ID_MAP[nextMap.next][0]=winnerName;
+        else MATCH_ID_MAP[nextMap.next][1]=winnerName;
+      }
+    }
   }
 
   // Sync topscorers — elke cron run
@@ -595,6 +638,14 @@ export default {
         `INSERT INTO results(match_id,home_score,away_score,winner)VALUES(?,?,?,?)
          ON CONFLICT(match_id)DO UPDATE SET home_score=excluded.home_score,away_score=excluded.away_score,winner=excluded.winner`
       ).bind(matchId,parseInt(h),parseInt(a),winner||null).run();
+      // Auto-update match_kickoffs voor volgende ronde zodra winner bekend is
+      if(winner){
+        const map=KNOCKOUT_NEXT[matchId];
+        if(map){
+          const col=map.slot==='home'?'home_team':'away_team';
+          await env.DB.prepare(`UPDATE match_kickoffs SET ${col}=? WHERE match_id=?`).bind(winner,map.next).run();
+        }
+      }
       return json({ok:true});
     }
 
@@ -647,7 +698,7 @@ export default {
       const resMap={};
       rows.results.forEach(r=>{
         if(!r.match_id.startsWith('override_')&&r.match_id!=='bonus'&&r.match_id!=='topscorers'&&r.match_id!=='titles_unlocked')
-          resMap[r.match_id]={h:r.home_score,a:r.away_score};
+          resMap[r.match_id]={h:r.home_score,a:r.away_score,winner:r.winner||null};
       });
       const overrides={};
       rows.results.forEach(r=>{
@@ -670,6 +721,16 @@ export default {
         .sort((a,b)=>b.pts-a.pts||b.gd-a.gd||b.gf-a.gf)
         .slice(0,8);
       thirds.forEach(t=>{if(!overrides[`3best_${t.grp}`])bracket[`3best_${t.grp}`]=t.name;});
+      // Knockout W/L-brackets: winner/loser van elke afgespeelde knockoutwedstrijd
+      Object.entries(resMap).forEach(([mid,res])=>{
+        if(res.winner){
+          const num=mid.replace('m','');
+          bracket[`W${num}`]=res.winner;
+          // Bepaal de verliezer voor 3de-plaatsmatch (L101, L102)
+          // Verliezer = de andere ploeg (home of away die NIET wint)
+          // We kunnen home/away niet hier bepalen zonder MATCHES — wordt afgehandeld via bracket zelf
+        }
+      });
       return json({standings,bracket,overrides});
     }
 
