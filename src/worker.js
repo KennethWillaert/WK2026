@@ -83,7 +83,14 @@ const MATCH_ID_MAP={
   'm83':['Spanje','Oostenrijk'],'m84':['Portugal','Kroatië'],
   'm85':['Zwitserland','Algerije'],'m86':['Australië','Egypte'],
   'm87':['Argentinië','Kaapverdië'],'m88':['Colombia','Ghana'],
-  // ── R16/QF/SF/FINAL: worden automatisch toegevoegd via syncKnockoutMap ─────
+  // ── ACHTSTE FINALES (teams gekend na R32) ──────────────────────────────────
+  'm89':['Canada','Marokko'],'m90':['Paraguay','Frankrijk'],
+  'm91':['Brazilië','Noorwegen'],'m92':['Mexico','Engeland'],
+  'm93':['Spanje','Portugal'],'m94':['België','VS'],
+  'm95':['Egypte','Argentinië'],'m96':['Zwitserland','Colombia'],
+  // ── KWARTFINALES (teams gekend na R16) ─────────────────────────────────────
+  'm97':['Frankrijk','Marokko'],'m98':['Spanje','België'],
+  'm99':['Brazilië','Engeland'],'m100':['Argentinië','Zwitserland'],
 };
 
 // Bracket mapping: winner van match X → volgende match (slot home/away)
@@ -97,8 +104,8 @@ const KNOCKOUT_NEXT={
   m87:{next:'m95',slot:'home'}, m88:{next:'m95',slot:'away'},
   m78:{next:'m96',slot:'home'}, m84:{next:'m96',slot:'away'},
   m89:{next:'m97',slot:'home'}, m90:{next:'m97',slot:'away'},
-  m91:{next:'m98',slot:'home'}, m92:{next:'m98',slot:'away'},
-  m93:{next:'m99',slot:'home'}, m94:{next:'m99',slot:'away'},
+  m91:{next:'m99',slot:'home'}, m92:{next:'m99',slot:'away'},
+  m93:{next:'m98',slot:'home'}, m94:{next:'m98',slot:'away'},
   m95:{next:'m100',slot:'home'},m96:{next:'m100',slot:'away'},
   m97:{next:'m101',slot:'home',loserNext:'m103',loserSlot:'home'},
   m98:{next:'m101',slot:'away',loserNext:'m103',loserSlot:'away'},
