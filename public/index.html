@@ -788,10 +788,11 @@ let results={}, curPreds={}, bonusPred={}, bonusResult={}, bracket={};
 let allPronosStatus={names:[],pronos:{}};
 function getCurrentPhase(){
   const now=Date.now();
-  const phases=[...PHASES].reverse();
-  for(const ph of phases){
-    if(ph.unlock&&now>=ph.unlock)return ph.id;
-  }
+  // Huidige fase = fase van de vroegste komende wedstrijd (of meest recente als alles voorbij is)
+  const upcoming=MATCHES.filter(m=>m.ph!=='group'&&m.ko>now-4*60*60*1000).sort((a,b)=>a.ko-b.ko);
+  if(upcoming.length)return upcoming[0].ph;
+  const past=[...MATCHES].filter(m=>m.ph!=='group').sort((a,b)=>b.ko-a.ko);
+  if(past.length)return past[0].ph;
   return 'group';
 }
 
