@@ -88,7 +88,7 @@ const MATCH_ID_MAP={
   'm93':['Spanje','Portugal'],'m94':['België','VS'],
   'm95':['Egypte','Argentinië'],'m96':['Zwitserland','Colombia'],
   'm97':['Frankrijk','Marokko'],'m98':['Spanje','België'],
-  'm99':['Brazilië','Engeland'],'m100':['Argentinië','Zwitserland'],
+  'm99':['Noorwegen','Engeland'],'m100':['Argentinië','Zwitserland'],
 };
 
 // Bracket mapping: winner van match X → volgende match (slot home/away)
