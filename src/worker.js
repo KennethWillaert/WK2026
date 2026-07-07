@@ -83,12 +83,10 @@ const MATCH_ID_MAP={
   'm83':['Spanje','Oostenrijk'],'m84':['Portugal','Kroatië'],
   'm85':['Zwitserland','Algerije'],'m86':['Australië','Egypte'],
   'm87':['Argentinië','Kaapverdië'],'m88':['Colombia','Ghana'],
-  // ── ACHTSTE FINALES (teams gekend na R32) ──────────────────────────────────
   'm89':['Canada','Marokko'],'m90':['Paraguay','Frankrijk'],
   'm91':['Brazilië','Noorwegen'],'m92':['Mexico','Engeland'],
   'm93':['Spanje','Portugal'],'m94':['België','VS'],
   'm95':['Egypte','Argentinië'],'m96':['Zwitserland','Colombia'],
-  // ── KWARTFINALES (teams gekend na R16) ─────────────────────────────────────
   'm97':['Frankrijk','Marokko'],'m98':['Spanje','België'],
   'm99':['Brazilië','Engeland'],'m100':['Argentinië','Zwitserland'],
 };

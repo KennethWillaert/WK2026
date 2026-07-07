@@ -665,10 +665,10 @@ const PHASES=[
   {id:'bonus',label:'<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><path d="M6 9H4a2 2 0 0 1-2-2V5h4"/><path d="M18 9h2a2 2 0 0 0 2-2V5h-4"/><path d="M12 17v4"/><path d="M8 21h8"/><path d="M6 5h12v6a6 6 0 0 1-12 0z"/></svg> Bonus',unlock:0,lock:ko('2026-06-11','21:00')},
   {id:'group',label:'Groepsfase',unlock:0},
   {id:'r32',label:'Ronde van 32',unlock:ko('2026-06-28','06:00')},
-  {id:'r16',label:'Achtste finales',unlock:ko('2026-07-04','07:00')},   // 12u voor eerste match
-  {id:'qf',label:'Kwartfinales',unlock:ko('2026-07-08','12:00')},     // ochtend na laatste R16
-  {id:'sf',label:'Halve finales',unlock:ko('2026-07-12','12:00')},    // ochtend na laatste QF
-  {id:'final',label:'Finale',unlock:ko('2026-07-16','06:00')},        // dag na laatste SF
+  {id:'r16',label:'Achtste finales',unlock:ko('2026-07-04','07:00')},
+  {id:'qf',label:'Kwartfinales',unlock:ko('2026-07-08','12:00')},
+  {id:'sf',label:'Halve finales',unlock:ko('2026-07-12','12:00')},
+  {id:'final',label:'Finale',unlock:ko('2026-07-16','06:00')},
 ];
 const DAYS=['zo','ma','di','wo','do','vr','za'];
 const MONTHS=['jan','feb','mrt','apr','mei','jun','jul','aug','sep','okt','nov','dec'];
@@ -1185,7 +1185,7 @@ function renderCurrent(){
 async function loadAll(){
   try{
     [results, bonusResult] = await Promise.all([apiFetch('/results'), apiFetch('/bonus-result')]);
-    try{const s=await apiFetch('/standings'); bracket=s.bracket||{}; lastStandings=s.standings||{};}catch{}
+    try{const s=await apiFetch('/standings'); bracket=s.bracket||{}; lastStandings=s.standings||{};}catch(e){console.warn('standings fetch failed:',e);}
     renderCurrent();
     renderTicker();
   }catch(e){showError(e.message);}
@@ -1212,7 +1212,7 @@ function renderTicker(){
     let label='';
     if(st==='IN_PLAY')label='<span class="t-live">LIVE</span>';
     else if(st==='PAUSED'||st==='HALFTIME')label='<span class="t-rust">RT</span>';
-    return `<span class="ticker-item">${label}${m.h} <span class="t-score">${r.h} – ${r.a}</span> ${m.a}</span><span class="ticker-item t-sep">•</span>`;
+    return `<span class="ticker-item">${label}${resolveTeam(m.h)} <span class="t-score">${r.h} – ${r.a}</span> ${resolveTeam(m.a)}</span><span class="ticker-item t-sep">•</span>`;
   }).join('');
   // Duplicate for seamless loop
   document.getElementById('ticker-track').innerHTML=items+items;
