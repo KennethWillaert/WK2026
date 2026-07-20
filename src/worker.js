@@ -83,12 +83,7 @@ const MATCH_ID_MAP={
   'm83':['Spanje','Oostenrijk'],'m84':['Portugal','Kroatië'],
   'm85':['Zwitserland','Algerije'],'m86':['Australië','Egypte'],
   'm87':['Argentinië','Kaapverdië'],'m88':['Colombia','Ghana'],
-  'm89':['Canada','Marokko'],'m90':['Paraguay','Frankrijk'],
-  'm91':['Brazilië','Noorwegen'],'m92':['Mexico','Engeland'],
-  'm93':['Spanje','Portugal'],'m94':['België','VS'],
-  'm95':['Egypte','Argentinië'],'m96':['Zwitserland','Colombia'],
-  'm97':['Frankrijk','Marokko'],'m98':['Spanje','België'],
-  'm99':['Noorwegen','Engeland'],'m100':['Argentinië','Zwitserland'],
+  // ── R16/QF/SF/FINAL: worden automatisch toegevoegd via syncKnockoutMap ─────
 };
 
 // Bracket mapping: winner van match X → volgende match (slot home/away)
@@ -102,8 +97,8 @@ const KNOCKOUT_NEXT={
   m87:{next:'m95',slot:'home'}, m88:{next:'m95',slot:'away'},
   m78:{next:'m96',slot:'home'}, m84:{next:'m96',slot:'away'},
   m89:{next:'m97',slot:'home'}, m90:{next:'m97',slot:'away'},
-  m91:{next:'m99',slot:'home'}, m92:{next:'m99',slot:'away'},
-  m93:{next:'m98',slot:'home'}, m94:{next:'m98',slot:'away'},
+  m91:{next:'m98',slot:'home'}, m92:{next:'m98',slot:'away'},
+  m93:{next:'m99',slot:'home'}, m94:{next:'m99',slot:'away'},
   m95:{next:'m100',slot:'home'},m96:{next:'m100',slot:'away'},
   m97:{next:'m101',slot:'home',loserNext:'m103',loserSlot:'home'},
   m98:{next:'m101',slot:'away',loserNext:'m103',loserSlot:'away'},
@@ -649,6 +644,20 @@ export default {
         if(map){
           const col=map.slot==='home'?'home_team':'away_team';
           await env.DB.prepare(`UPDATE match_kickoffs SET ${col}=? WHERE match_id=?`).bind(winner,map.next).run();
+          // Ook verliezer bijwerken voor 3de-plaatsmatch (L-bracket)
+          if(map.loserNext){
+            // Verliezer = andere ploeg uit deze match → haal teams op uit match_kickoffs
+            const mk=await env.DB.prepare(`SELECT home_team,away_team FROM match_kickoffs WHERE match_id=?`).bind(matchId).first();
+            if(mk){
+              const loser=winner===(map.slot==='home'?mk.home_team:mk.away_team)
+                ?(map.slot==='home'?mk.away_team:mk.home_team)
+                :(map.slot==='home'?mk.home_team:mk.away_team);
+              if(loser){
+                const loserCol=map.loserSlot==='home'?'home_team':'away_team';
+                await env.DB.prepare(`UPDATE match_kickoffs SET ${loserCol}=? WHERE match_id=?`).bind(loser,map.loserNext).run();
+              }
+            }
+          }
         }
       }
       return json({ok:true});
@@ -731,9 +740,21 @@ export default {
         if(res.winner){
           const num=mid.replace('m','');
           bracket[`W${num}`]=res.winner;
-          // Bepaal de verliezer voor 3de-plaatsmatch (L101, L102)
-          // Verliezer = de andere ploeg (home of away die NIET wint)
-          // We kunnen home/away niet hier bepalen zonder MATCHES — wordt afgehandeld via bracket zelf
+        }
+      });
+      // L-brackets: verliezers van halve finales voor 3de-plaatsmatch
+      // m101: W97 vs W98 → verliezer = L101
+      // m102: W99 vs W100 → verliezer = L102
+      const sfSlots={'m101':['W97','W98'],'m102':['W99','W100']};
+      Object.entries(sfSlots).forEach(([mid,[hSlot,aSlot]])=>{
+        const res=resMap[mid];
+        if(res&&res.winner){
+          const homeTeam=bracket[hSlot];
+          const awayTeam=bracket[aSlot];
+          if(homeTeam&&awayTeam){
+            const loserKey=`L${mid.replace('m','')}`;
+            bracket[loserKey]=res.winner===homeTeam?awayTeam:homeTeam;
+          }
         }
       });
       return json({standings,bracket,overrides});
