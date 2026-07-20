@@ -580,7 +580,6 @@
         <div style="font-size:12px;color:#7a90aa;margin-bottom:8px">Titels zijn enkel zichtbaar voor spelers als je ze hier vrijgeeft.</div>
         <button onclick="toggleTitlesUnlocked()" id="titles-unlock-btn" class="primary" style="font-size:13px;padding:7px 14px">Laden...</button>
         <span id="titles-unlock-status" style="font-size:12px;color:#1d9e75;margin-left:8px"></span>
-        <button onclick="resetEindanalyse()" class="primary" style="font-size:13px;padding:7px 14px;margin-left:8px;background:#c9a84c;color:#1a0d00">🎉 Eindanalyse tonen</button>
       </div>
       <div class="info-box" style="margin-top:12px">
         <div style="font-size:12px;font-weight:700;color:#7a90aa;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">Gebruikers</div>
@@ -884,7 +883,6 @@ function showApp(){
   // vooral op iOS waar de eerste render/scroll-pass trager is dan op Android)
   setTimeout(showFeaturePopup,1500);
   setTimeout(showTussenstand,2000);
-  setTimeout(showEindanalyse,2500);
   // Vraag push toestemming automatisch na login.
   // Ruim later dan de auto-scroll: op iOS reset de native permissie-prompt (Web Push) de webview-scroll
   // hard naar boven zodra hij opent/sluit. Door dit pas na 4s te tonen heeft de gebruiker dan al
@@ -1041,7 +1039,7 @@ function closeFormModalOutside(e){
 }
 
 // ── NAVIGATION ──────────────────────────────────
-let curPage='pronostiek';
+let curPage='ranking';
 function navTo(page){
   curPage=page;
   window.scrollTo({top:0,behavior:'auto'});
@@ -1125,11 +1123,10 @@ function renderTsBody(){
       <div class="ts-headline" style="color:${p.ptcolor}">${p.title}</div>
       <div class="ts-analysis">${p.analysis}</div>
       <div class="ts-statrow">
-          <div class="ts-stat"><div class="ts-stat-val" style="color:#2dd4a0">${p.exact}</div><div class="ts-stat-lbl">Exact (3pt)</div></div>
-          <div class="ts-stat"><div class="ts-stat-val" style="color:#5b9bff">${p.correct}</div><div class="ts-stat-lbl">Correct (1pt)</div></div>
-          <div class="ts-stat"><div class="ts-stat-val" style="color:#b07cff">${p.winner}</div><div class="ts-stat-lbl">KO winner (+1)</div></div>
-          <div class="ts-stat"><div class="ts-stat-val" style="color:#e8c06a">${p.bonus}</div><div class="ts-stat-lbl">Bonus</div></div>
-        </div>
+        <div class="ts-stat"><div class="ts-stat-val" style="color:#2dd4a0">${p.exact}</div><div class="ts-stat-lbl">Exact (3pt)</div></div>
+        <div class="ts-stat"><div class="ts-stat-val" style="color:#5b9bff">${p.correct}</div><div class="ts-stat-lbl">Correct (1pt)</div></div>
+        <div class="ts-stat"><div class="ts-stat-val" style="color:${p.ptcolor}">${p.pts}</div><div class="ts-stat-lbl">Totaal</div></div>
+      </div>
       <div class="ts-badges">${p.badges.map(b=>`<span class="ts-badge ${b[1]}">${b[0]}</span>`).join('')}</div>
     </div>`;
   }).join('');
@@ -1157,10 +1154,7 @@ function showTussenstand(){
 }
 // Ook tonen als de app al openstond bij deploy: check bij elke tab-wissel en app-focus
 document.addEventListener('visibilitychange',()=>{
-  if(document.visibilityState==='visible'&&currentUser){
-    showTussenstand();
-    showEindanalyse();
-  }
+  if(document.visibilityState==='visible'&&currentUser)showTussenstand();
 });
 async function confirmTussenstand(){
   const btn=document.getElementById('ts-confirm-btn');
@@ -1180,109 +1174,75 @@ window.confirmTussenstand=confirmTussenstand;
 
 // ── EINDANALYSE POPUP ────────────────────────────────────────
 const FINAL_PLAYERS=[
-  {
-    name:'Sabrina', pts:106, exact:13, correct:45, winner:22, bonus:0, rank:1,
-    color:'#0F6E56', bg:'#0d2e22', ptcolor:'#2dd4a0',
-    title:'👑 De Koningin — 106 punten zonder één bonuspunt',
-    analysis:'106 punten. Gewonnen zonder Spanje, zonder Mbappé, zonder één bonuspunt. Sabrina won dit toernooi puur op precisie: 13 exacte scores (absoluut record), 22 correcte knockout-winners, en het meeste in elke fase van het toernooi. Groepsfase 56pt, knockout fase nog eens 50pt erbij. Niemand kon haar bijhouden. De koningin heeft gesproken.',
-    badges:[['👑 Baas van het Voetbal','ts-b-gold'],['🎯 13 exacte scores (record)','ts-b-gold'],['🏆 22 knockout winners','ts-b-green'],['💪 Gewonnen zonder bonuspunten','ts-b-blue']],
-  },
-  {
-    name:'DUUUB', pts:101, exact:7, correct:49, winner:23, bonus:8, rank:2,
-    color:'#853300', bg:'#2e1000', ptcolor:'#e8753a',
-    title:'🥈 De Bouwer pakt zilver — 23 knockout winners, niemand deed beter',
-    analysis:'De app-bouwer eindigt op het podium — en het is verdiend. DUUUB had de meeste correcte knockout-winners van iedereen: 23. Dat is niet alleen Spanje raak als kampioen (+8pt), dat is wedstrijd na wedstrijd consistent de juiste doorstomer kiezen. Van R32 tot de finale. Lamine Yamal als topscorer was een miss, maar Spanje als wereldkampioen en die 23 knockout-winners maakten het verschil voor zilver.',
-    badges:[['🥈 Zilver','ts-b-gold'],['🇪🇸 Enige met Spanje WK-winnaar (+8pt)','ts-b-gold'],['🏆 23 knockout winners (record)','ts-b-gold'],['🔨 Én de bouwer van de app','ts-b-purple']],
-  },
-  {
-    name:'Alpha', pts:98, exact:7, correct:50, winner:19, bonus:8, rank:3,
-    color:'#3B6D11', bg:'#162810', ptcolor:'#7ccf3a',
-    title:'🥉 De Bijna-Man — Mbappé raak, één goal naast de 12pt',
-    analysis:'Alpha had Mbappé raak als topscorer (+8pt) én 50 correcte richtingen — de meeste in de groep. Maar die ene goal: 9 goals voorspeld, Mbappé scoorde er 10. Dat kostte hem 4pt (8pt i.p.v. 12pt). Met exact 10 goals had hij DUUUB bijgehaald en gedeeld zilver. 19 knockout winners was goed maar DUUUB deed er 4 meer. Brons, en het scheelde bitter weinig.',
-    badges:[['🥉 Brons','ts-b-blue'],['⚽ Mbappé correct (+8pt)','ts-b-gold'],['😬 Goals: 9 vs 10 (-4pt mis)','ts-b-red'],['📊 50 correcte richtingen','ts-b-green']],
-  },
-  {
-    name:'Zidane10', pts:96, exact:5, correct:53, winner:20, bonus:8, rank:4,
-    color:'#533AB7', bg:'#1a1040', ptcolor:'#b07cff',
-    title:'4de — 53 correcte richtingen, voor altijd het record',
-    analysis:'53 correcte richtingen — het absolute record van dit toernooi. Zidane10 voorspelt consistent de juiste winnaar maar te zelden de exacte score (slechts 5 keer). Had ook Mbappé raak (+8pt) maar scoorde 11 goals, één te veel. Spiegelbeeldig met Alpha die er één te weinig had. 20 knockout winners is ook sterk, maar DUUUB en Sabrina deden beter. 4de plek, maar die 53 richtingen staan voor eeuwig.',
-    badges:[['4de plek','ts-b-blue'],['📊 53 richtingen (absoluut record)','ts-b-gold'],['⚽ Mbappé correct (+8pt)','ts-b-gold'],['😬 Goals: 11 vs 10 (-4pt mis)','ts-b-red']],
-  },
-  {
-    name:'Ibo', pts:83, exact:6, correct:48, winner:17, bonus:0, rank:5,
-    color:'#0C447C', bg:'#091e3a', ptcolor:'#5b9bff',
-    title:'5de — Solide toernooi, bonuspunten lieten hem in de steek',
-    analysis:'83 punten en geen enkele bonuspunt — dat zegt alles. Ibo deed het zuiver op voetbalkennis: 6 exacte scores, 48 correcte richtingen, 17 knockout winners. Maar geen Spanje, geen Mbappé, geen Olise als topscorer. In een groep waar bonuspunten tot 8pt per persoon verschil maakten, was er geen marge. 23pt achter Sabrina, maar zonder bonusmissers misschien een ander verhaal.',
-    badges:[['5de plek','ts-b-blue'],['😶 Nul bonuspunten','ts-b-red'],['📋 Degelijk op voetbalkennis','ts-b-green'],['🎯 6 exacte scores','ts-b-blue']],
-  },
-  {
-    name:'Jood', pts:49, exact:3, correct:34, winner:6, bonus:0, rank:6,
-    color:'#5F5E5A', bg:'#1a1a18', ptcolor:'#c0cde0',
-    title:'6de — De Ghost. Slechts 6 knockout winners, te veel gemist.',
-    analysis:'Jood eindigt laatste — en het had anders kunnen zijn. In de groepsfase was zijn ratio nog goed (0.73pt/match), maar in de knockoutfase was hij quasi afwezig: slechts 6 correcte knockout-winners terwijl de anderen er 17-23 hadden. Geen bonuspunten, te weinig pronos, te weinig winners. 49pt is het eerlijk resultaat van een toernooi half gespeeld. Volgend WK: alles invullen?',
-    badges:[['6de plek','ts-b-red'],['👻 Minste knockout winners (6)','ts-b-red'],['💡 Goede ratio als hij speelde','ts-b-green'],['😴 Te veel wedstrijden gemist','ts-b-red']],
-  },
+  {name:'Sabrina',pts:106,exact:13,correct:45,winner:22,bonus:0,rank:1,color:'#0F6E56',bg:'#0d2e22',ptcolor:'#2dd4a0',
+   title:'👑 De Koningin — 106 punten zonder één bonuspunt',
+   analysis:'106 punten. Gewonnen zonder Spanje, zonder Mbappé, zonder één bonuspunt. Sabrina won puur op precisie: 13 exacte scores (absoluut record), 22 correcte knockout-winners, en het meeste in elke fase. Ze had de bonus niet nodig. Ze was gewoon beter. De koningin heeft gesproken.',
+   badges:[['👑 Baas van het Voetbal','ts-b-gold'],['🎯 13 exacte scores (record)','ts-b-gold'],['🏆 22 knockout winners','ts-b-green'],['💪 Gewonnen zonder bonus','ts-b-blue']]},
+  {name:'DUUUB',pts:101,exact:7,correct:49,winner:23,bonus:8,rank:2,color:'#853300',bg:'#2e1000',ptcolor:'#e8753a',
+   title:'🥈 De Bouwer pakt zilver — 23 knockout winners',
+   analysis:'De app-bouwer eindigt op het podium. DUUUB had de meeste correcte knockout-winners: 23 — meer dan iedereen. Dat is niet alleen Spanje raak als kampioen (+8pt), dat is wedstrijd na wedstrijd consistent de juiste doorstomer kiezen. Van R32 tot de finale. Hij bouwde het systeem, en hij won er zilver mee.',
+   badges:[['🥈 Zilver','ts-b-gold'],['🇪🇸 Enige met Spanje (+8pt)','ts-b-gold'],['🏆 23 knockout winners (record)','ts-b-gold'],['🔨 Bouwer van de app','ts-b-purple']]},
+  {name:'Alpha',pts:98,exact:7,correct:50,winner:19,bonus:8,rank:3,color:'#3B6D11',bg:'#162810',ptcolor:'#7ccf3a',
+   title:'🥉 De Bijna-Man — Mbappé raak, één goal te weinig',
+   analysis:'Alpha had Mbappé raak (+8pt) én 50 correcte richtingen — de meeste in de groep. Maar die ene goal: 9 goals voorspeld, Mbappé scoorde er 10. Dat kostte hem 4pt en mogelijk zilver. Brons, en het scheelde bitter weinig.',
+   badges:[['🥉 Brons','ts-b-blue'],['⚽ Mbappé correct (+8pt)','ts-b-gold'],['😬 Goals: 9 vs 10 (-4pt)','ts-b-red'],['📊 50 correcte richtingen','ts-b-green']]},
+  {name:'Zidane10',pts:96,exact:5,correct:53,winner:20,bonus:8,rank:4,color:'#533AB7',bg:'#1a1040',ptcolor:'#b07cff',
+   title:'4de — 53 richtingen, voor altijd het record',
+   analysis:'53 correcte richtingen — het absolute record van dit toernooi. Zidane10 voorspelt consistent de juiste winnaar maar te zelden de exacte score. Mbappé raak (+8pt) maar 11 goals, één te veel. Die 53 richtingen staan voor eeuwig.',
+   badges:[['4de plek','ts-b-blue'],['📊 53 richtingen (record)','ts-b-gold'],['⚽ Mbappé correct (+8pt)','ts-b-gold'],['😬 Goals: 11 vs 10 (-4pt)','ts-b-red']]},
+  {name:'Ibo',pts:83,exact:6,correct:48,winner:17,bonus:0,rank:5,color:'#0C447C',bg:'#091e3a',ptcolor:'#5b9bff',
+   title:'5de — Solide, maar geen bonuspunten',
+   analysis:'Ibo deed het zuiver op voetbalkennis: 6 exacte scores, 48 correcte richtingen, 17 knockout-winners. Maar geen Spanje, geen Mbappé, geen Olise als topscorer. In een groep waar bonuspunten beslissend waren, was er geen marge.',
+   badges:[['5de plek','ts-b-blue'],['😶 Nul bonuspunten','ts-b-red'],['📋 Degelijk op kennis','ts-b-green'],['🎯 6 exacte scores','ts-b-blue']]},
+  {name:'Jood',pts:49,exact:3,correct:34,winner:6,bonus:0,rank:6,color:'#5F5E5A',bg:'#1a1a18',ptcolor:'#c0cde0',
+   title:'6de — De Ghost. Te veel gemist.',
+   analysis:'Jood eindigt laatste. In de groepsfase was zijn ratio nog goed, maar in de knockoutfase was hij quasi afwezig: slechts 6 correcte knockout-winners. Geen bonuspunten, te weinig pronos. 49pt is het eerlijke resultaat van een toernooi half gespeeld. Volgend WK: alles invullen!',
+   badges:[['6de plek','ts-b-red'],['👻 Minste knockout winners (6)','ts-b-red'],['💡 Goede ratio als hij speelde','ts-b-green']]}
 ];
 
 function renderEindBody(){
   const body=document.getElementById('eind-body');
   if(!body)return;
-
-  // Top 3 podium
-  const podiumHtml=`<div style="display:flex;justify-content:center;align-items:flex-end;gap:8px;margin-bottom:16px;padding:12px">
-    ${[FINAL_PLAYERS[1],FINAL_PLAYERS[0],FINAL_PLAYERS[2]].map((p,i)=>{
-      const heights=['60px','80px','50px'];
-      const medals=['🥈','🥇','🥉'];
-      return `<div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:1">
-        <div style="font-size:11px;font-weight:700;color:${p.ptcolor}">${p.pts}pt</div>
-        <div style="font-size:22px">${medals[i]}</div>
-        <div style="background:${p.bg};border:1px solid ${p.color}44;border-radius:8px 8px 0 0;width:100%;height:${heights[i]};display:flex;align-items:flex-start;justify-content:center;padding-top:8px">
-          <span style="font-size:13px;font-weight:700;color:${p.ptcolor}">${p.name}</span>
-        </div>
-      </div>`;
-    }).join('')}
-  </div>`;
-
-  const cardsHtml=FINAL_PLAYERS.map(p=>`
-    <div class="ts-card" style="background:${p.bg};margin-bottom:10px">
-      <div class="ts-card-head">
-        <div class="ts-avatar" style="background:${p.color}22;color:${p.color};border:1px solid ${p.color}44">${p.rank}</div>
-        <div>
-          <div class="ts-card-name">${p.name} <span style="font-size:14px;color:${p.ptcolor};font-weight:700">${p.pts}pt</span>${p.bonus?`<span style="font-size:11px;color:#c9a84c;margin-left:6px">+${p.bonus}bonus</span>`:''}</div>
-          <div class="ts-card-sub">${p.exact}×3 · ${p.correct}×1 · ${p.pts}pt totaal</div>
-        </div>
+  const podium=[FINAL_PLAYERS[1],FINAL_PLAYERS[0],FINAL_PLAYERS[2]];
+  const medals=['🥈','🥇','🥉'];
+  const heights=['60px','80px','50px'];
+  const podiumHtml=`<div style="display:flex;justify-content:center;align-items:flex-end;gap:6px;padding:12px 8px 16px">
+    ${podium.map((p,i)=>`<div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:1">
+      <div style="font-size:11px;font-weight:700;color:${p.ptcolor}">${p.pts}pt</div>
+      <div style="font-size:20px">${medals[i]}</div>
+      <div style="background:${p.bg};border:1px solid ${p.color}55;border-radius:8px 8px 0 0;width:100%;height:${heights[i]};display:flex;align-items:flex-start;justify-content:center;padding-top:8px">
+        <span style="font-size:12px;font-weight:700;color:${p.ptcolor}">${p.name}</span>
       </div>
-      <div class="ts-headline" style="color:${p.ptcolor}">${p.title}</div>
-      <div class="ts-analysis">${p.analysis}</div>
-      <div class="ts-badges">${p.badges.map(b=>`<span class="ts-badge ${b[1]}">${b[0]}</span>`).join('')}</div>
-    </div>`).join('');
-
-  const sharedHtml=`<div class="ts-shared">
-    <div class="ts-shared-title">📊 Finale statistieken</div>
-    <div class="ts-shared-text">
-      Spanje 🇪🇸 wereldkampioen · Mbappé topscorer (10 doelpunten) ·
-      Sabrina recordhouder exacte scores (13) · Zidane10 recordhouder correcte richtingen (53) ·
-      Niemand haalde de 12pt topscorer+goals combo ·
-      DUUUB enige met juiste WK-winnaar
-    </div>
+    </div>`).join('')}
   </div>`;
-
-  body.innerHTML=podiumHtml+cardsHtml+sharedHtml;
+  const cardsHtml=FINAL_PLAYERS.map(p=>`<div class="ts-card" style="background:${p.bg};margin-bottom:8px">
+    <div class="ts-card-head">
+      <div class="ts-avatar" style="background:${p.color}22;color:${p.color};border:1px solid ${p.color}44">${p.rank}</div>
+      <div>
+        <div class="ts-card-name">${p.name} <span style="font-size:13px;color:${p.ptcolor};font-weight:700">${p.pts}pt</span>${p.bonus?`<span style="font-size:11px;color:#c9a84c;margin-left:5px">+${p.bonus}bonus</span>`:''}</div>
+        <div class="ts-card-sub">${p.exact}×3 · ${p.correct}×1 · ${p.winner}×KO · ${p.bonus}bonus</div>
+      </div>
+    </div>
+    <div class="ts-headline" style="color:${p.ptcolor}">${p.title}</div>
+    <div class="ts-analysis">${p.analysis}</div>
+    <div class="ts-badges">${p.badges.map(b=>`<span class="ts-badge ${b[1]}">${b[0]}</span>`).join('')}</div>
+  </div>`).join('');
+  body.innerHTML=podiumHtml+cardsHtml+`<div class="ts-shared"><div class="ts-shared-title">🏅 Eindstatistieken</div><div class="ts-shared-text">Spanje 🇪🇸 kampioen · Mbappé topscorer (10g) · Sabrina: 13 exacte scores (record) · Zidane10: 53 correcte richtingen (record) · DUUUB: 23 knockout winners (record) · Niemand had 12pt topscorer+goals</div></div>`;
 }
 
 function showEindanalyse(){
-  const key='wk26_eindanalyse_v1';
-  if(!localStorage.getItem(key)){
-    renderEindBody();
-    document.getElementById('eind-overlay').style.display='flex';
-  }
+  renderEindBody();
+  document.getElementById('eind-overlay').style.display='flex';
 }
 function closeEindanalyse(){
-  localStorage.setItem('wk26_eindanalyse_v1','1');
   document.getElementById('eind-overlay').style.display='none';
+}
+function resetEindanalyse(){
+  showEindanalyse();
 }
 window.closeEindanalyse=closeEindanalyse;
 window.showEindanalyse=showEindanalyse;
+window.resetEindanalyse=resetEindanalyse;
 
 function renderCurrent(){
   if(curPage==='pronostiek') renderPredPage();
@@ -1800,11 +1760,6 @@ window.toggleTitlesUnlocked=async function(){
   }catch(e){if(status){status.textContent=e.message;status.style.color='#f08090';}}
   finally{btn.disabled=false;}
 };
-window.resetEindanalyse=function(){
-  localStorage.removeItem('wk26_eindanalyse_v1');
-  renderEindBody();
-  document.getElementById('eind-overlay').style.display='flex';
-};
 
 // ── SCORES (admin) ──────────────────────────────
 async function loadAdminUsers(){
@@ -2059,7 +2014,16 @@ async function renderRanking(){
     let titlesUnlocked=false;
     try{const ts=await apiFetch('/titles-unlocked');titlesUnlocked=ts.unlocked;}catch{}
     if(titlesUnlocked){
-      renderTitles(ranking, wrap);
+      // Prominente eindanalyse-knop bovenaan ranking
+      const eindBtn=`<div onclick="resetEindanalyse&&resetEindanalyse()" style="background:linear-gradient(135deg,#1a1000,#2a1a00);border:1.5px solid #c9a84c;border-radius:14px;padding:16px 20px;margin-bottom:16px;cursor:pointer;display:flex;align-items:center;gap:14px;-webkit-tap-highlight-color:transparent">
+        <span style="font-size:32px">🏆</span>
+        <div>
+          <div style="font-size:15px;font-weight:800;color:#e8c06a;margin-bottom:3px">WK 2026 — De Finale Afrekening</div>
+          <div style="font-size:12px;color:#7a6030">Tik voor de volledige analyse per speler</div>
+        </div>
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c9a84c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto;flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>`;
+      wrap.innerHTML=eindBtn+wrap.innerHTML;
     }else{
       wrap.innerHTML+=`<div style="margin-top:16px;padding:14px;background:#0d1520;border:1px solid rgba(255,255,255,0.07);border-radius:10px;text-align:center;font-size:13px;color:#445566">
         🏆 Titels worden uitgedeeld na het toernooi
@@ -2302,55 +2266,6 @@ async function renderTopscorers(){
         </div>`:''}`;
 
       if(window.twemoji) twemoji.parse(document.getElementById('stats-body'),{folder:'svg',ext:'.svg'});
-
-      // ── Persoonlijke eindanalyse ──────────────────────────────────────────
-      const PLAYER_ANALYSIS={
-        'Sabrina':{
-          emoji:'👑',
-          title:'De Koningin van het Voetbal',
-          text:`Sabrina won dit WK zoals ze het hele toernooi speelde: kalm, precies, en zonder gnade voor haar tegenstanders. 13 exacte scores — een absoluut record dat niemand ook maar in de buurt kwam. Ze voorspelde Engeland als kampioen en Yamal als topscorer, beide fout — en tóch won ze. Dat zegt alles. Ze had de bonus niet nodig. Ze was gewoon beter. 22 correcte knockout-winners, consistent van R32 tot finale. Sabrina is de baas van het voetbal, en ze weet het.`,
-          color:'#2dd4a0',
-        },
-        'DUUUB':{
-          emoji:'🥈',
-          title:'De Bouwer die ook meespeelde — en won',
-          text:`DUUUB bouwde elke steen van deze app: de database, de sync, de notificaties, het scoresysteem — en terwijl hij dat deed, vulde hij ook nog rustig zijn pronos in. 72/72 in de groepsfase, de enige die dat deed. En dan: Spanje als wereldkampioen. Niemand anders had dat. Die ene keuze was goud waard. Maar de echte troef? 23 correcte knockout-winners — meer dan iedereen. Dat is geen geluk, dat is doordacht inzicht. Hij bouwde het systeem, en hij won er zilver mee.`,
-          color:'#e8753a',
-        },
-        'Alpha':{
-          emoji:'🥉',
-          title:'De Cowboy met de Mbappé-radar',
-          text:`Alpha leeft voor het risico. Spanje-Kaapverdië 6-1 voorspeld (werd 0-0, diff: 7 goals — het toernooirecord). Maar diezelfde audacie leverde hem iets groots op: Mbappé als topscorer. Raak. 9 goals voorspeld, Mbappé scoorde er 10 — dat ene doelpuntje kostte hem 4pt en mogelijk zilver. 50 correcte richtingen, het hoogste in de groep. Alpha was overal, soms te wild, maar zelden totaal verkeerd.`,
-          color:'#7ccf3a',
-        },
-        'Zidane10':{
-          emoji:'🤖',
-          title:'De Machine — 53 richtingen correct, voor eeuwig het record',
-          text:`53. Dat is het getal waarmee Zidane10 dit toernooi de boeken ingaat. 53 correcte richtingen — meer dan iedereen, en het verschil tussen hem en de rest is groot. Maar Zidane10 heeft ook een zwakheid: hij leeft in een wereld met meer goals dan de realiteit. Gemiddeld 3.9 goals per match voorspeld in de groepsfase terwijl het er 3.0 waren. Mbappé raak als topscorer (11 goals, was 10 — één te veel) en Algerije als wereldkampioen. Dat laatste is zijn enige grote blunder. Maar die 53 richtingen? Ongenaakbaar.`,
-          color:'#b07cff',
-        },
-        'Ibo':{
-          emoji:'💼',
-          title:'De Professional — solide, consistent, pechvogel van de bonussen',
-          text:`Ibo deed alles goed. Echt alles. 6 exacte scores, 48 correcte richtingen, 17 knockout-winners — dat is een serieus toernooi. Maar de bonussen liepen hem volledig voorbij: geen Spanje, geen Mbappé, geen Olise als topscorer. In een groep waar bonuspunten tot 8pt per persoon verschil maakten, had hij simpelweg pech. Frankrijk als kampioen was logisch (ze zijn ook in de finale geraakt!), maar Spanje was net iets logischer. Ibo doet het volgend toernooi gewoon beter op de bonussen.`,
-          color:'#5b9bff',
-        },
-        'Jood':{
-          emoji:'👻',
-          title:'De Ghost — het potentieel was er, de aanwezigheid niet',
-          text:`Jood is een raadsel. Als hij er was, was hij goed — zijn ratio per gespeelde match was in de groepsfase de op-één-na-beste van de groep. Panama-Engeland 0-2 exact als enige, niemand anders zag dat aankomen. Maar dan verdween hij. In de knockoutfase nauwelijks aanwezig: slechts 6 correcte knockout-winners terwijl de anderen er 17-23 hadden. Geen bonuspunten, te weinig pronos, te veel gemiste wedstrijden. 49pt is eerlijk. Volgend WK: gewoon alles invullen, en Jood doet mee voor de top 3.`,
-          color:'#c0cde0',
-        },
-      };
-
-      const pa=PLAYER_ANALYSIS[playerName];
-      if(pa){
-        const analyseHtml=`<div class="stats-section" style="border-top:1px solid rgba(255,255,255,0.1);margin-top:4px">
-          <h3 style="display:flex;align-items:center;gap:6px">${pa.emoji} ${pa.title}</h3>
-          <p style="font-size:13px;color:#c0cde0;line-height:1.65;margin-top:8px">${pa.text}</p>
-        </div>`;
-        document.getElementById('stats-body').insertAdjacentHTML('beforeend',analyseHtml);
-      }
     }catch(e){
       document.getElementById('stats-body').innerHTML=`<div class="error-msg">${e.message}</div>`;
     }
@@ -2393,8 +2308,8 @@ init();
   <div id="eind-overlay" class="ts-overlay" style="display:none">
     <div class="ts-sheet" onclick="event.stopPropagation()">
       <div class="ts-header" style="background:linear-gradient(135deg,#1a0d3a,#0d1929)">
-        <h2 style="font-size:20px">🏆 WK 2026 — De Finale Afrekening</h2>
-        <p>Spanje wereldkampioen · Mbappé topscorer (10 doelpunten)</p>
+        <h2 style="font-size:18px">🏆 WK 2026 — De Finale Afrekening</h2>
+        <p>Spanje 🇪🇸 kampioen · Mbappé topscorer (10 goals)</p>
       </div>
       <div class="ts-body" id="eind-body"></div>
       <div class="ts-footer">
