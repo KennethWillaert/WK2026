@@ -2302,6 +2302,55 @@ async function renderTopscorers(){
         </div>`:''}`;
 
       if(window.twemoji) twemoji.parse(document.getElementById('stats-body'),{folder:'svg',ext:'.svg'});
+
+      // ── Persoonlijke eindanalyse ──────────────────────────────────────────
+      const PLAYER_ANALYSIS={
+        'Sabrina':{
+          emoji:'👑',
+          title:'De Koningin van het Voetbal',
+          text:`Sabrina won dit WK zoals ze het hele toernooi speelde: kalm, precies, en zonder gnade voor haar tegenstanders. 13 exacte scores — een absoluut record dat niemand ook maar in de buurt kwam. Ze voorspelde Engeland als kampioen en Yamal als topscorer, beide fout — en tóch won ze. Dat zegt alles. Ze had de bonus niet nodig. Ze was gewoon beter. 22 correcte knockout-winners, consistent van R32 tot finale. Sabrina is de baas van het voetbal, en ze weet het.`,
+          color:'#2dd4a0',
+        },
+        'DUUUB':{
+          emoji:'🥈',
+          title:'De Bouwer die ook meespeelde — en won',
+          text:`DUUUB bouwde elke steen van deze app: de database, de sync, de notificaties, het scoresysteem — en terwijl hij dat deed, vulde hij ook nog rustig zijn pronos in. 72/72 in de groepsfase, de enige die dat deed. En dan: Spanje als wereldkampioen. Niemand anders had dat. Die ene keuze was goud waard. Maar de echte troef? 23 correcte knockout-winners — meer dan iedereen. Dat is geen geluk, dat is doordacht inzicht. Hij bouwde het systeem, en hij won er zilver mee.`,
+          color:'#e8753a',
+        },
+        'Alpha':{
+          emoji:'🥉',
+          title:'De Cowboy met de Mbappé-radar',
+          text:`Alpha leeft voor het risico. Spanje-Kaapverdië 6-1 voorspeld (werd 0-0, diff: 7 goals — het toernooirecord). Maar diezelfde audacie leverde hem iets groots op: Mbappé als topscorer. Raak. 9 goals voorspeld, Mbappé scoorde er 10 — dat ene doelpuntje kostte hem 4pt en mogelijk zilver. 50 correcte richtingen, het hoogste in de groep. Alpha was overal, soms te wild, maar zelden totaal verkeerd.`,
+          color:'#7ccf3a',
+        },
+        'Zidane10':{
+          emoji:'🤖',
+          title:'De Machine — 53 richtingen correct, voor eeuwig het record',
+          text:`53. Dat is het getal waarmee Zidane10 dit toernooi de boeken ingaat. 53 correcte richtingen — meer dan iedereen, en het verschil tussen hem en de rest is groot. Maar Zidane10 heeft ook een zwakheid: hij leeft in een wereld met meer goals dan de realiteit. Gemiddeld 3.9 goals per match voorspeld in de groepsfase terwijl het er 3.0 waren. Mbappé raak als topscorer (11 goals, was 10 — één te veel) en Algerije als wereldkampioen. Dat laatste is zijn enige grote blunder. Maar die 53 richtingen? Ongenaakbaar.`,
+          color:'#b07cff',
+        },
+        'Ibo':{
+          emoji:'💼',
+          title:'De Professional — solide, consistent, pechvogel van de bonussen',
+          text:`Ibo deed alles goed. Echt alles. 6 exacte scores, 48 correcte richtingen, 17 knockout-winners — dat is een serieus toernooi. Maar de bonussen liepen hem volledig voorbij: geen Spanje, geen Mbappé, geen Olise als topscorer. In een groep waar bonuspunten tot 8pt per persoon verschil maakten, had hij simpelweg pech. Frankrijk als kampioen was logisch (ze zijn ook in de finale geraakt!), maar Spanje was net iets logischer. Ibo doet het volgend toernooi gewoon beter op de bonussen.`,
+          color:'#5b9bff',
+        },
+        'Jood':{
+          emoji:'👻',
+          title:'De Ghost — het potentieel was er, de aanwezigheid niet',
+          text:`Jood is een raadsel. Als hij er was, was hij goed — zijn ratio per gespeelde match was in de groepsfase de op-één-na-beste van de groep. Panama-Engeland 0-2 exact als enige, niemand anders zag dat aankomen. Maar dan verdween hij. In de knockoutfase nauwelijks aanwezig: slechts 6 correcte knockout-winners terwijl de anderen er 17-23 hadden. Geen bonuspunten, te weinig pronos, te veel gemiste wedstrijden. 49pt is eerlijk. Volgend WK: gewoon alles invullen, en Jood doet mee voor de top 3.`,
+          color:'#c0cde0',
+        },
+      };
+
+      const pa=PLAYER_ANALYSIS[playerName];
+      if(pa){
+        const analyseHtml=`<div class="stats-section" style="border-top:1px solid rgba(255,255,255,0.1);margin-top:4px">
+          <h3 style="display:flex;align-items:center;gap:6px">${pa.emoji} ${pa.title}</h3>
+          <p style="font-size:13px;color:#c0cde0;line-height:1.65;margin-top:8px">${pa.text}</p>
+        </div>`;
+        document.getElementById('stats-body').insertAdjacentHTML('beforeend',analyseHtml);
+      }
     }catch(e){
       document.getElementById('stats-body').innerHTML=`<div class="error-msg">${e.message}</div>`;
     }
