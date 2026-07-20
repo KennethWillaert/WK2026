@@ -580,6 +580,7 @@
         <div style="font-size:12px;color:#7a90aa;margin-bottom:8px">Titels zijn enkel zichtbaar voor spelers als je ze hier vrijgeeft.</div>
         <button onclick="toggleTitlesUnlocked()" id="titles-unlock-btn" class="primary" style="font-size:13px;padding:7px 14px">Laden...</button>
         <span id="titles-unlock-status" style="font-size:12px;color:#1d9e75;margin-left:8px"></span>
+        <button onclick="resetEindanalyse()" class="primary" style="font-size:13px;padding:7px 14px;margin-left:8px;background:#c9a84c;color:#1a0d00">🎉 Eindanalyse tonen</button>
       </div>
       <div class="info-box" style="margin-top:12px">
         <div style="font-size:12px;font-weight:700;color:#7a90aa;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">Gebruikers</div>
@@ -665,10 +666,10 @@ const PHASES=[
   {id:'bonus',label:'<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><path d="M6 9H4a2 2 0 0 1-2-2V5h4"/><path d="M18 9h2a2 2 0 0 0 2-2V5h-4"/><path d="M12 17v4"/><path d="M8 21h8"/><path d="M6 5h12v6a6 6 0 0 1-12 0z"/></svg> Bonus',unlock:0,lock:ko('2026-06-11','21:00')},
   {id:'group',label:'Groepsfase',unlock:0},
   {id:'r32',label:'Ronde van 32',unlock:ko('2026-06-28','06:00')},
-  {id:'r16',label:'Achtste finales',unlock:ko('2026-07-04','07:00')},
-  {id:'qf',label:'Kwartfinales',unlock:ko('2026-07-07','00:00')},
-  {id:'sf',label:'Halve finales',unlock:ko('2026-07-07','00:00')},
-  {id:'final',label:'Finale',unlock:ko('2026-07-07','00:00')},
+  {id:'r16',label:'Achtste finales',unlock:ko('2026-07-04','19:00')},
+  {id:'qf',label:'Kwartfinales',unlock:ko('2026-07-09','22:00')},
+  {id:'sf',label:'Halve finales',unlock:ko('2026-07-14','21:00')},
+  {id:'final',label:'Finale',unlock:ko('2026-07-18','23:00')},
 ];
 const DAYS=['zo','ma','di','wo','do','vr','za'];
 const MONTHS=['jan','feb','mrt','apr','mei','jun','jul','aug','sep','okt','nov','dec'];
@@ -764,17 +765,17 @@ const MATCHES=[
   {id:'m86',date:'2026-07-03',h:'Australië',a:'Egypte',ph:'r32',ko:ko('2026-07-03','20:00')},
   {id:'m87',date:'2026-07-03',h:'Argentinië',a:'Kaapverdië',ph:'r32',ko:ko('2026-07-04','00:00')},
   {id:'m88',date:'2026-07-03',h:'Colombia',a:'Ghana',ph:'r32',ko:ko('2026-07-04','03:30')},
-  {id:'m89',date:'2026-07-04',h:'W73',a:'W76',ph:'r16',ko:ko('2026-07-04','19:00')},
-  {id:'m90',date:'2026-07-04',h:'W75',a:'W78',ph:'r16',ko:ko('2026-07-04','23:00')},
-  {id:'m91',date:'2026-07-05',h:'W74',a:'W77',ph:'r16',ko:ko('2026-07-05','22:00')},
-  {id:'m92',date:'2026-07-05',h:'W79',a:'W80',ph:'r16',ko:ko('2026-07-06','02:00')},
-  {id:'m93',date:'2026-07-06',h:'W83',a:'W84',ph:'r16',ko:ko('2026-07-06','21:00')},
-  {id:'m94',date:'2026-07-06',h:'W81',a:'W82',ph:'r16',ko:ko('2026-07-07','02:00')},
-  {id:'m95',date:'2026-07-07',h:'W86',a:'W87',ph:'r16',ko:ko('2026-07-07','18:00')},
-  {id:'m96',date:'2026-07-07',h:'W85',a:'W88',ph:'r16',ko:ko('2026-07-07','22:00')},
-  {id:'m97',date:'2026-07-09',h:'W90',a:'W89',ph:'qf',ko:ko('2026-07-09','22:00')},
-  {id:'m98',date:'2026-07-10',h:'W93',a:'W94',ph:'qf',ko:ko('2026-07-10','21:00')},
-  {id:'m99',date:'2026-07-11',h:'W91',a:'W92',ph:'qf',ko:ko('2026-07-11','23:00')},
+  {id:'m89',date:'2026-07-04',h:'W73',a:'W83',ph:'r16',ko:ko('2026-07-04','19:00')},
+  {id:'m90',date:'2026-07-04',h:'W74',a:'W80',ph:'r16',ko:ko('2026-07-04','23:00')},
+  {id:'m91',date:'2026-07-05',h:'W76',a:'W86',ph:'r16',ko:ko('2026-07-05','22:00')},
+  {id:'m92',date:'2026-07-05',h:'W79',a:'W85',ph:'r16',ko:ko('2026-07-06','02:00')},
+  {id:'m93',date:'2026-07-06',h:'W77',a:'W82',ph:'r16',ko:ko('2026-07-06','21:00')},
+  {id:'m94',date:'2026-07-06',h:'W75',a:'W81',ph:'r16',ko:ko('2026-07-07','02:00')},
+  {id:'m95',date:'2026-07-07',h:'W87',a:'W88',ph:'r16',ko:ko('2026-07-07','18:00')},
+  {id:'m96',date:'2026-07-07',h:'W78',a:'W84',ph:'r16',ko:ko('2026-07-08','00:00')},
+  {id:'m97',date:'2026-07-09',h:'W89',a:'W90',ph:'qf',ko:ko('2026-07-09','22:00')},
+  {id:'m98',date:'2026-07-10',h:'W91',a:'W92',ph:'qf',ko:ko('2026-07-10','21:00')},
+  {id:'m99',date:'2026-07-11',h:'W93',a:'W94',ph:'qf',ko:ko('2026-07-11','23:00')},
   {id:'m100',date:'2026-07-11',h:'W95',a:'W96',ph:'qf',ko:ko('2026-07-12','03:00')},
   {id:'m101',date:'2026-07-14',h:'W97',a:'W98',ph:'sf',ko:ko('2026-07-14','21:00')},
   {id:'m102',date:'2026-07-15',h:'W99',a:'W100',ph:'sf',ko:ko('2026-07-15','21:00')},
@@ -788,11 +789,10 @@ let results={}, curPreds={}, bonusPred={}, bonusResult={}, bracket={};
 let allPronosStatus={names:[],pronos:{}};
 function getCurrentPhase(){
   const now=Date.now();
-  // Huidige fase = fase van de vroegste komende wedstrijd (of meest recente als alles voorbij is)
-  const upcoming=MATCHES.filter(m=>m.ph!=='group'&&m.ko>now-4*60*60*1000).sort((a,b)=>a.ko-b.ko);
-  if(upcoming.length)return upcoming[0].ph;
-  const past=[...MATCHES].filter(m=>m.ph!=='group').sort((a,b)=>b.ko-a.ko);
-  if(past.length)return past[0].ph;
+  const phases=[...PHASES].reverse();
+  for(const ph of phases){
+    if(ph.unlock&&now>=ph.unlock)return ph.id;
+  }
   return 'group';
 }
 
@@ -884,6 +884,7 @@ function showApp(){
   // vooral op iOS waar de eerste render/scroll-pass trager is dan op Android)
   setTimeout(showFeaturePopup,1500);
   setTimeout(showTussenstand,2000);
+  setTimeout(showEindanalyse,2500);
   // Vraag push toestemming automatisch na login.
   // Ruim later dan de auto-scroll: op iOS reset de native permissie-prompt (Web Push) de webview-scroll
   // hard naar boven zodra hij opent/sluit. Door dit pas na 4s te tonen heeft de gebruiker dan al
@@ -1124,10 +1125,11 @@ function renderTsBody(){
       <div class="ts-headline" style="color:${p.ptcolor}">${p.title}</div>
       <div class="ts-analysis">${p.analysis}</div>
       <div class="ts-statrow">
-        <div class="ts-stat"><div class="ts-stat-val" style="color:#2dd4a0">${p.exact}</div><div class="ts-stat-lbl">Exact (3pt)</div></div>
-        <div class="ts-stat"><div class="ts-stat-val" style="color:#5b9bff">${p.correct}</div><div class="ts-stat-lbl">Correct (1pt)</div></div>
-        <div class="ts-stat"><div class="ts-stat-val" style="color:${p.ptcolor}">${p.pts}</div><div class="ts-stat-lbl">Totaal</div></div>
-      </div>
+          <div class="ts-stat"><div class="ts-stat-val" style="color:#2dd4a0">${p.exact}</div><div class="ts-stat-lbl">Exact (3pt)</div></div>
+          <div class="ts-stat"><div class="ts-stat-val" style="color:#5b9bff">${p.correct}</div><div class="ts-stat-lbl">Correct (1pt)</div></div>
+          <div class="ts-stat"><div class="ts-stat-val" style="color:#b07cff">${p.winner}</div><div class="ts-stat-lbl">KO winner (+1)</div></div>
+          <div class="ts-stat"><div class="ts-stat-val" style="color:#e8c06a">${p.bonus}</div><div class="ts-stat-lbl">Bonus</div></div>
+        </div>
       <div class="ts-badges">${p.badges.map(b=>`<span class="ts-badge ${b[1]}">${b[0]}</span>`).join('')}</div>
     </div>`;
   }).join('');
@@ -1155,7 +1157,10 @@ function showTussenstand(){
 }
 // Ook tonen als de app al openstond bij deploy: check bij elke tab-wissel en app-focus
 document.addEventListener('visibilitychange',()=>{
-  if(document.visibilityState==='visible'&&currentUser)showTussenstand();
+  if(document.visibilityState==='visible'&&currentUser){
+    showTussenstand();
+    showEindanalyse();
+  }
 });
 async function confirmTussenstand(){
   const btn=document.getElementById('ts-confirm-btn');
@@ -1173,6 +1178,112 @@ function closeTussenstand(){
 window.closeTussenstand=closeTussenstand;
 window.confirmTussenstand=confirmTussenstand;
 
+// ── EINDANALYSE POPUP ────────────────────────────────────────
+const FINAL_PLAYERS=[
+  {
+    name:'Sabrina', pts:106, exact:13, correct:45, winner:22, bonus:0, rank:1,
+    color:'#0F6E56', bg:'#0d2e22', ptcolor:'#2dd4a0',
+    title:'👑 De Koningin — 106 punten zonder één bonuspunt',
+    analysis:'106 punten. Gewonnen zonder Spanje, zonder Mbappé, zonder één bonuspunt. Sabrina won dit toernooi puur op precisie: 13 exacte scores (absoluut record), 22 correcte knockout-winners, en het meeste in elke fase van het toernooi. Groepsfase 56pt, knockout fase nog eens 50pt erbij. Niemand kon haar bijhouden. De koningin heeft gesproken.',
+    badges:[['👑 Baas van het Voetbal','ts-b-gold'],['🎯 13 exacte scores (record)','ts-b-gold'],['🏆 22 knockout winners','ts-b-green'],['💪 Gewonnen zonder bonuspunten','ts-b-blue']],
+  },
+  {
+    name:'DUUUB', pts:101, exact:7, correct:49, winner:23, bonus:8, rank:2,
+    color:'#853300', bg:'#2e1000', ptcolor:'#e8753a',
+    title:'🥈 De Bouwer pakt zilver — 23 knockout winners, niemand deed beter',
+    analysis:'De app-bouwer eindigt op het podium — en het is verdiend. DUUUB had de meeste correcte knockout-winners van iedereen: 23. Dat is niet alleen Spanje raak als kampioen (+8pt), dat is wedstrijd na wedstrijd consistent de juiste doorstomer kiezen. Van R32 tot de finale. Lamine Yamal als topscorer was een miss, maar Spanje als wereldkampioen en die 23 knockout-winners maakten het verschil voor zilver.',
+    badges:[['🥈 Zilver','ts-b-gold'],['🇪🇸 Enige met Spanje WK-winnaar (+8pt)','ts-b-gold'],['🏆 23 knockout winners (record)','ts-b-gold'],['🔨 Én de bouwer van de app','ts-b-purple']],
+  },
+  {
+    name:'Alpha', pts:98, exact:7, correct:50, winner:19, bonus:8, rank:3,
+    color:'#3B6D11', bg:'#162810', ptcolor:'#7ccf3a',
+    title:'🥉 De Bijna-Man — Mbappé raak, één goal naast de 12pt',
+    analysis:'Alpha had Mbappé raak als topscorer (+8pt) én 50 correcte richtingen — de meeste in de groep. Maar die ene goal: 9 goals voorspeld, Mbappé scoorde er 10. Dat kostte hem 4pt (8pt i.p.v. 12pt). Met exact 10 goals had hij DUUUB bijgehaald en gedeeld zilver. 19 knockout winners was goed maar DUUUB deed er 4 meer. Brons, en het scheelde bitter weinig.',
+    badges:[['🥉 Brons','ts-b-blue'],['⚽ Mbappé correct (+8pt)','ts-b-gold'],['😬 Goals: 9 vs 10 (-4pt mis)','ts-b-red'],['📊 50 correcte richtingen','ts-b-green']],
+  },
+  {
+    name:'Zidane10', pts:96, exact:5, correct:53, winner:20, bonus:8, rank:4,
+    color:'#533AB7', bg:'#1a1040', ptcolor:'#b07cff',
+    title:'4de — 53 correcte richtingen, voor altijd het record',
+    analysis:'53 correcte richtingen — het absolute record van dit toernooi. Zidane10 voorspelt consistent de juiste winnaar maar te zelden de exacte score (slechts 5 keer). Had ook Mbappé raak (+8pt) maar scoorde 11 goals, één te veel. Spiegelbeeldig met Alpha die er één te weinig had. 20 knockout winners is ook sterk, maar DUUUB en Sabrina deden beter. 4de plek, maar die 53 richtingen staan voor eeuwig.',
+    badges:[['4de plek','ts-b-blue'],['📊 53 richtingen (absoluut record)','ts-b-gold'],['⚽ Mbappé correct (+8pt)','ts-b-gold'],['😬 Goals: 11 vs 10 (-4pt mis)','ts-b-red']],
+  },
+  {
+    name:'Ibo', pts:83, exact:6, correct:48, winner:17, bonus:0, rank:5,
+    color:'#0C447C', bg:'#091e3a', ptcolor:'#5b9bff',
+    title:'5de — Solide toernooi, bonuspunten lieten hem in de steek',
+    analysis:'83 punten en geen enkele bonuspunt — dat zegt alles. Ibo deed het zuiver op voetbalkennis: 6 exacte scores, 48 correcte richtingen, 17 knockout winners. Maar geen Spanje, geen Mbappé, geen Olise als topscorer. In een groep waar bonuspunten tot 8pt per persoon verschil maakten, was er geen marge. 23pt achter Sabrina, maar zonder bonusmissers misschien een ander verhaal.',
+    badges:[['5de plek','ts-b-blue'],['😶 Nul bonuspunten','ts-b-red'],['📋 Degelijk op voetbalkennis','ts-b-green'],['🎯 6 exacte scores','ts-b-blue']],
+  },
+  {
+    name:'Jood', pts:49, exact:3, correct:34, winner:6, bonus:0, rank:6,
+    color:'#5F5E5A', bg:'#1a1a18', ptcolor:'#c0cde0',
+    title:'6de — De Ghost. Slechts 6 knockout winners, te veel gemist.',
+    analysis:'Jood eindigt laatste — en het had anders kunnen zijn. In de groepsfase was zijn ratio nog goed (0.73pt/match), maar in de knockoutfase was hij quasi afwezig: slechts 6 correcte knockout-winners terwijl de anderen er 17-23 hadden. Geen bonuspunten, te weinig pronos, te weinig winners. 49pt is het eerlijk resultaat van een toernooi half gespeeld. Volgend WK: alles invullen?',
+    badges:[['6de plek','ts-b-red'],['👻 Minste knockout winners (6)','ts-b-red'],['💡 Goede ratio als hij speelde','ts-b-green'],['😴 Te veel wedstrijden gemist','ts-b-red']],
+  },
+];
+
+function renderEindBody(){
+  const body=document.getElementById('eind-body');
+  if(!body)return;
+
+  // Top 3 podium
+  const podiumHtml=`<div style="display:flex;justify-content:center;align-items:flex-end;gap:8px;margin-bottom:16px;padding:12px">
+    ${[FINAL_PLAYERS[1],FINAL_PLAYERS[0],FINAL_PLAYERS[2]].map((p,i)=>{
+      const heights=['60px','80px','50px'];
+      const medals=['🥈','🥇','🥉'];
+      return `<div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:1">
+        <div style="font-size:11px;font-weight:700;color:${p.ptcolor}">${p.pts}pt</div>
+        <div style="font-size:22px">${medals[i]}</div>
+        <div style="background:${p.bg};border:1px solid ${p.color}44;border-radius:8px 8px 0 0;width:100%;height:${heights[i]};display:flex;align-items:flex-start;justify-content:center;padding-top:8px">
+          <span style="font-size:13px;font-weight:700;color:${p.ptcolor}">${p.name}</span>
+        </div>
+      </div>`;
+    }).join('')}
+  </div>`;
+
+  const cardsHtml=FINAL_PLAYERS.map(p=>`
+    <div class="ts-card" style="background:${p.bg};margin-bottom:10px">
+      <div class="ts-card-head">
+        <div class="ts-avatar" style="background:${p.color}22;color:${p.color};border:1px solid ${p.color}44">${p.rank}</div>
+        <div>
+          <div class="ts-card-name">${p.name} <span style="font-size:14px;color:${p.ptcolor};font-weight:700">${p.pts}pt</span>${p.bonus?`<span style="font-size:11px;color:#c9a84c;margin-left:6px">+${p.bonus}bonus</span>`:''}</div>
+          <div class="ts-card-sub">${p.exact}×3 · ${p.correct}×1 · ${p.pts}pt totaal</div>
+        </div>
+      </div>
+      <div class="ts-headline" style="color:${p.ptcolor}">${p.title}</div>
+      <div class="ts-analysis">${p.analysis}</div>
+      <div class="ts-badges">${p.badges.map(b=>`<span class="ts-badge ${b[1]}">${b[0]}</span>`).join('')}</div>
+    </div>`).join('');
+
+  const sharedHtml=`<div class="ts-shared">
+    <div class="ts-shared-title">📊 Finale statistieken</div>
+    <div class="ts-shared-text">
+      Spanje 🇪🇸 wereldkampioen · Mbappé topscorer (10 doelpunten) ·
+      Sabrina recordhouder exacte scores (13) · Zidane10 recordhouder correcte richtingen (53) ·
+      Niemand haalde de 12pt topscorer+goals combo ·
+      DUUUB enige met juiste WK-winnaar
+    </div>
+  </div>`;
+
+  body.innerHTML=podiumHtml+cardsHtml+sharedHtml;
+}
+
+function showEindanalyse(){
+  const key='wk26_eindanalyse_v1';
+  if(!localStorage.getItem(key)){
+    renderEindBody();
+    document.getElementById('eind-overlay').style.display='flex';
+  }
+}
+function closeEindanalyse(){
+  localStorage.setItem('wk26_eindanalyse_v1','1');
+  document.getElementById('eind-overlay').style.display='none';
+}
+window.closeEindanalyse=closeEindanalyse;
+window.showEindanalyse=showEindanalyse;
+
 function renderCurrent(){
   if(curPage==='pronostiek') renderPredPage();
   if(curPage==='standen') renderStandings();
@@ -1186,7 +1297,7 @@ function renderCurrent(){
 async function loadAll(){
   try{
     [results, bonusResult] = await Promise.all([apiFetch('/results'), apiFetch('/bonus-result')]);
-    try{const s=await apiFetch('/standings'); bracket=s.bracket||{}; lastStandings=s.standings||{};}catch(e){console.warn('standings fetch failed:',e);}
+    try{const s=await apiFetch('/standings'); bracket=s.bracket||{}; lastStandings=s.standings||{};}catch{}
     renderCurrent();
     renderTicker();
   }catch(e){showError(e.message);}
@@ -1213,7 +1324,7 @@ function renderTicker(){
     let label='';
     if(st==='IN_PLAY')label='<span class="t-live">LIVE</span>';
     else if(st==='PAUSED'||st==='HALFTIME')label='<span class="t-rust">RT</span>';
-    return `<span class="ticker-item">${label}${resolveTeam(m.h)} <span class="t-score">${r.h} – ${r.a}</span> ${resolveTeam(m.a)}</span><span class="ticker-item t-sep">•</span>`;
+    return `<span class="ticker-item">${label}${m.h} <span class="t-score">${r.h} – ${r.a}</span> ${m.a}</span><span class="ticker-item t-sep">•</span>`;
   }).join('');
   // Duplicate for seamless loop
   document.getElementById('ticker-track').innerHTML=items+items;
@@ -1688,6 +1799,11 @@ window.toggleTitlesUnlocked=async function(){
     if(status){status.textContent=newState?'✓ Titels zijn nu zichtbaar':'✓ Titels verborgen';setTimeout(()=>{if(status)status.textContent='';},2500);}
   }catch(e){if(status){status.textContent=e.message;status.style.color='#f08090';}}
   finally{btn.disabled=false;}
+};
+window.resetEindanalyse=function(){
+  localStorage.removeItem('wk26_eindanalyse_v1');
+  renderEindBody();
+  document.getElementById('eind-overlay').style.display='flex';
 };
 
 // ── SCORES (admin) ──────────────────────────────
@@ -2221,6 +2337,19 @@ init();
       <div class="ts-body" id="ts-body"></div>
       <div class="ts-footer">
         <button id="ts-confirm-btn" onclick="confirmTussenstand()" style="width:100%;background:#1d4ed8;color:#fff;border:none;border-radius:10px;padding:11px;font-size:14px;font-weight:700;cursor:pointer">✓ Bevestig gelezen</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="eind-overlay" class="ts-overlay" style="display:none">
+    <div class="ts-sheet" onclick="event.stopPropagation()">
+      <div class="ts-header" style="background:linear-gradient(135deg,#1a0d3a,#0d1929)">
+        <h2 style="font-size:20px">🏆 WK 2026 — De Finale Afrekening</h2>
+        <p>Spanje wereldkampioen · Mbappé topscorer (10 doelpunten)</p>
+      </div>
+      <div class="ts-body" id="eind-body"></div>
+      <div class="ts-footer">
+        <button onclick="closeEindanalyse()" style="width:100%;background:linear-gradient(135deg,#c9a84c,#e8c06a);color:#1a0d00;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:800;cursor:pointer">🎉 Tot het volgende WK!</button>
       </div>
     </div>
   </div>
