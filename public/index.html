@@ -883,6 +883,10 @@ function showApp(){
   // vooral op iOS waar de eerste render/scroll-pass trager is dan op Android)
   setTimeout(showFeaturePopup,1500);
   setTimeout(showTussenstand,2000);
+  setTimeout(()=>{
+    const key='wk26_eindanalyse_v1';
+    if(!localStorage.getItem(key)){localStorage.setItem(key,'1');showEindanalyse();}
+  },2500);
   // Vraag push toestemming automatisch na login.
   // Ruim later dan de auto-scroll: op iOS reset de native permissie-prompt (Web Push) de webview-scroll
   // hard naar boven zodra hij opent/sluit. Door dit pas na 4s te tonen heeft de gebruiker dan al
